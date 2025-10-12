@@ -29,7 +29,7 @@
         .container { 
             max-width: 1800px; 
             margin: 0 auto; 
-            padding: 15px; /* Adjusted for more compact view */
+            padding: 15px;
         }
         
         #loading-overlay {
@@ -85,7 +85,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Market Sub-tabs Enhancement */
         .market-sub-tabs { 
             display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap;
         }
@@ -169,7 +168,6 @@
         .chart-time-controls button.active { background-color: #d1e3f8; color: var(--primary-color); border-color: var(--primary-color);}
         .modal-chart-container { position: relative; height: 500px; width: 100%; }
 
-        /* Summary Tab Styles */
         #summary { padding: 10px 0; }
         .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .summary-header h2 { font-size: 1.5rem; color: var(--text-primary); }
@@ -180,8 +178,8 @@
         .print-btn:hover { background-color: #3a7ac8; }
         #summary-content-to-print {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); /* Adjusted for narrower cards */
-            gap: 20px; /* Adjusted for more compact view */
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
         }
         .summary-section { 
             display: flex; flex-direction: column; gap: 20px;
@@ -196,12 +194,11 @@
             margin-bottom: 10px; font-size: 1.2rem; color: var(--text-primary); 
             border-bottom: 1px solid #eee; padding-bottom: 8px;
         }
-        .summary-card table { font-size: 0.9rem; table-layout: fixed; } /* Added table-layout fixed */
-        .summary-card th, .summary-card td { padding: 6px 8px; } /* Adjusted padding */
+        .summary-card table { font-size: 0.9rem; table-layout: fixed; }
+        .summary-card th, .summary-card td { padding: 6px 8px; }
         
-        /* ### FIX 2: Make Summary page tables narrower ### */
         .summary-card td:first-child, .summary-card th:first-child {
-            width: 40%; /* Allocate specific width to the name column */
+            width: 40%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -220,11 +217,10 @@
             margin-bottom: 15px;
         }
 
-        /* News Tab Styles */
         .news-layout-container {
             display: flex;
             gap: 20px;
-            height: 70vh; /* Or a suitable height */
+            height: 70vh;
         }
         .news-list-pane {
             flex: 1;
@@ -272,14 +268,15 @@
         .news-content-pane .news-body {
             font-size: 1rem;
             line-height: 1.7;
-            white-space: pre-wrap; /* To respect newlines from the JSON content */
+            white-space: pre-wrap;
         }
+        
+        .print-only { display: none; }
 
-        /* Print Styles */
         @media print {
             @page {
                 size: landscape;
-                margin: 20mm;
+                margin: 15mm;
             }
             body, .container, .main-content {
                 margin: 0;
@@ -290,17 +287,34 @@
             body * { visibility: hidden; }
             #summary-content-to-print, #summary-content-to-print * { visibility: visible; }
             .tabs, .summary-header { display: none; }
+            
             #summary-content-to-print {
                 position: absolute; left: 0; top: 0; width: 100%;
-                display: grid !important;
-                grid-template-columns: repeat(3, 1fr) !important;
-                gap: 15px !important;
+                display: block !important;
             }
             .summary-card {
                 page-break-inside: avoid;
                 box-shadow: none !important; 
                 border: 1px solid #ccc !important;
+                font-size: 9pt; /* Smaller font for printing */
             }
+            .summary-card h3 { font-size: 12pt; }
+            .summary-card table { font-size: 8pt; }
+            .summary-card th, .summary-card td { padding: 4px 6px; }
+
+            .print-only { 
+                display: table-cell; 
+                text-align: right;
+            }
+            
+            /* ### FIX 3: Perfect print layout for summary tables ### */
+            .summary-card th:nth-child(1), .summary-card td:nth-child(1) { width: 30%; } /* Name */
+            .summary-card th:nth-child(2), .summary-card td:nth-child(2) { width: 20%; } /* Date */
+            .summary-card th:nth-child(3), .summary-card td:nth-child(3) { width: 18%; } /* Last */
+            .summary-card th:nth-child(4), .summary-card td:nth-child(4) { width: 16%; } /* 1-Day */
+            .summary-card th:nth-child(5), .summary-card td:nth-child(5) { width: 16%; } /* YTD */
+
+            #summary-news-card .news-meta, #summary-news-card .news-body { font-size: 8pt; }
         }
 
     </style>
@@ -312,7 +326,6 @@
     </div>
 
     <div class="container">
-        <!-- ### FIX 1: Removed the main header ### -->
         <div class="main-content">
             <div class="tabs">
                 <div class="tab-link active" onclick="openTab(event, 'summary')">Summary</div>
@@ -323,7 +336,8 @@
             <div id="summary" class="tab-content active">
                 <div class="summary-header">
                     <h2 id="summary-title">Market Summary</h2>
-                    <button class="print-btn" onclick="window.print()">列印摘要 (PDF)</button>
+                    <!-- ### FIX 3: Changed button text to English ### -->
+                    <button class="print-btn" onclick="window.print()">Print Summary (PDF)</button>
                 </div>
                 <div id="summary-content-to-print">
                     <div class="summary-section">
@@ -387,7 +401,7 @@
         let newsByCategory = {};
 
         function consoleLog(message) {
-            console.log(message); // Use standard console log for debugging
+            console.log(message);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -424,7 +438,6 @@
         async function loadAllDataFromGitHub() {
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingText = document.getElementById('loading-text');
-            consoleLog("開始載入資料...");
 
             const marketDataUrls = {
                 'Equity Index': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/Equity_Index.json',
@@ -510,7 +523,6 @@
                     .filter(news => news.datetime.getTime() > 0)
                     .sort((a, b) => b.datetime - a.datetime);
                     
-                    consoleLog(`新聞資料處理完成。總共 ${allNewsData.length} 則新聞。`);
                     processNewsData();
                 } else {
                      consoleLog("警告: 新聞資料是空的或格式不符。");
@@ -525,10 +537,6 @@
                 consoleLog(`致命錯誤: ${error.message}`);
             }
         }
-
-        // ===================================
-        // Price Data Processing Functions
-        // ===================================
 
         function processPriceData() {
             allPerformanceData.clear();
@@ -549,10 +557,6 @@
             setupMarketTabs();
             renderSummaryTab();
         }
-
-        // ===================================
-        // News Data Processing Functions
-        // ===================================
 
         function processNewsData() {
             renderNewsSummary();
@@ -715,10 +719,6 @@
             if(activeListItem) activeListItem.classList.add('active');
         }
 
-        // ===================================
-        // Market Tab Functions
-        // ===================================
-        
         function setupMarketTabs() {
             const tabsContainer = document.getElementById('market-sub-tabs-container');
             const contentContainer = document.getElementById('market-sub-content-container');
@@ -899,6 +899,20 @@
                 newHeader.querySelector('.sort-icon').textContent = direction === 'asc' ? '▲' : '▼';
             }
         }
+        
+        // ### FIX 1 & 2: New function to handle specific price formatting ###
+        function formatPrice(ticker, price, market) {
+            if (market === 'FX') {
+                if (ticker.includes('DX-Y.NYB')) return price.toFixed(2); // DXY
+                if (ticker.includes('JPY=')) return price.toFixed(2);     // JPY
+                if (ticker.includes('TWD=')) return price.toFixed(3);     // TWD
+                if (ticker.includes('EUR=')) return price.toFixed(4);     // EUR
+                // Default for other FX like KRW, CNY
+                return price.toFixed(4);
+            }
+            // Equity, Stocks, Rates, Commodity
+            return price.toFixed(2);
+        }
 
         function calculatePerformanceForTicker(ticker, market) {
            const tickerData = allData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
@@ -943,13 +957,13 @@
                const calcBpsChange = (start, end) => (start === null || end === null) ? null : (end - start) * 100;
                const lastYearDates = getStartDate('lastYear', latestDataDate);
                return {
-                   ticker, name, market, lastPrice: lastPrice.toFixed(4),
+                   ticker, name, market, lastPrice: formatPrice(ticker, lastPrice, market),
                    oneDay: formatValue(calcBpsChange(prevDataPoint?.price, lastPrice), true),
                    wtd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('wtd', latestDataDate)), lastPrice), true),
                    mtd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('mtd', latestDataDate)), lastPrice), true),
                    ytd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('ytd', latestDataDate)), lastPrice), true),
                    lastYear: formatValue(calcBpsChange(findPriceOnDate(lastYearDates.start), findPriceOnDate(lastYearDates.end)), true),
-                   lastDate: lastDataPoint.date.toLocaleDateString() // ### FIX 3: Add last date for tooltip ###
+                   lastDate: lastDataPoint.date.toLocaleDateString()
                };
            }
            
@@ -962,13 +976,13 @@
 
            const lastYearDates = getStartDate('lastYear', latestDataDate);
            return {
-               ticker, name, market, lastPrice: lastPrice.toFixed(4),
+               ticker, name, market, lastPrice: formatPrice(ticker, lastPrice, market),
                oneDay: formatValue(calcReturn(prevDataPoint?.price, lastPrice)),
                wtd: formatValue(calcReturn(findPriceOnDate(getStartDate('wtd', latestDataDate)), lastPrice)),
                mtd: formatValue(calcReturn(findPriceOnDate(getStartDate('mtd', latestDataDate)), lastPrice)),
                ytd: formatValue(calcReturn(findPriceOnDate(getStartDate('ytd', latestDataDate)), lastPrice)),
                lastYear: formatValue(calcReturn(findPriceOnDate(lastYearDates.start), findPriceOnDate(lastYearDates.end))),
-               lastDate: lastDataPoint.date.toLocaleDateString() // ### FIX 3: Add last date for tooltip ###
+               lastDate: lastDataPoint.date.toLocaleDateString()
            };
        }
 
@@ -996,7 +1010,6 @@
                     const num = parseFloat(val);
                     return num > 0 ? 'text-positive' : num < 0 ? 'text-negative' : '';
                 };
-                // ### FIX 3: Add title attribute for tooltip ###
                 tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row" title="Last Update: ${item.lastDate}">
                     <td>${item.name}</td><td>${item.ticker}</td><td>${item.lastPrice}</td>
                     <td class="${colorClass(item.oneDay)}">${item.oneDay}</td>
@@ -1019,7 +1032,7 @@
             const summaryConfig = {
                 'index': { title: 'Index', tickers: ['.SPX', '.IXIC', '.SOX', '.TWII'], container: 'summary-index' },
                 'rate': { title: 'US Rates', tickers: ['US3MT=RR', 'US2YT=RR', 'US10YT=RR', 'US30YT=RR'], container: 'summary-rate' },
-                'fx': { title: 'FX', tickers: ['DXY', 'EUR=', 'JPY=', 'TWD='], container: 'summary-fx' },
+                'fx': { title: 'FX', tickers: ['.DXY', 'EUR=', 'JPY=', 'TWD='], container: 'summary-fx' },
                 'stocks': { title: 'Stocks', tickers: ['NVDA.O', 'AAPL.O', 'MSFT.O', 'GOOGL.O', 'META.O', 'AMZN.O', 'TSLA.O', 'AVGO.O', 'TSM.N', 'AMD.O', 'INTC.O'], container: 'summary-stocks' },
                 'commodity': { title: 'Commodity', tickers: ['CLc1', 'GCc1'], container: 'summary-commodity'}
             };
@@ -1030,23 +1043,31 @@
                 
                 const data = config.tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
                 
+                // ### FIX 3: Add new header for print view ###
                 let tableHTML = `<h3>${config.title}</h3><table><thead>
-                    <tr><th style="text-align: left;">Name</th><th>Last</th><th>1-Day</th><th>YTD</th></tr>
+                    <tr>
+                        <th style="text-align: left;">Name</th>
+                        <th class="print-only">Date</th>
+                        <th>Last</th>
+                        <th>1-Day</th>
+                        <th>YTD</th>
+                    </tr>
                 </thead><tbody>`;
                 
                 if (data.length > 0) {
                     data.forEach(item => {
                         const colorClass = val => (val === 'N/A' || parseFloat(val) === 0) ? '' : parseFloat(val) > 0 ? 'text-positive' : 'text-negative';
-                        // ### FIX 3: Add title attribute for tooltip ###
+                        // ### FIX 3: Add new cell for print view and tooltip for screen view ###
                         tableHTML += `<tr title="Last Update: ${item.lastDate}">
                             <td style="text-align: left;">${item.name}</td>
+                            <td class="print-only">${item.lastDate}</td>
                             <td>${item.lastPrice}</td>
                             <td class="${colorClass(item.oneDay)}">${item.oneDay}</td>
                             <td class="${colorClass(item.ytd)}">${item.ytd}</td>
                         </tr>`;
                     });
                 } else {
-                    tableHTML += `<tr><td colspan="4" style="text-align: center;">No data available.</td></tr>`;
+                    tableHTML += `<tr><td colspan="5" style="text-align: center;">No data available.</td></tr>`;
                 }
                 tableHTML += '</tbody></table>';
                 container.innerHTML = tableHTML;
@@ -1299,7 +1320,7 @@
                     activeCharts[canvasId].destroy();
                     delete activeCharts[canvasId];
                 }
-            }, 300); // Wait for transition to finish
+            }, 300);
             document.body.style.overflow = '';
         }
         
@@ -1318,3 +1339,4 @@
     </script>
 </body>
 </html>
+
