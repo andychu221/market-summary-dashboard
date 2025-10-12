@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchlist & News (Auto-updating)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --positive-color: #28a745;
+            --negative-color: #dc3545;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --text-primary: #2c3e50;
+            --text-secondary: #555;
+            --border-color: #e0e0e0;
+            --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-strong: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+            background: var(--bg-gradient); 
+            min-height: 100vh; 
+            color: #333; 
+        }
+        .container { 
+            max-width: 1800px; 
+            margin: 0 auto; 
+            padding: 15px; /* Adjusted for more compact view */
+        }
+        
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #loading-text {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .main-content {
+            background: white; border-radius: 12px;
+            padding: 25px; box-shadow: var(--shadow-light);
+        }
+
+        .tabs { 
+            display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 20px;
+            position: sticky; top: 0; background: white; z-index: 100;
+        }
+        .tab-link { 
+            padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; 
+            margin-bottom: -2px; font-size: 1.1rem; font-weight: 500; transition: all 0.3s ease;
+        }
+        .tab-link.active { 
+            color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600;
+        }
+        
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Market Sub-tabs Enhancement */
+        .market-sub-tabs { 
+            display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap;
+        }
+        .market-sub-tab-link {
+            padding: 10px 18px; cursor: pointer; font-size: 1rem; font-weight: 500;
+            color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px;
+            transition: all 0.3s ease;
+        }
+        .market-sub-tab-link:hover { color: var(--primary-color); }
+        .market-sub-tab-link.active {
+            color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600;
+        }
+        .market-sub-tab-content { display: none; animation: fadeIn 0.4s; }
+        .market-sub-tab-content.active { display: block; }
+        
+        .view-toggle-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .view-toggle-tab {
+            padding: 6px 12px; font-size: 0.9rem; font-weight: 500;
+            border-radius: 6px; cursor: pointer; background-color: #f0f0f0;
+        }
+        .view-toggle-tab.active { background-color: #d1e3f8; color: var(--primary-color); }
+        .view-content { display: none; }
+        .view-content.active { display: block; }
+
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .table-header .as-of-date { font-size: 0.9rem; color: var(--text-secondary); }
+
+        .table-container { 
+            overflow-y: auto; overflow-x: auto; max-height: 600px;
+            border: 1px solid var(--border-color); border-radius: 8px;
+        }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th, td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 0.95rem;}
+        th:first-child, td:first-child { text-align: left; }
+        th { 
+            background-color: #f8f9fa; font-weight: 600; cursor: pointer; user-select: none;
+            position: sticky; top: 0; z-index: 10;
+        }
+        th:hover .sort-icon { opacity: 1; }
+        .sort-icon { margin-left: 5px; opacity: 0.8; transition: opacity 0.3s; display: inline-block; width: 1em; }
+        .clickable-row { cursor: pointer; }
+        tr:hover { background-color: #f5f5f5; }
+        .text-positive { color: var(--positive-color) !important; font-weight: 500; }
+        .text-negative { color: var(--negative-color) !important; font-weight: 500; }
+        
+        .chart-controls { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; }
+        .chart-controls label { font-weight: 500; }
+        .chart-controls input {
+            flex-grow: 1; border: 1px solid #ccc; padding: 8px; 
+            border-radius: 6px; min-width: 300px; font-size: 1rem;
+        }
+        .chart-controls button {
+             background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;
+        }
+        
+        .modal {
+            position: fixed; z-index: 1001; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            opacity: 0; visibility: hidden; 
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.show { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: #fefefe; margin: 5% auto; padding: 25px;
+            border-radius: 12px; width: 90%; max-width: 1200px; box-shadow: var(--shadow-strong);
+            position: relative;
+            transform: translateY(-50px); transition: transform 0.3s ease-out;
+        }
+        .modal.show .modal-content { transform: translateY(0); }
+        .close {
+            color: #aaa; position: absolute; top: 10px; right: 20px;
+            font-size: 28px; font-weight: bold; cursor: pointer;
+        }
+        #modalTickerName { text-align: center; margin-bottom: 10px; color: var(--text-primary); }
+        .chart-time-controls { display: flex; gap: 8px; margin-bottom: 15px; justify-content: center; }
+        .chart-time-controls button {
+            padding: 6px 12px; font-size: 0.9rem; font-weight: 500;
+            border-radius: 6px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc;
+        }
+        .chart-time-controls button.active { background-color: #d1e3f8; color: var(--primary-color); border-color: var(--primary-color);}
+        .modal-chart-container { position: relative; height: 500px; width: 100%; }
+
+        /* Summary Tab Styles */
+        #summary { padding: 10px 0; }
+        .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .summary-header h2 { font-size: 1.5rem; color: var(--text-primary); }
+        .print-btn { 
+            background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; 
+            border-radius: 8px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s;
+        }
+        .print-btn:hover { background-color: #3a7ac8; }
+        #summary-content-to-print {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); /* Adjusted for narrower cards */
+            gap: 20px; /* Adjusted for more compact view */
+        }
+        .summary-section { 
+            display: flex; flex-direction: column; gap: 20px;
+        }
+        .summary-card { 
+            border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+        }
+        .summary-card h3 { 
+            margin-bottom: 10px; font-size: 1.2rem; color: var(--text-primary); 
+            border-bottom: 1px solid #eee; padding-bottom: 8px;
+        }
+        .summary-card table { font-size: 0.9rem; table-layout: fixed; } /* Added table-layout fixed */
+        .summary-card th, .summary-card td { padding: 6px 8px; } /* Adjusted padding */
+        
+        /* ### FIX 2: Make Summary page tables narrower ### */
+        .summary-card td:first-child, .summary-card th:first-child {
+            width: 40%; /* Allocate specific width to the name column */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #summary-news-content {
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+         .news-meta {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        /* News Tab Styles */
+        .news-layout-container {
+            display: flex;
+            gap: 20px;
+            height: 70vh; /* Or a suitable height */
+        }
+        .news-list-pane {
+            flex: 1;
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+            padding-right: 15px;
+        }
+        .news-content-pane {
+            flex: 2;
+            overflow-y: auto;
+            padding-left: 15px;
+        }
+        .news-list-item {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-radius: 6px;
+        }
+        .news-list-item:hover, .news-list-item.active {
+            background-color: #e9f2fe;
+        }
+        .news-list-item h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .news-list-item p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .news-content-pane h3 {
+            font-size: 1.4rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .news-content-pane .news-meta {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        .news-content-pane .news-body {
+            font-size: 1rem;
+            line-height: 1.7;
+            white-space: pre-wrap; /* To respect newlines from the JSON content */
+        }
+
+        /* Print Styles */
+        @media print {
+            @page {
+                size: landscape;
+                margin: 20mm;
+            }
+            body, .container, .main-content {
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                background: white !important;
+            }
+            body * { visibility: hidden; }
+            #summary-content-to-print, #summary-content-to-print * { visibility: visible; }
+            .tabs, .summary-header { display: none; }
+            #summary-content-to-print {
+                position: absolute; left: 0; top: 0; width: 100%;
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 15px !important;
+            }
+            .summary-card {
+                page-break-inside: avoid;
+                box-shadow: none !important; 
+                border: 1px solid #ccc !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p id="loading-text">正在從 GitHub 載入最新資料...</p>
+    </div>
+
+    <div class="container">
+        <!-- ### FIX 1: Removed the main header ### -->
+        <div class="main-content">
+            <div class="tabs">
+                <div class="tab-link active" onclick="openTab(event, 'summary')">Summary</div>
+                <div class="tab-link" onclick="openTab(event, 'market')">Market</div>
+                <div class="tab-link" onclick="openTab(event, 'news')">News</div>
+            </div>
+            
+            <div id="summary" class="tab-content active">
+                <div class="summary-header">
+                    <h2 id="summary-title">Market Summary</h2>
+                    <button class="print-btn" onclick="window.print()">列印摘要 (PDF)</button>
+                </div>
+                <div id="summary-content-to-print">
+                    <div class="summary-section">
+                        <div id="summary-index" class="summary-card"></div>
+                        <div id="summary-rate" class="summary-card"></div>
+                        <div id="summary-commodity" class="summary-card"></div>
+                    </div>
+                    <div class="summary-section">
+                        <div id="summary-fx" class="summary-card"></div>
+                        <div id="summary-stocks" class="summary-card"></div>
+                    </div>
+                     <div class="summary-section">
+                        <div id="summary-news-card" class="summary-card">
+                            <h3>Latest News Summary</h3>
+                            <div id="summary-news-content">
+                                <p>正在載入新聞...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="market" class="tab-content">
+                <div id="market-sub-tabs-container" class="market-sub-tabs"></div>
+                <div id="market-sub-content-container"></div>
+            </div>
+
+            <div id="news" class="tab-content">
+                <div id="news-sub-tabs-container" class="market-sub-tabs"></div>
+                <div id="news-sub-content-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tickerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTickerName"></h2>
+            <div class="chart-time-controls" id="modal-time-controls">
+                <button data-period="3m">3-Month</button>
+                <button data-period="6m">6-Month</button>
+                <button data-period="ytd">YTD</button>
+                <button class="active" data-period="last_calendar">Since Last Year</button>
+                <button data-period="5y">5-Year</button>
+            </div>
+            <div class="modal-chart-container">
+                <canvas id="individualTickerChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global data variables
+        let allData = [];
+        let dataByMarket = {};
+        let activeCharts = {};
+        let allPerformanceData = new Map();
+        let latestDataDate = null;
+        let marketSortState = {};
+        let allNewsData = [];
+        let newsByCategory = {};
+
+        function consoleLog(message) {
+            console.log(message); // Use standard console log for debugging
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('tickerModal');
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    closeModal();
+                }
+            }
+            window.addEventListener('resize', adjustSummaryNewsHeight);
+            loadAllDataFromGitHub();
+        });
+        
+        async function fetchJsonWithRetry(url, retries = 3, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const cacheBustedUrl = `${url}?v=${new Date().getTime()}`;
+                    const response = await fetch(cacheBustedUrl);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status} for URL: ${url}`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    consoleLog(`Attempt ${i + 1} failed for ${url}: ${error.message}`);
+                    if (i < retries - 1) {
+                        await new Promise(res => setTimeout(res, delay));
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+        }
+
+        async function loadAllDataFromGitHub() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
+            consoleLog("開始載入資料...");
+
+            const marketDataUrls = {
+                'Equity Index': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/Equity_Index.json',
+                'Commodity': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/Commodity.json',
+                'FX': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/FX.json',
+                'TW Stocks': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/TW_Stocks.json',
+                'US Stocks': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/US_Stocks.json',
+                'US Rates': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/US_Rates.json'
+            };
+            const newsDataUrl = 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/reuters_archive.json';
+
+            try {
+                loadingText.textContent = '正在載入市場資料...';
+                
+                const marketPromises = Object.entries(marketDataUrls).map(async ([marketName, url]) => {
+                    try {
+                        const data = await fetchJsonWithRetry(url);
+                        return { marketName, data };
+                    } catch (error) {
+                        consoleLog(`錯誤: 無法載入市場資料 ${marketName} 來自 ${url}`);
+                        return { marketName, data: null };
+                    }
+                });
+                
+                const newsPromise = fetchJsonWithRetry(newsDataUrl).catch(error => {
+                    consoleLog(`錯誤: 無法載入新聞資料來自 ${newsDataUrl}`);
+                    return null;
+                });
+
+                const [marketResults, newsResult] = await Promise.all([
+                    Promise.all(marketPromises),
+                    newsPromise
+                ]);
+
+                loadingText.textContent = '正在處理市場資料...';
+                allData = [];
+                marketResults.forEach(result => {
+                    if (!result || !result.data) return;
+                    const marketName = result.marketName;
+                    const marketContent = result.data;
+                    if (typeof marketContent !== 'object' || Array.isArray(marketContent)) return;
+
+                    Object.keys(marketContent).forEach((ticker) => {
+                        const details = marketContent[ticker];
+                        if (details && details.hasOwnProperty('data')) {
+                            const priceData = details.data;
+                            if(typeof priceData === 'object' && priceData !== null) {
+                                Object.entries(priceData).forEach(([dateStr, price]) => {
+                                    if (price !== null) {
+                                        const date = new Date(dateStr);
+                                        if (!isNaN(date.getTime())) {
+                                            allData.push({
+                                                ticker: ticker,
+                                                name: details.name,
+                                                market: marketName,
+                                                date: date,
+                                                price: parseFloat(price)
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                });
+
+                allData.sort((a, b) => a.date - b.date);
+                if (allData.length > 0) {
+                    latestDataDate = new Date(Math.max(...allData.map(d => d.date)));
+                } else {
+                    loadingText.textContent = '未找到任何市場資料。';
+                    return;
+                }
+
+                processPriceData();
+
+                loadingText.textContent = '正在處理新聞資料...';
+                if (newsResult && Array.isArray(newsResult.reports)) {
+                    allNewsData = newsResult.reports.map(report => ({
+                        ...report,
+                        datetime: (report.Date && report.Time) ? new Date(`${report.Date}T${report.Time}`) : new Date(0)
+                    }))
+                    .filter(news => news.datetime.getTime() > 0)
+                    .sort((a, b) => b.datetime - a.datetime);
+                    
+                    consoleLog(`新聞資料處理完成。總共 ${allNewsData.length} 則新聞。`);
+                    processNewsData();
+                } else {
+                     consoleLog("警告: 新聞資料是空的或格式不符。");
+                     processNewsData();
+                }
+
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => { loadingOverlay.style.display = 'none'; }, 300);
+
+            } catch (error) {
+                loadingText.textContent = '資料載入失敗，請檢查網路連線或稍後再試。';
+                consoleLog(`致命錯誤: ${error.message}`);
+            }
+        }
+
+        // ===================================
+        // Price Data Processing Functions
+        // ===================================
+
+        function processPriceData() {
+            allPerformanceData.clear();
+            dataByMarket = allData.reduce((acc, row) => {
+                const market = row.market;
+                if (!acc[market]) acc[market] = [];
+                acc[market].push(row);
+                return acc;
+            }, {});
+
+            const allTickers = [...new Set(allData.map(d => d.ticker))];
+            allTickers.forEach(ticker => {
+                const market = allData.find(d => d.ticker === ticker)?.market || 'Unknown';
+                const perf = calculatePerformanceForTicker(ticker, market);
+                if (perf) allPerformanceData.set(ticker, perf);
+            });
+            
+            setupMarketTabs();
+            renderSummaryTab();
+        }
+
+        // ===================================
+        // News Data Processing Functions
+        // ===================================
+
+        function processNewsData() {
+            renderNewsSummary();
+            setupNewsTabs();
+        }
+
+        function renderNewsSummary() {
+            const summaryContainer = document.getElementById('summary-news-card');
+            if (!summaryContainer) return;
+            
+            const morningBriefing = allNewsData.find(news => news && news.Title && news.Title.includes('路透早報'));
+            
+            let contentHTML = '';
+            if (morningBriefing) {
+                 contentHTML = `
+                    <h3>${morningBriefing.Title || 'Latest News Summary'}</h3>
+                    <div class="news-meta">
+                        <span>${morningBriefing.Date || 'N/A'} ${morningBriefing.Time || 'N/A'}</span> | <span>Source: ${morningBriefing.Source || 'N/A'}</span>
+                    </div>
+                    <div id="summary-news-content">${morningBriefing.Content || 'No content available.'}</div>
+                `;
+            } else {
+                 contentHTML = `
+                    <h3>Latest News Summary</h3>
+                    <div id="summary-news-content">
+                        <p>Could not find the latest Reuters Morning Briefing.</p>
+                    </div>
+                `;
+            }
+            summaryContainer.innerHTML = contentHTML;
+            adjustSummaryNewsHeight();
+        }
+
+        function setupNewsTabs() {
+            const tabsContainer = document.getElementById('news-sub-tabs-container');
+            const contentContainer = document.getElementById('news-sub-content-container');
+            tabsContainer.innerHTML = '';
+            contentContainer.innerHTML = '';
+
+            const categories = {
+                '路透早報': '路透早報', '全球匯市': '全球匯市', '台灣匯市': '台灣匯市',
+                '美國債市': '美國債市', '台灣債市': '台灣債市'
+            };
+            const categoryKeys = Object.keys(categories);
+
+            newsByCategory = { ...Object.fromEntries(categoryKeys.map(k => [k, []])), '其他': [] };
+
+            allNewsData.forEach(news => {
+                if (!news || typeof news.Title !== 'string') return; 
+
+                let foundCategory = false;
+                for (const key of categoryKeys) {
+                    if (news.Title.includes(categories[key])) {
+                        newsByCategory[key].push(news);
+                        foundCategory = true;
+                        break;
+                    }
+                }
+                if (!foundCategory) {
+                    newsByCategory['其他'].push(news);
+                }
+            });
+
+            const allTabNames = [...categoryKeys, '其他'].filter(category => newsByCategory[category].length > 0);
+            let isFirstTab = true;
+
+            allTabNames.forEach(category => {
+                const tabLink = document.createElement('div');
+                tabLink.className = 'market-sub-tab-link';
+                tabLink.textContent = category;
+                tabLink.onclick = () => openNewsSubTab(category);
+                tabsContainer.appendChild(tabLink);
+
+                const tabContent = document.createElement('div');
+                tabContent.id = `news-content-${category.replace(/\s+/g, '-')}`;
+                tabContent.className = 'market-sub-tab-content';
+                contentContainer.appendChild(tabContent);
+
+                if (isFirstTab) {
+                    tabLink.classList.add('active');
+                    tabContent.classList.add('active');
+                    renderNewsCategory(category);
+                    isFirstTab = false;
+                }
+            });
+            
+            if(isFirstTab) {
+                contentContainer.innerHTML = "<p style='padding: 20px;'>沒有可顯示的新聞。</p>";
+            }
+        }
+        
+        function openNewsSubTab(categoryName) {
+            document.querySelectorAll('#news-sub-tabs-container .market-sub-tab-link').forEach(link => {
+                link.classList.toggle('active', link.textContent === categoryName);
+            });
+            document.querySelectorAll('#news-sub-content-container .market-sub-tab-content').forEach(content => {
+                const isActive = content.id === `news-content-${categoryName.replace(/\s+/g, '-')}`;
+                content.classList.toggle('active', isActive);
+                if (isActive && !content.hasChildNodes()) {
+                     renderNewsCategory(categoryName);
+                }
+            });
+        }
+        
+        function renderNewsCategory(category) {
+            const categoryId = category.replace(/\s+/g, '-');
+            const container = document.getElementById(`news-content-${categoryId}`);
+            const newsItems = newsByCategory[category];
+            if (!container || !newsItems || newsItems.length === 0) {
+                if(container) container.innerHTML = "<p>此分類沒有新聞。</p>";
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="news-layout-container">
+                    <div class="news-list-pane" id="news-list-${categoryId}"></div>
+                    <div class="news-content-pane" id="news-detail-${categoryId}"></div>
+                </div>
+            `;
+            
+            const listPane = document.getElementById(`news-list-${categoryId}`);
+            let listHTML = '';
+            newsItems.forEach((news, index) => {
+                const newsId = news.URL || news.StoryId || `${category}-${index}`;
+                const sanitizedId = newsId.replace(/[:.\/]/g, '-').replace(/\s/g, '_');
+                listHTML += `
+                    <div class="news-list-item" id="list-item-${sanitizedId}" onclick="showNewsContent('${newsId.replace(/'/g, "\\'")}', '${category}')">
+                        <h4>${news.Title}</h4>
+                        <p>${news.Date} ${news.Time}</p>
+                    </div>
+                `;
+            });
+            listPane.innerHTML = listHTML;
+
+            if (newsItems.length > 0) {
+                const firstNewsId = newsItems[0].URL || newsItems[0].StoryId || `${category}-0`;
+                showNewsContent(firstNewsId, category);
+            }
+        }
+
+        function showNewsContent(newsId, category) {
+            const news = allNewsData.find(n => (n.URL === newsId || n.StoryId === newsId));
+            if (!news) return;
+
+            const categoryId = category.replace(/\s+/g, '-');
+            const contentPane = document.getElementById(`news-detail-${categoryId}`);
+            if (!contentPane) return;
+
+            contentPane.innerHTML = `
+                <h3>${news.Title}</h3>
+                <div class="news-meta">
+                    <span>${news.Date} ${news.Time}</span> | <span>Source: ${news.Source}</span>
+                </div>
+                <div class="news-body">${news.Content}</div>
+            `;
+            
+            const sanitizedId = newsId.replace(/[:.\/]/g, '-').replace(/\s/g, '_');
+            document.querySelectorAll(`#news-list-${categoryId} .news-list-item`).forEach(item => item.classList.remove('active'));
+            const activeListItem = document.getElementById(`list-item-${sanitizedId}`);
+            if(activeListItem) activeListItem.classList.add('active');
+        }
+
+        // ===================================
+        // Market Tab Functions
+        // ===================================
+        
+        function setupMarketTabs() {
+            const tabsContainer = document.getElementById('market-sub-tabs-container');
+            const contentContainer = document.getElementById('market-sub-content-container');
+            tabsContainer.innerHTML = '';
+            contentContainer.innerHTML = '';
+
+            const markets = ['Equity Index', 'US Stocks', 'TW Stocks', 'FX', 'US Rates', 'Commodity'];
+            let isFirstMarket = true;
+            markets.forEach((market) => {
+                if (dataByMarket[market]) {
+                    const tabLink = document.createElement('div');
+                    tabLink.className = 'market-sub-tab-link';
+                    tabLink.textContent = market;
+                    tabLink.onclick = () => openMarketSubTab(market);
+                    tabsContainer.appendChild(tabLink);
+
+                    const tabContent = document.createElement('div');
+                    tabContent.id = `market-${market.replace(/\s+/g, '-')}`;
+                    tabContent.className = 'market-sub-tab-content';
+                    contentContainer.appendChild(tabContent);
+
+                    if (isFirstMarket) {
+                        tabLink.classList.add('active');
+                        tabContent.classList.add('active');
+                        renderMarketData(market);
+                        isFirstMarket = false;
+                    }
+                }
+            });
+        }
+        
+        function openMarketSubTab(marketName) {
+            document.querySelectorAll('#market-sub-tabs-container .market-sub-tab-link').forEach(link => {
+                link.classList.toggle('active', link.textContent === marketName);
+            });
+            document.querySelectorAll('#market-sub-content-container .market-sub-tab-content').forEach(content => {
+                const isActive = content.id === `market-${marketName.replace(/\s+/g, '-')}`;
+                content.classList.toggle('active', isActive);
+                if (isActive && !content.hasChildNodes()) {
+                     renderMarketData(marketName);
+                }
+            });
+        }
+
+        function switchMarketView(market, view) {
+            const marketId = market.replace(/\s+/g, '-');
+            document.querySelectorAll(`#market-${marketId} .view-toggle-tab`).forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.view === view);
+            });
+             document.querySelectorAll(`#market-${marketId} .view-content`).forEach(content => {
+                content.classList.toggle('active', content.id === `${view}-${marketId}`);
+            });
+        }
+
+        function renderMarketData(market) {
+            const container = document.getElementById(`market-${market.replace(/\s+/g, '-')}`);
+            const marketId = market.replace(/\s+/g, '-');
+            let performanceData = Array.from(allPerformanceData.values()).filter(d => d.market === market);
+            
+            container.innerHTML = `
+                <div class="view-toggle-tabs">
+                    <div class="view-toggle-tab active" data-view="table" onclick="switchMarketView('${market}', 'table')">Table</div>
+                    <div class="view-toggle-tab" data-view="chart" onclick="switchMarketView('${market}', 'chart')">Comparison Chart</div>
+                </div>
+                <div id="table-${marketId}" class="view-content active"></div>
+                <div id="chart-${marketId}" class="view-content"></div>
+            `;
+            
+            const customOrders = {
+                'FX': ['.DXY', 'EUR=', 'JPY=', 'TWD=', 'KRW=', 'CNY='],
+                'US Rates': ['US3MT=RR', 'US2YT=RR', 'US5YT=RR', 'US10YT=RR', 'US30YT=RR'],
+                'Equity Index': ['.SPX', '.IXIC', '.SOX', '.DJI', '.TWII', '.N225', 'KOSPI.KS', '000001.SS', '000300.SS', '.HSI', '.GDAXI', '.FCHI'],
+                'TW Stocks': ['2330.TW', '2317.TW', '2454.TW', '2308.TW', '3374.TW', '3443.TW', '5347.TW', '6789.TW'],
+                'US Stocks': ['NVDA.O', 'AAPL.O', 'MSFT.O', 'GOOGL.O', 'AMZN.O', 'META.O', 'TSLA.O', 'AVGO.O', 'TSM.N', 'AMD.O', 'INTC.O', 'QCOM.O', 'NFLX.O', 'MRVL.O', 'ASML.O'],
+                'Commodity': ['CLc1', 'GCc1']
+            };
+
+            const sortState = marketSortState[market];
+            if (sortState) {
+                sortTable(market, sortState.key, sortState.dir, performanceData, false);
+            } else if (customOrders[market]) {
+                 performanceData.sort((a, b) => {
+                    const order = customOrders[market];
+                    const findIndex = (item) => market === 'US Rates' ? order.findIndex(ticker => item.ticker === ticker) : order.indexOf(item.ticker);
+                    const indexA = findIndex(a);
+                    const indexB = findIndex(b);
+                    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                    if (indexA !== -1) return -1; if (indexB !== -1) return 1;
+                    return a.name.localeCompare(b.name);
+                });
+            } else {
+                performanceData.sort((a, b) => (parseFloat(b.ytd) || -Infinity) - (parseFloat(a.ytd) || -Infinity));
+            }
+            
+            const asOfDate = latestDataDate ? `As of: ${latestDataDate.toLocaleDateString()}` : '';
+            const tableContainer = document.getElementById(`table-${marketId}`);
+            tableContainer.innerHTML = `
+                <div class="table-header"><div class="as-of-date">${asOfDate}</div></div>
+                ${createPerformanceTable(performanceData, market)}
+            `;
+            addTableEventListeners(market, performanceData);
+
+            const chartContainer = document.getElementById(`chart-${marketId}`);
+            const defaultTickers = performanceData.slice(0, 10).map(p => p.ticker).join(',');
+            chartContainer.innerHTML = `
+                <div class="chart-controls">
+                    <label for="ticker-input-${marketId}">Tickers:</label>
+                    <input type="text" id="ticker-input-${marketId}" value="${defaultTickers}" placeholder="e.g., AAPL.O,GOOGL.O,MSFT.O">
+                    <button onclick="updateComparisonChartWrapper('${market}')">Update Chart</button>
+                </div>
+                <div class="chart-time-controls" id="time-controls-${marketId}">
+                    <button class="active" data-period="since_last_year" onclick="updateComparisonChartWrapper('${market}', 'since_last_year', this)">Since Last Year</button>
+                    <button data-period="ytd" onclick="updateComparisonChartWrapper('${market}', 'ytd', this)">YTD</button>
+                    <button data-period="3m" onclick="updateComparisonChartWrapper('${market}', '3m', this)">3-Month</button>
+                    <button data-period="1m" onclick="updateComparisonChartWrapper('${market}', '1m', this)">1-Month</button>
+                </div>
+                <div class="modal-chart-container" style="height: 600px;">
+                    <canvas id="canvas-chart-${marketId}"></canvas>
+                </div>
+            `;
+            updateComparisonChartWrapper(market, 'since_last_year');
+        }
+
+        function addTableEventListeners(market, data) {
+            const marketId = market.replace(/\s+/g, '-');
+            const tableId = `perf-table-${marketId}`;
+            
+            document.querySelectorAll(`#${tableId} tbody tr`).forEach(row => {
+                if(row.dataset.ticker) row.addEventListener('click', () => showIndividualTickerChart(row.dataset.ticker));
+            });
+
+            document.querySelectorAll(`#${tableId} th[data-sort-key]`).forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortKey = header.dataset.sortKey;
+                    const currentSort = (marketSortState[market] && marketSortState[market].key === sortKey) ? marketSortState[market].dir : 'desc';
+                    const newSort = currentSort === 'desc' ? 'asc' : 'desc';
+                    marketSortState[market] = { key: sortKey, dir: newSort };
+                    sortTable(market, sortKey, newSort, data);
+                });
+            });
+        }
+
+        function sortTable(market, sortKey, direction, data, rerender = true) {
+            const parseValue = (val) => {
+                if (typeof val === 'string') {
+                    const num = parseFloat(val.replace(/[ bps%]/g, ''));
+                    if (!isNaN(num)) return num;
+                    return val === 'N/A' ? -Infinity : val;
+                }
+                return isNaN(val) ? -Infinity : val;
+            };
+
+            data.sort((a, b) => {
+                let valA = parseValue(a[sortKey]);
+                let valB = parseValue(b[sortKey]);
+                
+                if(typeof valA === 'string' && typeof valB === 'string') {
+                    return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+                
+                if (valA < valB) return direction === 'asc' ? -1 : 1;
+                if (valA > valB) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            if (rerender) {
+                const marketId = market.replace(/\s+/g, '-');
+                const tableContainer = document.querySelector(`#table-${marketId} .table-container`);
+                if (tableContainer) {
+                    tableContainer.innerHTML = createPerformanceTable(data, market, false);
+                    addTableEventListeners(market, data); // Re-attach listeners
+                }
+            }
+
+            document.querySelectorAll(`#perf-table-${market.replace(/\s+/g, '-')} th .sort-icon`).forEach(icon => icon.textContent = '↕');
+            const newHeader = document.querySelector(`#perf-table-${market.replace(/\s+/g, '-')} th[data-sort-key="${sortKey}"]`);
+            if (newHeader) {
+                newHeader.querySelector('.sort-icon').textContent = direction === 'asc' ? '▲' : '▼';
+            }
+        }
+
+        function calculatePerformanceForTicker(ticker, market) {
+           const tickerData = allData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
+           if(tickerData.length === 0) return null;
+
+           const getStartDate = (period, refDate) => {
+               const d = new Date(refDate);
+               switch(period) {
+                   case 'wtd': d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)); d.setHours(0,0,0,0); return d;
+                   case 'mtd': return new Date(d.getFullYear(), d.getMonth(), 1);
+                   case 'ytd': return new Date(d.getFullYear(), 0, 1);
+                   case 'lastYear': return { start: new Date(d.getFullYear() - 1, 0, 1), end: new Date(d.getFullYear() - 1, 11, 31) };
+                   default: return null;
+               }
+           }
+
+           const name = tickerData[0].name;
+           const lastDataPoint = tickerData[tickerData.length - 1];
+           const prevDataPoint = tickerData.length > 1 ? tickerData[tickerData.length - 2] : null;
+           const lastPrice = lastDataPoint.price;
+
+           const findPriceOnDate = (date) => {
+               if (!date) return null;
+               let closest = tickerData.find(d => d.date.getTime() === date.getTime());
+               if(closest) return closest.price;
+               closest = null;
+               for (let i = tickerData.length - 1; i >= 0; i--) {
+                   if (tickerData[i].date <= date) { closest = tickerData[i]; break; }
+               }
+               return closest ? closest.price : null;
+           };
+
+           const formatValue = (val, isRate) => {
+               if (val === null || isNaN(val)) return 'N/A';
+               if (isRate) {
+                   return val.toFixed(0) + ' bps';
+               }
+               return val.toFixed(2) + '%';
+           };
+
+           if (market === 'US Rates') {
+               const calcBpsChange = (start, end) => (start === null || end === null) ? null : (end - start) * 100;
+               const lastYearDates = getStartDate('lastYear', latestDataDate);
+               return {
+                   ticker, name, market, lastPrice: lastPrice.toFixed(4),
+                   oneDay: formatValue(calcBpsChange(prevDataPoint?.price, lastPrice), true),
+                   wtd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('wtd', latestDataDate)), lastPrice), true),
+                   mtd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('mtd', latestDataDate)), lastPrice), true),
+                   ytd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('ytd', latestDataDate)), lastPrice), true),
+                   lastYear: formatValue(calcBpsChange(findPriceOnDate(lastYearDates.start), findPriceOnDate(lastYearDates.end)), true),
+                   lastDate: lastDataPoint.date.toLocaleDateString() // ### FIX 3: Add last date for tooltip ###
+               };
+           }
+           
+           const invertedFxTickers = ['JPY=', 'TWD=', 'KRW=', 'CNY='];
+           const calcReturn = (startPrice, endPrice) => {
+               if (startPrice === null || endPrice === null || startPrice === 0) return null;
+               let result = ((endPrice / startPrice) - 1) * 100;
+               return (market === 'FX' && invertedFxTickers.some(inv => ticker.includes(inv))) ? result * -1 : result;
+           };
+
+           const lastYearDates = getStartDate('lastYear', latestDataDate);
+           return {
+               ticker, name, market, lastPrice: lastPrice.toFixed(4),
+               oneDay: formatValue(calcReturn(prevDataPoint?.price, lastPrice)),
+               wtd: formatValue(calcReturn(findPriceOnDate(getStartDate('wtd', latestDataDate)), lastPrice)),
+               mtd: formatValue(calcReturn(findPriceOnDate(getStartDate('mtd', latestDataDate)), lastPrice)),
+               ytd: formatValue(calcReturn(findPriceOnDate(getStartDate('ytd', latestDataDate)), lastPrice)),
+               lastYear: formatValue(calcReturn(findPriceOnDate(lastYearDates.start), findPriceOnDate(lastYearDates.end))),
+               lastDate: lastDataPoint.date.toLocaleDateString() // ### FIX 3: Add last date for tooltip ###
+           };
+       }
+
+
+        function createPerformanceTable(data, market, includeContainer = true) {
+            if (data.length === 0) return '<p>No performance data available.</p>';
+            const tableId = `perf-table-${market.replace(/\s+/g, '-')}`;
+            const isRate = market === 'US Rates';
+            const suffix = isRate ? ' (bps)' : ' (%)';
+
+            let tableHTML = `<thead><tr>
+                <th data-sort-key="name">Name <span class="sort-icon">↕</span></th>
+                <th data-sort-key="ticker">Ticker <span class="sort-icon">↕</span></th>
+                <th data-sort-key="lastPrice">Last Price <span class="sort-icon">↕</span></th>
+                <th data-sort-key="oneDay">1-day${suffix} <span class="sort-icon">↕</span></th>
+                <th data-sort-key="wtd">WTD${suffix} <span class="sort-icon">↕</span></th>
+                <th data-sort-key="mtd">MTD${suffix} <span class="sort-icon">↕</span></th>
+                <th data-sort-key="ytd">YTD${suffix} <span class="sort-icon">↕</span></th>
+                <th data-sort-key="lastYear">Last Year${suffix} <span class="sort-icon">↕</span></th>
+            </tr></thead><tbody>`;
+
+            data.forEach(item => {
+                const colorClass = (val) => {
+                    if (val === 'N/A') return '';
+                    const num = parseFloat(val);
+                    return num > 0 ? 'text-positive' : num < 0 ? 'text-negative' : '';
+                };
+                // ### FIX 3: Add title attribute for tooltip ###
+                tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row" title="Last Update: ${item.lastDate}">
+                    <td>${item.name}</td><td>${item.ticker}</td><td>${item.lastPrice}</td>
+                    <td class="${colorClass(item.oneDay)}">${item.oneDay}</td>
+                    <td class="${colorClass(item.wtd)}">${item.wtd}</td>
+                    <td class="${colorClass(item.mtd)}">${item.mtd}</td>
+                    <td class="${colorClass(item.ytd)}">${item.ytd}</td>
+                    <td class="${colorClass(item.lastYear)}">${item.lastYear}</td>
+                </tr>`;
+            });
+            tableHTML += '</tbody>';
+            
+            const table = `<table id="${tableId}">${tableHTML}</table>`;
+            return includeContainer ? `<div class="table-container">${table}</div>` : table;
+        }
+
+        function renderSummaryTab() {
+            const asOfDate = latestDataDate ? ` (${latestDataDate.toLocaleDateString()})` : '';
+            document.getElementById('summary-title').textContent = `Market Summary${asOfDate}`;
+            
+            const summaryConfig = {
+                'index': { title: 'Index', tickers: ['.SPX', '.IXIC', '.SOX', '.TWII'], container: 'summary-index' },
+                'rate': { title: 'US Rates', tickers: ['US3MT=RR', 'US2YT=RR', 'US10YT=RR', 'US30YT=RR'], container: 'summary-rate' },
+                'fx': { title: 'FX', tickers: ['DXY', 'EUR=', 'JPY=', 'TWD='], container: 'summary-fx' },
+                'stocks': { title: 'Stocks', tickers: ['NVDA.O', 'AAPL.O', 'MSFT.O', 'GOOGL.O', 'META.O', 'AMZN.O', 'TSLA.O', 'AVGO.O', 'TSM.N', 'AMD.O', 'INTC.O'], container: 'summary-stocks' },
+                'commodity': { title: 'Commodity', tickers: ['CLc1', 'GCc1'], container: 'summary-commodity'}
+            };
+
+            Object.values(summaryConfig).forEach(config => {
+                const container = document.getElementById(config.container);
+                if (!container) return;
+                
+                const data = config.tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
+                
+                let tableHTML = `<h3>${config.title}</h3><table><thead>
+                    <tr><th style="text-align: left;">Name</th><th>Last</th><th>1-Day</th><th>YTD</th></tr>
+                </thead><tbody>`;
+                
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const colorClass = val => (val === 'N/A' || parseFloat(val) === 0) ? '' : parseFloat(val) > 0 ? 'text-positive' : 'text-negative';
+                        // ### FIX 3: Add title attribute for tooltip ###
+                        tableHTML += `<tr title="Last Update: ${item.lastDate}">
+                            <td style="text-align: left;">${item.name}</td>
+                            <td>${item.lastPrice}</td>
+                            <td class="${colorClass(item.oneDay)}">${item.oneDay}</td>
+                            <td class="${colorClass(item.ytd)}">${item.ytd}</td>
+                        </tr>`;
+                    });
+                } else {
+                    tableHTML += `<tr><td colspan="4" style="text-align: center;">No data available.</td></tr>`;
+                }
+                tableHTML += '</tbody></table>';
+                container.innerHTML = tableHTML;
+            });
+            adjustSummaryNewsHeight();
+        }
+
+        function adjustSummaryNewsHeight() {
+            setTimeout(() => {
+                const fxCard = document.getElementById('summary-fx');
+                const stocksCard = document.getElementById('summary-stocks');
+                const newsCard = document.getElementById('summary-news-card');
+
+                if (fxCard && stocksCard && newsCard && window.innerWidth > 1250) { 
+                    const fxHeight = fxCard.offsetHeight;
+                    const stocksHeight = stocksCard.offsetHeight;
+                    const sectionGap = 25;
+                    const totalHeight = fxHeight + stocksHeight + sectionGap;
+                    newsCard.style.height = `${totalHeight}px`;
+                } else if (newsCard) {
+                    newsCard.style.height = 'auto';
+                }
+            }, 100);
+        }
+        
+        function updateComparisonChartWrapper(market, period, element) {
+            const marketId = market.replace(/\s+/g, '-');
+            const input = document.getElementById(`ticker-input-${marketId}`);
+            const tickersToShow = input.value.split(',').map(t => t.trim()).filter(Boolean);
+            let selectedPeriod = period || document.querySelector(`#time-controls-${marketId} button.active`).dataset.period;
+            if (element) {
+                document.querySelectorAll(`#time-controls-${marketId} button`).forEach(b => b.classList.remove('active'));
+                element.classList.add('active');
+            }
+            createComparisonChart(market, tickersToShow, selectedPeriod);
+        }
+
+        function createComparisonChart(market, tickers, period = 'since_last_year') {
+            const marketId = market.replace(/\s+/g, '-');
+            const canvasId = `canvas-chart-${marketId}`;
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            
+            const tickerToNameMap = allData.reduce((map, item) => (map[item.ticker] = item.name, map), {});
+            let startDate;
+            const tempDate = new Date(latestDataDate);
+
+            switch(period) {
+                case 'ytd': startDate = new Date(tempDate.getFullYear(), 0, 1); break;
+                case '3m': startDate = new Date(new Date(tempDate).setMonth(tempDate.getMonth() - 3)); break;
+                case '1m': startDate = new Date(new Date(tempDate).setMonth(tempDate.getMonth() - 1)); break;
+                default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1); break;
+            }
+
+            let datasets, yAxisTitle;
+            if (market === 'US Rates') {
+                yAxisTitle = 'Rate';
+                datasets = tickers.map(ticker => {
+                    const tickerData = allData.filter(d => d.ticker === ticker && d.date >= startDate);
+                    const chartData = tickerData.map(d => ({ x: d.date.getTime(), y: d.price }));
+                    const color = `hsla(${Math.random() * 360}, 70%, 50%, 0.8)`;
+                    return { label: tickerToNameMap[ticker] || ticker, data: chartData, borderColor: color, borderWidth: 2, pointRadius: 0 };
+                }).filter(Boolean);
+            } else {
+                yAxisTitle = 'Performance (%)';
+                datasets = tickers.map(ticker => {
+                    const tickerData = allData.filter(d => d.ticker === ticker && d.date >= startDate);
+                    if (tickerData.length < 1) return null;
+                    const firstPricePoint = allData.find(d => d.ticker === ticker && d.date >= startDate);
+                    const firstPrice = firstPricePoint ? firstPricePoint.price : null;
+                    if (firstPrice === null || firstPrice === 0) return null;
+                    const normalizedData = tickerData.map(d => ({ x: d.date.getTime(), y: ((d.price / firstPrice) - 1) * 100 }));
+                    const color = `hsla(${Math.random() * 360}, 70%, 50%, 0.8)`;
+                    return { label: tickerToNameMap[ticker] || ticker, data: normalizedData, borderColor: color, borderWidth: 2, pointRadius: 0 };
+                }).filter(Boolean);
+            }
+
+            if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
+            activeCharts[canvasId] = new Chart(ctx, {
+                type: 'line', data: { datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'time', time: { unit: 'month' }, title: { display: true, text: 'Date' } },
+                        y: { title: { display: true, text: yAxisTitle } }
+                    },
+                    plugins: {
+                        title: { display: true, text: `${market} Performance`, font: { size: 16 } },
+                        tooltip: { mode: 'index', intersect: false },
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+        }
+        
+        const yearAxisPlugin = {
+            id: 'yearAxis',
+            afterDraw: (chart) => {
+                const { ctx, chartArea: { bottom, left, right }, scales: { x } } = chart;
+                const years = chart.options.plugins.yearAxis.years;
+                if (!years) return;
+
+                ctx.save();
+                ctx.font = '14px sans-serif';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.textAlign = 'center';
+
+                for (const year in years) {
+                    const yearData = years[year];
+                    const midPoint = (yearData.min + yearData.max) / 2;
+                    const xPos = x.getPixelForValue(midPoint);
+                    
+                    if (xPos >= left && xPos <= right) {
+                         ctx.fillText(year, xPos, bottom + 55);
+                    }
+                }
+                ctx.restore();
+            }
+        };
+
+        function showIndividualTickerChart(ticker, period = 'last_calendar') {
+            const modal = document.getElementById('tickerModal');
+            const tickerData = allData.filter(d => d.ticker === ticker);
+            if (tickerData.length === 0) return;
+
+            const name = tickerData[0].name;
+            document.getElementById('modalTickerName').textContent = `${name} (${ticker})`;
+            
+            const timeControls = document.getElementById('modal-time-controls');
+            timeControls.querySelectorAll('button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.period === period);
+                btn.onclick = () => showIndividualTickerChart(ticker, btn.dataset.period);
+            });
+
+            const tempDate = new Date(latestDataDate);
+            let startDate;
+            switch(period) {
+                case '3m': startDate = new Date(new Date(tempDate).setMonth(tempDate.getMonth() - 3)); break;
+                case '6m': startDate = new Date(new Date(tempDate).setMonth(tempDate.getMonth() - 6)); break;
+                case 'ytd': startDate = new Date(tempDate.getFullYear(), 0, 1); break;
+                case '5y': startDate = new Date(new Date(tempDate).setFullYear(tempDate.getFullYear() - 5)); break;
+                default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1); break; // last_calendar
+            }
+
+            const chartData = tickerData.filter(d => d.date >= startDate).map(d => ({ x: d.date.getTime(), y: d.price }));
+            
+            const canvasId = 'individualTickerChart';
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
+
+            if (chartData.length < 2) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.font = "16px sans-serif";
+                ctx.fillStyle = "#888";
+                ctx.textAlign = "center";
+                ctx.fillText("Not enough data to display chart for this period.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+            } else {
+                let minPoint = chartData[0], maxPoint = chartData[0];
+                chartData.forEach(p => {
+                    if (p.y < minPoint.y) minPoint = p;
+                    if (p.y > maxPoint.y) maxPoint = p;
+                });
+
+                const getLabelAnnotation = (point, content, defaultYAdjust) => {
+                    const label = {
+                        type: 'label', xValue: point.x, yValue: point.y, content: content,
+                        font: { size: 12 }, yAdjust: defaultYAdjust,
+                        backgroundColor: 'rgba(255, 255, 255, 0.85)', padding: 4, borderRadius: 4,
+                    };
+                    const pointIndex = chartData.findIndex(p => p.x === point.x);
+                    if (pointIndex < chartData.length / 2) {
+                        label.xAdjust = 5; label.textAlign = 'left';
+                    } else {
+                        label.xAdjust = -5; label.textAlign = 'right';
+                    }
+                    return label;
+                };
+                
+                const yearAnnotations = {};
+                const yearsInData = {};
+                chartData.forEach(d => {
+                    const year = new Date(d.x).getFullYear();
+                    if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
+                    else {
+                        if (d.x < yearsInData[year].min) yearsInData[year].min = d.x;
+                        if (d.x > yearsInData[year].max) yearsInData[year].max = d.x;
+                    }
+                });
+
+                Object.keys(yearsInData).sort().forEach((year, index) => {
+                    if (index > 0) {
+                        const yearStartDate = new Date(parseInt(year), 0, 1).getTime();
+                        yearAnnotations[`yearLine${year}`] = {
+                            type: 'line', xMin: yearStartDate, xMax: yearStartDate,
+                            borderColor: 'rgba(0, 0, 0, 0.3)', borderWidth: 1, borderDash: [6, 6]
+                        };
+                    }
+                });
+                
+                activeCharts[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets: [{ 
+                        label: 'Price', data: chartData, borderColor: 'rgba(74, 144, 226, 1)', 
+                        backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 2, 
+                        fill: true, pointRadius: 0, tension: 0.1 
+                    }] },
+                    plugins: [yearAxisPlugin],
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        layout: { padding: { bottom: 40 } },
+                        scales: {
+                            x: {
+                                type: 'time', time: { unit: 'month', displayFormats: { month: 'MMM' } },
+                                ticks: { source: 'auto', maxRotation: 0, autoSkip: true },
+                            },
+                            y: { position: 'right', title: { display: true, text: 'Price' } }
+                        },
+                        plugins: {
+                            yearAxis: { years: yearsInData },
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false, callbacks: {
+                                title: (tooltipItems) => new Date(tooltipItems[0].parsed.x).toLocaleDateString()
+                            }},
+                            annotation: {
+                                annotations: {
+                                    ...yearAnnotations,
+                                    highPoint: { type: 'point', xValue: maxPoint.x, yValue: maxPoint.y, backgroundColor: 'rgba(220, 53, 69, 0.8)', radius: 5 },
+                                    highLabel: getLabelAnnotation(maxPoint, `High: ${maxPoint.y.toFixed(2)}`, -15),
+                                    lowPoint: { type: 'point', xValue: minPoint.x, yValue: minPoint.y, backgroundColor: 'rgba(40, 167, 69, 0.8)', radius: 5 },
+                                    lowLabel: getLabelAnnotation(minPoint, `Low: ${minPoint.y.toFixed(2)}`, 15)
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            modal.style.display = 'block';
+            setTimeout(() => modal.classList.add('show'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() { 
+            const modal = document.getElementById('tickerModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                const canvasId = 'individualTickerChart';
+                if (activeCharts[canvasId]) {
+                    activeCharts[canvasId].destroy();
+                    delete activeCharts[canvasId];
+                }
+            }, 300); // Wait for transition to finish
+            document.body.style.overflow = '';
+        }
+        
+        function openTab(evt, tabName) {
+            document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+            document.querySelectorAll(".tab-link").forEach(l => l.classList.remove("active"));
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+            
+            if (tabName === 'news' && document.querySelector('#news-sub-tabs-container .market-sub-tab-link.active')) {
+                const activeCategory = document.querySelector('#news-sub-tabs-container .market-sub-tab-link.active').textContent;
+                openNewsSubTab(activeCategory);
+            }
+        }
+
+    </script>
+</body>
+</html>
