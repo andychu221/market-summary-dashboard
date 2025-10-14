@@ -197,12 +197,17 @@
         .summary-card table { font-size: 0.9rem; table-layout: fixed; }
         .summary-card th, .summary-card td { padding: 6px 8px; }
         
-        .summary-card td:first-child, .summary-card th:first-child {
-            width: 40%;
+        /* ** CHANGE: Adjusted summary card column widths for better layout ** */
+        .summary-card th:nth-child(1), .summary-card td:nth-child(1) { /* Name */
+            width: 35%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .summary-card th:nth-child(2), .summary-card td:nth-child(2) { width: 15%; } /* Date */
+        .summary-card th:nth-child(3), .summary-card td:nth-child(3) { width: 20%; } /* Last */
+        .summary-card th:nth-child(4), .summary-card td:nth-child(4) { width: 15%; } /* 1-Day */
+        .summary-card th:nth-child(5), .summary-card td:nth-child(5) { width: 15%; } /* YTD */
 
         #summary-news-content {
             white-space: pre-wrap;
@@ -271,8 +276,6 @@
             white-space: pre-wrap;
         }
         
-        .print-only { display: none; }
-
         @media print {
             @page {
                 size: landscape;
@@ -301,13 +304,8 @@
             .summary-card h3 { font-size: 12pt; }
             .summary-card table { font-size: 8pt; }
             .summary-card th, .summary-card td { padding: 4px 6px; }
-
-            .print-only { 
-                display: table-cell; 
-                text-align: right;
-            }
             
-            /* ### FIX 3: Perfect print layout for summary tables ### */
+            /* Sizing for the new column structure in print */
             .summary-card th:nth-child(1), .summary-card td:nth-child(1) { width: 30%; } /* Name */
             .summary-card th:nth-child(2), .summary-card td:nth-child(2) { width: 20%; } /* Date */
             .summary-card th:nth-child(3), .summary-card td:nth-child(3) { width: 18%; } /* Last */
@@ -336,7 +334,6 @@
             <div id="summary" class="tab-content active">
                 <div class="summary-header">
                     <h2 id="summary-title">Market Summary</h2>
-                    <!-- ### FIX 3: Changed button text to English ### -->
                     <button class="print-btn" onclick="window.print()">Print Summary (PDF)</button>
                 </div>
                 <div id="summary-content-to-print">
@@ -402,6 +399,14 @@
 
         function consoleLog(message) {
             console.log(message);
+        }
+
+        // ** ADDED: Helper function to format date as MM/DD **
+        function formatDateMMDD(date) {
+            if (!(date instanceof Date) || isNaN(date)) return '';
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${month}/${day}`;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -813,12 +818,8 @@
                 performanceData.sort((a, b) => (parseFloat(b.ytd) || -Infinity) - (parseFloat(a.ytd) || -Infinity));
             }
             
-            const asOfDate = latestDataDate ? `As of: ${latestDataDate.toLocaleDateString()}` : '';
             const tableContainer = document.getElementById(`table-${marketId}`);
-            tableContainer.innerHTML = `
-                <div class="table-header"><div class="as-of-date">${asOfDate}</div></div>
-                ${createPerformanceTable(performanceData, market)}
-            `;
+            tableContainer.innerHTML = createPerformanceTable(performanceData, market);
             addTableEventListeners(market, performanceData);
 
             const chartContainer = document.getElementById(`chart-${marketId}`);
@@ -864,6 +865,12 @@
         function sortTable(market, sortKey, direction, data, rerender = true) {
             const parseValue = (val) => {
                 if (typeof val === 'string') {
+                    // Handle date sorting
+                    if (sortKey === 'lastDate') {
+                        const parts = val.split('/');
+                        // Assuming MM/DD format, create a date in a common year for comparison
+                        return new Date(2000, parseInt(parts[0], 10) - 1, parseInt(parts[1], 10)).getTime();
+                    }
                     const num = parseFloat(val.replace(/[ bps%]/g, ''));
                     if (!isNaN(num)) return num;
                     return val === 'N/A' ? -Infinity : val;
@@ -900,17 +907,14 @@
             }
         }
         
-        // ### FIX 1 & 2: New function to handle specific price formatting ###
         function formatPrice(ticker, price, market) {
             if (market === 'FX') {
                 if (ticker.includes('DX-Y.NYB')) return price.toFixed(2); // DXY
                 if (ticker.includes('JPY=')) return price.toFixed(2);     // JPY
                 if (ticker.includes('TWD=')) return price.toFixed(3);     // TWD
                 if (ticker.includes('EUR=')) return price.toFixed(4);     // EUR
-                // Default for other FX like KRW, CNY
                 return price.toFixed(4);
             }
-            // Equity, Stocks, Rates, Commodity
             return price.toFixed(2);
         }
 
@@ -918,8 +922,11 @@
            const tickerData = allData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
            if(tickerData.length === 0) return null;
 
-           const getStartDate = (period, refDate) => {
-               const d = new Date(refDate);
+            const lastDataPoint = tickerData[tickerData.length - 1];
+            const refDate = lastDataPoint.date; 
+
+           const getStartDate = (period, referenceDate) => {
+               const d = new Date(referenceDate);
                switch(period) {
                    case 'wtd': d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)); d.setHours(0,0,0,0); return d;
                    case 'mtd': return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -930,7 +937,6 @@
            }
 
            const name = tickerData[0].name;
-           const lastDataPoint = tickerData[tickerData.length - 1];
            const prevDataPoint = tickerData.length > 1 ? tickerData[tickerData.length - 2] : null;
            const lastPrice = lastDataPoint.price;
 
@@ -955,15 +961,15 @@
 
            if (market === 'US Rates') {
                const calcBpsChange = (start, end) => (start === null || end === null) ? null : (end - start) * 100;
-               const lastYearDates = getStartDate('lastYear', latestDataDate);
+               const lastYearDates = getStartDate('lastYear', refDate);
                return {
                    ticker, name, market, lastPrice: formatPrice(ticker, lastPrice, market),
                    oneDay: formatValue(calcBpsChange(prevDataPoint?.price, lastPrice), true),
-                   wtd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('wtd', latestDataDate)), lastPrice), true),
-                   mtd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('mtd', latestDataDate)), lastPrice), true),
-                   ytd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('ytd', latestDataDate)), lastPrice), true),
+                   wtd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('wtd', refDate)), lastPrice), true),
+                   mtd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('mtd', refDate)), lastPrice), true),
+                   ytd: formatValue(calcBpsChange(findPriceOnDate(getStartDate('ytd', refDate)), lastPrice), true),
                    lastYear: formatValue(calcBpsChange(findPriceOnDate(lastYearDates.start), findPriceOnDate(lastYearDates.end)), true),
-                   lastDate: lastDataPoint.date.toLocaleDateString()
+                   lastDate: formatDateMMDD(lastDataPoint.date) // ** CHANGE: Use new date format **
                };
            }
            
@@ -974,15 +980,15 @@
                return (market === 'FX' && invertedFxTickers.some(inv => ticker.includes(inv))) ? result * -1 : result;
            };
 
-           const lastYearDates = getStartDate('lastYear', latestDataDate);
+           const lastYearDates = getStartDate('lastYear', refDate);
            return {
                ticker, name, market, lastPrice: formatPrice(ticker, lastPrice, market),
                oneDay: formatValue(calcReturn(prevDataPoint?.price, lastPrice)),
-               wtd: formatValue(calcReturn(findPriceOnDate(getStartDate('wtd', latestDataDate)), lastPrice)),
-               mtd: formatValue(calcReturn(findPriceOnDate(getStartDate('mtd', latestDataDate)), lastPrice)),
-               ytd: formatValue(calcReturn(findPriceOnDate(getStartDate('ytd', latestDataDate)), lastPrice)),
+               wtd: formatValue(calcReturn(findPriceOnDate(getStartDate('wtd', refDate)), lastPrice)),
+               mtd: formatValue(calcReturn(findPriceOnDate(getStartDate('mtd', refDate)), lastPrice)),
+               ytd: formatValue(calcReturn(findPriceOnDate(getStartDate('ytd', refDate)), lastPrice)),
                lastYear: formatValue(calcReturn(findPriceOnDate(lastYearDates.start), findPriceOnDate(lastYearDates.end))),
-               lastDate: lastDataPoint.date.toLocaleDateString()
+               lastDate: formatDateMMDD(lastDataPoint.date) // ** CHANGE: Use new date format **
            };
        }
 
@@ -993,9 +999,11 @@
             const isRate = market === 'US Rates';
             const suffix = isRate ? ' (bps)' : ' (%)';
 
+            // ** CHANGE: Reordered table headers **
             let tableHTML = `<thead><tr>
                 <th data-sort-key="name">Name <span class="sort-icon">↕</span></th>
                 <th data-sort-key="ticker">Ticker <span class="sort-icon">↕</span></th>
+                <th data-sort-key="lastDate">Date <span class="sort-icon">↕</span></th>
                 <th data-sort-key="lastPrice">Last Price <span class="sort-icon">↕</span></th>
                 <th data-sort-key="oneDay">1-day${suffix} <span class="sort-icon">↕</span></th>
                 <th data-sort-key="wtd">WTD${suffix} <span class="sort-icon">↕</span></th>
@@ -1010,8 +1018,12 @@
                     const num = parseFloat(val);
                     return num > 0 ? 'text-positive' : num < 0 ? 'text-negative' : '';
                 };
-                tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row" title="Last Update: ${item.lastDate}">
-                    <td>${item.name}</td><td>${item.ticker}</td><td>${item.lastPrice}</td>
+                // ** CHANGE: Reordered table cells **
+                tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
+                    <td>${item.name}</td>
+                    <td>${item.ticker}</td>
+                    <td>${item.lastDate}</td>
+                    <td>${item.lastPrice}</td>
                     <td class="${colorClass(item.oneDay)}">${item.oneDay}</td>
                     <td class="${colorClass(item.wtd)}">${item.wtd}</td>
                     <td class="${colorClass(item.mtd)}">${item.mtd}</td>
@@ -1026,8 +1038,7 @@
         }
 
         function renderSummaryTab() {
-            const asOfDate = latestDataDate ? ` (${latestDataDate.toLocaleDateString()})` : '';
-            document.getElementById('summary-title').textContent = `Market Summary${asOfDate}`;
+            document.getElementById('summary-title').textContent = 'Market Summary';
             
             const summaryConfig = {
                 'index': { title: 'Index', tickers: ['.SPX', '.IXIC', '.SOX', '.TWII'], container: 'summary-index' },
@@ -1043,11 +1054,10 @@
                 
                 const data = config.tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
                 
-                // ### FIX 3: Add new header for print view ###
                 let tableHTML = `<h3>${config.title}</h3><table><thead>
                     <tr>
                         <th style="text-align: left;">Name</th>
-                        <th class="print-only">Date</th>
+                        <th style="text-align: left;">Date</th>
                         <th>Last</th>
                         <th>1-Day</th>
                         <th>YTD</th>
@@ -1057,10 +1067,9 @@
                 if (data.length > 0) {
                     data.forEach(item => {
                         const colorClass = val => (val === 'N/A' || parseFloat(val) === 0) ? '' : parseFloat(val) > 0 ? 'text-positive' : 'text-negative';
-                        // ### FIX 3: Add new cell for print view and tooltip for screen view ###
-                        tableHTML += `<tr title="Last Update: ${item.lastDate}">
+                        tableHTML += `<tr>
                             <td style="text-align: left;">${item.name}</td>
-                            <td class="print-only">${item.lastDate}</td>
+                            <td style="text-align: left;">${item.lastDate}</td>
                             <td>${item.lastPrice}</td>
                             <td class="${colorClass(item.oneDay)}">${item.oneDay}</td>
                             <td class="${colorClass(item.ytd)}">${item.ytd}</td>
@@ -1289,7 +1298,7 @@
                             yearAxis: { years: yearsInData },
                             legend: { display: false },
                             tooltip: { mode: 'index', intersect: false, callbacks: {
-                                title: (tooltipItems) => new Date(tooltipItems[0].parsed.x).toLocaleDateString()
+                                title: (tooltipItems) => formatDateMMDD(new Date(tooltipItems[0].parsed.x)) // ** CHANGE: Use new date format **
                             }},
                             annotation: {
                                 annotations: {
