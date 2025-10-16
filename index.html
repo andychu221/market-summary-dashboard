@@ -102,26 +102,28 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .market-sub-tabs, .view-toggle-tabs, .chart-time-controls, .summary-period-controls { 
+        .market-sub-tabs, .view-toggle-tabs, .chart-time-controls, .summary-period-controls, .cross-market-controls { 
             display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap;
         }
-        .market-sub-tab-link, .view-toggle-tab, .chart-time-controls button, .summary-period-controls button {
+        .market-sub-tab-link, .view-toggle-tab, .chart-time-controls button, .summary-period-controls button, .cross-market-controls button {
             padding: 8px 15px; cursor: pointer; font-size: 0.95rem; font-weight: 500;
             color: var(--text-secondary); border: none; background-color: var(--button-bg);
             margin: 0 5px 5px 0; border-radius: 6px; transition: all 0.3s ease;
         }
-        .market-sub-tab-link:hover, .view-toggle-tab:hover, .chart-time-controls button:hover, .summary-period-controls button:hover { color: var(--primary-color); }
+        .market-sub-tab-link:hover, .view-toggle-tab:hover, .chart-time-controls button:hover, .summary-period-controls button:hover, .cross-market-controls button:hover { color: var(--primary-color); }
         
         .market-sub-tabs { border-bottom-style: solid; border-bottom-width: 2px; }
         .market-sub-tab-link { background: none; margin-bottom: -2px; border-bottom: 3px solid transparent; }
         
-        .market-sub-tab-link.active, .view-toggle-tab.active, .chart-time-controls button.active, .summary-period-controls button.active {
+        .market-sub-tab-link.active, .view-toggle-tab.active, .chart-time-controls button.active, .summary-period-controls button.active, .cross-market-controls button.active {
             color: var(--primary-color); background-color: var(--button-active-bg); font-weight: 600;
         }
-        body.dark-mode .market-sub-tab-link.active, body.dark-mode .view-toggle-tab.active, body.dark-mode .chart-time-controls button.active, body.dark-mode .summary-period-controls button.active {
+        body.dark-mode .market-sub-tab-link.active, body.dark-mode .view-toggle-tab.active, body.dark-mode .chart-time-controls button.active, body.dark-mode .summary-period-controls button.active, body.dark-mode .cross-market-controls button.active {
             color: #fff;
         }
         .market-sub-tab-link.active { border-bottom-color: var(--primary-color); background: none; }
+        .cross-market-controls { border-bottom: none;}
+
 
         .market-sub-tab-content { display: none; animation: fadeIn 0.4s; }
         .market-sub-tab-content.active { display: block; }
@@ -166,10 +168,14 @@
             position: fixed; z-index: 1001; left: 0; top: 0;
             width: 100%; height: 100%; overflow: auto;
             background-color: var(--modal-overlay-bg);
-            opacity: 0; visibility: hidden; 
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            opacity: 0; 
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
-        .modal.show { opacity: 1; visibility: visible; }
+        .modal.show { 
+            opacity: 1; 
+            pointer-events: auto;
+        }
         .modal-content {
             background-color: var(--modal-bg); margin: 5% auto; padding: 25px;
             border-radius: 12px; width: 90%; max-width: 1200px; box-shadow: var(--shadow-strong);
@@ -184,13 +190,43 @@
         .modal-header { text-align: center; margin-bottom: 10px; color: var(--text-primary); }
         .modal-chart-container { position: relative; height: 500px; width: 100%; }
 
+        /* Ticker Selection Modal Styles */
+        #tickerSelectionModal .modal-content, #confirmationModal .modal-content { max-width: 500px; }
+        #ticker-selection-list { list-style: none; margin-top: 15px; max-height: 40vh; overflow-y: auto; }
+        #ticker-selection-list li {
+            padding: 12px; border: 1px solid var(--border-color);
+            border-radius: 6px; margin-bottom: 8px; cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        #ticker-selection-list li:hover {
+            background-color: var(--hover-bg);
+            border-color: var(--primary-color);
+        }
+        .confirmation-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;}
+        .btn-secondary {
+            background-color: var(--button-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        .btn-secondary:hover {
+            background-color: var(--hover-bg);
+        }
+
         #summary { padding: 10px 0; }
         .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
         .summary-header-left { display: flex; align-items: center; gap: 20px; flex-wrap: wrap;}
         .summary-header h2 { font-size: 1.5rem; color: var(--text-primary); }
         .print-btn { 
             background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; 
-            border-radius: 8px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s;
+            border-radius: 8px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s, filter 0.3s;
+        }
+        .print-btn:hover {
+            filter: brightness(110%);
         }
         #summary-content-to-print {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;
@@ -231,7 +267,7 @@
 
         #chart-tooltip {
             position: fixed; z-index: 9999;
-            width: 250px; height: 150px;
+            width: 280px; height: 180px;
             background: var(--modal-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px; box-shadow: var(--shadow-strong);
@@ -348,6 +384,25 @@
         </div>
     </div>
 
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirmationTitle" class="modal-header">變更 Ticker</h3>
+            <p id="confirmationMessage" style="text-align: center; margin: 20px 0; font-size: 1.1rem;"></p>
+            <div class="confirmation-buttons">
+                <button id="confirmBtnNo" onclick="closeModal('confirmationModal')" class="btn-secondary">取消</button>
+                <button id="confirmBtnYes" class="print-btn">確認</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tickerSelectionModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('tickerSelectionModal')">&times;</span>
+            <h3 id="tickerSelectionTitle" class="modal-header">Select a Ticker</h3>
+            <ul id="ticker-selection-list"></ul>
+        </div>
+    </div>
+
     <div id="chart-tooltip"><canvas id="tooltip-canvas"></canvas></div>
 
     <script>
@@ -358,6 +413,15 @@
         let currentSummaryPeriod = { period: 'ytd' };
         let tooltipChart = null;
         let activeCustomDateContext = null;
+        let currentCrossMarketPeriod = { period: 'ytd' };
+        
+        // --- Data for Cross Market Chart (Global for modification) ---
+        let crossMarketAssets = {
+            labels: ['S&P 500', 'TWSE Index', 'TSM (ADR)', 'TSMC (TW)', 'UST 2Y', 'UST 10Y', 'DXY Index', 'TWD', 'Gold'],
+            tickers: ['.SPX', '.TWII', 'TSM.N', '2330.TW', 'US2YT=RR', 'US10YT=RR', '.DXY', 'TWD=', 'GCc1'],
+            types: ['perf', 'perf', 'perf', 'perf', 'bps', 'bps', 'perf', 'perf', 'perf'],
+            groups: ['Equity Index', 'Equity Index', 'Stocks', 'Stocks', 'US Rates', 'US Rates', 'FX', 'FX', 'Commodity']
+        };
 
         // --- Utility Functions ---
         function getStartDate(period, referenceDate) {
@@ -484,6 +548,7 @@
             const refDate = lastDataPoint.date;
             
             const findPriceOnOrBefore = (date, data = tickerData) => {
+                if (!date || isNaN(date.getTime())) return null;
                 let closest = null;
                 for (let i = data.length - 1; i >= 0; i--) {
                     if (data[i].date <= date) { closest = data[i]; break; }
@@ -516,7 +581,8 @@
             };
             
             ['1d', '1w', 'mtd', '1m', '3m', 'ytd', '1y'].forEach(p => {
-                perf[p] = formatValue(calcPerf(findPriceOnOrBefore(getStartDate(p, refDate)), lastPrice, isRate, invertedFx), isRate);
+                const startDate = getStartDate(p, refDate);
+                perf[p] = formatValue(calcPerf(findPriceOnOrBefore(startDate), lastPrice, isRate, invertedFx), isRate);
             });
 
             const lastYearDates = getStartDate('lastYear', refDate);
@@ -546,10 +612,11 @@
             const periodLabels = {'1d': '1-Day', '1w':'1-Week', 'mtd': 'MTD', '1m':'1-Month', '3m':'3-Month', 'ytd':'YTD', '1y':'1-Year'};
             
             let perfKey = 'period' in currentSummaryPeriod ? currentSummaryPeriod.period : 'custom';
-            let perfHeader = periodLabels[perfKey] || `${formatDateMMDD(new Date(currentSummaryPeriod.start))}-${formatDateMMDD(new Date(currentSummaryPeriod.end))}`;
+            let perfHeader = periodLabels[perfKey] || `${formatDateMMDD(new Date(currentSummaryPeriod.start))}-<br>${formatDateMMDD(new Date(currentSummaryPeriod.end))}`;
 
             Object.values(summaryConfig).forEach(config => {
                 const container = document.getElementById(config.container);
+                if (!container) return;
                 const data = config.tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
                 
                 let tableHTML = `<h3>${config.title}</h3><table><thead><tr>
@@ -590,14 +657,16 @@
             const tabsContainer = document.getElementById('market-sub-tabs-container');
             const contentContainer = document.getElementById('market-sub-content-container');
             tabsContainer.innerHTML = ''; contentContainer.innerHTML = '';
-            const markets = ['Equity Index', 'US Stocks', 'TW Stocks', 'FX', 'US Rates', 'Commodity'];
+            const markets = ['Cross Market', 'Equity Index', 'US Stocks', 'TW Stocks', 'FX', 'US Rates', 'Commodity'];
             
             markets.forEach((market, index) => {
-                if (dataByMarket[market]) {
+                const marketDataExists = dataByMarket[market] || market === 'Cross Market';
+                if (marketDataExists) {
                     const isActive = index === 0;
+                    const marketId = market.replace(/\s/g, '-');
                     tabsContainer.innerHTML += `<div class="market-sub-tab-link ${isActive ? 'active' : ''}" onclick="openMarketSubTab('${market}')">${market}</div>`;
-                    contentContainer.innerHTML += `<div id="market-${market.replace(/\s/g, '-')}" class="market-sub-tab-content ${isActive ? 'active' : ''}"></div>`;
-                    if (isActive) renderMarketData(market);
+                    contentContainer.innerHTML += `<div id="market-${marketId}" class="market-sub-tab-content ${isActive ? 'active' : ''}"></div>`;
+                    if (isActive) openMarketSubTab(market);
                 }
             });
         }
@@ -605,9 +674,16 @@
         function openMarketSubTab(marketName) {
             document.querySelectorAll('#market-sub-tabs-container .market-sub-tab-link').forEach(link => link.classList.toggle('active', link.textContent === marketName));
             document.querySelectorAll('#market-sub-content-container .market-sub-tab-content').forEach(content => {
-                const isActive = content.id === `market-${marketName.replace(/\s/g, '-')}`;
+                const marketId = marketName.replace(/\s/g, '-');
+                const isActive = content.id === `market-${marketId}`;
                 content.classList.toggle('active', isActive);
-                if (isActive && !content.hasChildNodes()) renderMarketData(marketName);
+                if (isActive && !content.hasChildNodes()) {
+                    if (marketName === 'Cross Market') {
+                        renderCrossMarketTab();
+                    } else {
+                        renderMarketData(marketName);
+                    }
+                }
             });
         }
 
@@ -615,11 +691,21 @@
             const marketId = market.replace(/\s/g, '-');
             document.querySelectorAll(`#market-${marketId} .view-toggle-tab`).forEach(tab => tab.classList.toggle('active', tab.dataset.view === view));
             document.querySelectorAll(`#market-${marketId} .view-content`).forEach(content => content.classList.toggle('active', content.id === `${view}-${marketId}`));
+            
+            // Fix for chart not rendering on first click
+            if (view === 'chart') {
+                const chartContainer = document.getElementById(`chart-${marketId}`);
+                if (chartContainer && !chartContainer.hasChildNodes()) {
+                    let performanceData = Array.from(allPerformanceData.values()).filter(d => d.market === market);
+                    renderComparisonChartUI(market, performanceData);
+                }
+            }
         }
 
         function renderMarketData(market) {
             const marketId = market.replace(/\s/g, '-');
             const container = document.getElementById(`market-${marketId}`);
+            if (!container) return;
             let performanceData = Array.from(allPerformanceData.values()).filter(d => d.market === market);
             
             container.innerHTML = `
@@ -627,11 +713,11 @@
                     <div class="view-toggle-tab active" data-view="table" onclick="switchMarketView('${market}', 'table')">Table</div>
                     <div class="view-toggle-tab" data-view="chart" onclick="switchMarketView('${market}', 'chart')">Chart</div>
                 </div>
-                <div id="table-${marketId}" class="view-content active">${createPerformanceTable(performanceData, market)}</div>
+                <div id="table-${marketId}" class="view-content active"></div>
                 <div id="chart-${marketId}" class="view-content"></div>`;
             
-            addTableEventListeners(market, performanceData);
-            renderComparisonChartUI(market, performanceData);
+            document.getElementById(`table-${marketId}`).innerHTML = createPerformanceTable(performanceData, market);
+            addTableEventListeners(market);
         }
 
         function createPerformanceTable(data, market) {
@@ -663,6 +749,220 @@
             return `<div class="table-container"><table id="perf-table-${market.replace(/\s/g, '-')}">${tableHTML}</tbody></table></div>`;
         }
 
+        // --- Cross Market Tab ---
+        function renderCrossMarketTab() {
+            const container = document.getElementById('market-Cross-Market');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="cross-market-controls">
+                     <button data-period="ytd" class="active" onclick="updateCrossMarketChart({period: 'ytd'}, this)">YTD</button>
+                     <button data-period="mtd" onclick="updateCrossMarketChart({period: 'mtd'}, this)">MTD</button>
+                     <button data-period="1m" onclick="updateCrossMarketChart({period: '1m'}, this)">1-Month</button>
+                     <button data-period="3m" onclick="updateCrossMarketChart({period: '3m'}, this)">3-Month</button>
+                     <button data-period="custom" onclick="openCustomDateModal('cross-market')">Custom</button>
+                </div>
+                <div class="modal-chart-container" style="height: 600px;">
+                    <canvas id="crossMarketChart"></canvas>
+                </div>
+            `;
+            updateCrossMarketChart({ period: 'ytd' });
+        }
+
+        function updateCrossMarketChart(periodConfig, element) {
+            currentCrossMarketPeriod = periodConfig;
+            if(element){
+                document.querySelectorAll('.cross-market-controls button').forEach(b => b.classList.remove('active'));
+                element.classList.add('active');
+            }
+            
+            let startDate, endDate = latestDataDate;
+            if (periodConfig.period) {
+                startDate = getStartDate(periodConfig.period, latestDataDate);
+            } else {
+                startDate = new Date(periodConfig.start);
+                endDate = new Date(periodConfig.end);
+            }
+
+            const chartData = crossMarketAssets.tickers.map(ticker => {
+                const perfData = allPerformanceData.get(ticker);
+                if (!perfData) return 0;
+                
+                const isRate = perfData.market === 'US Rates';
+                const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => ticker.includes(inv));
+                
+                const startPrice = perfData.findPriceOnOrBefore(startDate);
+                const endPrice = perfData.findPriceOnOrBefore(endDate);
+
+                return perfData.calcPerf(startPrice, endPrice, isRate, inverted) || 0;
+            });
+            createCrossMarketChart(crossMarketAssets.labels, chartData, crossMarketAssets.types);
+        }
+
+        function createCrossMarketChart(labels, data, types) {
+            const canvasId = 'crossMarketChart';
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
+
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            const mutedTextColor = isDarkMode ? '#bbb' : '#777';
+            
+            const categoryLabelPlugin = {
+                id: 'categoryLabels',
+                afterDraw: (chart) => {
+                    const { ctx, chartArea: { bottom }, scales: { x } } = chart;
+                    ctx.save();
+                    ctx.font = 'bold 13px sans-serif';
+                    ctx.fillStyle = mutedTextColor;
+                    ctx.textAlign = 'center';
+
+                    const assetGroups = [
+                        { label: 'Equity Index', start: 0, end: 1 },
+                        { label: 'Stocks', start: 2, end: 3 },
+                        { label: 'US Rates', start: 4, end: 5 },
+                        { label: 'FX', start: 6, end: 7 },
+                        { label: 'Commodity', start: 8, end: 8 }
+                    ];
+
+                    assetGroups.forEach(group => {
+                        const startPixel = x.getPixelForValue(group.start);
+                        const endPixel = x.getPixelForValue(group.end);
+                        const middlePixel = startPixel + (endPixel - startPixel) / 2;
+                        ctx.fillText(group.label, middlePixel, bottom + 45);
+                    });
+                    ctx.restore();
+                }
+            };
+            
+            activeCharts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Performance',
+                        data: data,
+                        backgroundColor: data.map(v => v >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)'),
+                        borderColor: data.map(v => v >= 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'),
+                        borderWidth: 1
+                    }]
+                },
+                plugins: [categoryLabelPlugin],
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'x',
+                    layout: { padding: { bottom: 55 } },
+                    scales: {
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { color: textColor, font: { weight: '500' } }
+                        },
+                        y: { 
+                            grid: { color: gridColor }, 
+                            ticks: { color: textColor },
+                            title: { display: true, text: 'Performance (% or bps)'}
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            if (index !== undefined && crossMarketAssets.labels[index]) {
+                                showTickerChangeConfirmation(index);
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.raw.toFixed(2);
+                                    const type = types[context.dataIndex];
+                                    return `${label}: ${value} ${type === 'bps' ? 'bps' : '%'}`;
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                line1: { type: 'line', xMin: 1.5, xMax: 1.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] },
+                                line2: { type: 'line', xMin: 3.5, xMax: 3.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] },
+                                line3: { type: 'line', xMin: 5.5, xMax: 5.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] },
+                                line4: { type: 'line', xMin: 7.5, xMax: 7.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function showTickerChangeConfirmation(index) {
+            const group = crossMarketAssets.groups[index];
+            const label = crossMarketAssets.labels[index];
+            
+            const messageEl = document.getElementById('confirmationMessage');
+            messageEl.innerHTML = `您是否要為 <b style="color:var(--primary-color)">'${group}'</b> 類別選擇不同的 Ticker？<br>(目前為 ${label})`;
+
+            const confirmBtnYes = document.getElementById('confirmBtnYes');
+            
+            const newConfirmBtnYes = confirmBtnYes.cloneNode(true);
+            confirmBtnYes.parentNode.replaceChild(newConfirmBtnYes, confirmBtnYes);
+            
+            newConfirmBtnYes.onclick = () => {
+                closeModal('confirmationModal');
+                showTickerSelectionModal(index);
+            };
+            
+            openModal('confirmationModal');
+        }
+
+        function showTickerSelectionModal(index) {
+            const group = crossMarketAssets.groups[index];
+            if (!group) return;
+
+            document.getElementById('tickerSelectionTitle').textContent = `Select a Ticker for ${group}`;
+            const list = document.getElementById('ticker-selection-list');
+            list.innerHTML = '';
+            
+            let tickersToShow = [];
+            if (group === 'Stocks') {
+                tickersToShow = [...allPerformanceData.values()].filter(d => d.market === 'US Stocks' || d.market === 'TW Stocks');
+            } else {
+                 // Assumes group name matches market name
+                tickersToShow = [...allPerformanceData.values()].filter(d => d.market === group);
+            }
+
+            tickersToShow.sort((a, b) => a.name.localeCompare(b.name));
+
+            tickersToShow.forEach(perfData => {
+                if (!perfData) return;
+                
+                const li = document.createElement('li');
+                li.textContent = `${perfData.name} (${perfData.ticker})`;
+                li.onclick = () => selectNewTicker(index, perfData.ticker);
+                list.appendChild(li);
+            });
+            openModal('tickerSelectionModal');
+        }
+
+        function selectNewTicker(index, newTicker) {
+            const perfData = allPerformanceData.get(newTicker);
+            if (!perfData) return;
+
+            crossMarketAssets.tickers[index] = newTicker;
+            
+            let displayName = perfData.name;
+            if (newTicker === 'TSM.N') displayName = 'TSM (ADR)';
+            if (newTicker === '2330.TW') displayName = 'TSMC (TW)';
+            crossMarketAssets.labels[index] = displayName;
+            
+            crossMarketAssets.types[index] = (perfData.market === 'US Rates') ? 'bps' : 'perf';
+            
+            closeModal('tickerSelectionModal');
+            updateCrossMarketChart(currentCrossMarketPeriod);
+        }
+
+
         // --- News Tab ---
         function processNewsData() {
             renderNewsSummary();
@@ -671,14 +971,15 @@
 
         function renderNewsSummary() {
             const container = document.getElementById('summary-news-card');
-            const latestNews = allNewsData[0];
-            if (latestNews) {
+            const morningBriefing = allNewsData.find(news => news && news.Title && (news.Title.includes('路透早報') || news.Title.includes('Morning Briefing')));
+            
+            if (morningBriefing) {
                 container.innerHTML = `
-                    <h3>Latest News Summary</h3>
-                    <div class="news-meta"><span>${latestNews.Date || ''} ${latestNews.Time || ''}</span> | <span>Source: ${latestNews.Source || 'N/A'}</span></div>
-                    <div id="summary-news-content">${latestNews.Content || 'No content available.'}</div>`;
+                    <h3>${morningBriefing.Title}</h3>
+                    <div class="news-meta"><span>${morningBriefing.Date || ''} ${morningBriefing.Time || ''}</span> | <span>Source: ${morningBriefing.Source || 'N/A'}</span></div>
+                    <div id="summary-news-content">${morningBriefing.Content || 'No content available.'}</div>`;
             } else {
-                container.innerHTML = `<h3>Latest News Summary</h3><div id="summary-news-content"><p>No news found.</p></div>`;
+                container.innerHTML = `<h3>Latest News Summary</h3><div id="summary-news-content"><p>Could not find the latest Reuters Morning Briefing.</p></div>`;
             }
             adjustSummaryNewsHeight();
         }
@@ -688,17 +989,23 @@
             const contentContainer = document.getElementById('news-sub-content-container');
             tabsContainer.innerHTML = ''; contentContainer.innerHTML = '';
 
-            const categories = {'路透早報': '路透早報', '全球匯市': '全球匯市', '台灣匯市': '台灣匯市', '美國債市': '美國債市', '台灣債市': '台灣債市'};
+            const categories = {
+                'Morning Briefing': '路透早報', 
+                'Global Forex': '全球匯市', 
+                'Taiwan Forex': '台灣匯市', 
+                'US Bonds': '美國債市', 
+                'Taiwan Bonds': '台灣債市'
+            };
             const categoryKeys = Object.keys(categories);
-            newsByCategory = { ...Object.fromEntries(categoryKeys.map(k => [k, []])), '其他': [] };
+            newsByCategory = { ...Object.fromEntries(categoryKeys.map(k => [k, []])), 'Other': [] };
 
             allNewsData.forEach(news => {
                 if (!news || typeof news.Title !== 'string') return;
-                let foundCategory = categoryKeys.find(key => news.Title.includes(categories[key]));
-                newsByCategory[foundCategory || '其他'].push(news);
+                let foundCategoryKey = categoryKeys.find(key => news.Title.includes(categories[key]));
+                newsByCategory[foundCategoryKey || 'Other'].push(news);
             });
 
-            [...categoryKeys, '其他'].filter(cat => newsByCategory[cat].length > 0).forEach((category, index) => {
+            [...categoryKeys, 'Other'].filter(cat => newsByCategory[cat].length > 0).forEach((category, index) => {
                 const isActive = index === 0;
                 tabsContainer.innerHTML += `<div class="market-sub-tab-link ${isActive ? 'active' : ''}" onclick="openNewsSubTab('${category}')">${category}</div>`;
                 contentContainer.innerHTML += `<div id="news-content-${category.replace(/\s/g, '-')}" class="market-sub-tab-content ${isActive ? 'active' : ''}"></div>`;
@@ -797,7 +1104,7 @@
             if (period === 'custom') {
                 const start = document.getElementById(`chart-start-${marketId}`).value;
                 const end = document.getElementById(`chart-end-${marketId}`).value;
-                if (!start || !end) { alert('Please select a start and end date.'); return; }
+                if (!start || !end) { return; } // Don't show alert
                 timeConfig = { start, end };
             }
             createComparisonChart(market, tickers, timeConfig);
@@ -839,72 +1146,189 @@
             }).filter(Boolean);
 
             if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
+            const isDarkMode = document.body.classList.contains('dark-mode');
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line', data: { datasets },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: { 
-                        x: { type: 'time', time: { unit: 'month' }, ticks: { color: document.body.classList.contains('dark-mode') ? '#a0a0a0' : '#555' } }, 
-                        y: { title: { display: true, text: isRate ? 'Rate' : 'Performance (%)' }, ticks: { color: document.body.classList.contains('dark-mode') ? '#a0a0a0' : '#555' } } 
+                        x: { type: 'time', time: { unit: 'month' }, ticks: { color: isDarkMode ? '#a0a0a0' : '#555' } }, 
+                        y: { title: { display: true, text: isRate ? 'Rate' : 'Performance (%)' }, ticks: { color: isDarkMode ? '#a0a0a0' : '#555' } } 
                     },
-                    plugins: { legend: { labels: { color: document.body.classList.contains('dark-mode') ? '#f0f0f0' : '#333' } } }
+                    plugins: { legend: { labels: { color: isDarkMode ? '#f0f0f0' : '#333' } } }
                 }
             });
         }
         
+        const yearAxisPlugin = {
+            id: 'yearAxis',
+            afterDraw: (chart) => {
+                const years = chart.options.plugins.yearAxis.years;
+                if (!years || Object.keys(years).length === 0) return;
+                const { ctx, chartArea: { bottom, left, right }, scales: { x } } = chart;
+                
+                ctx.save();
+                ctx.font = '14px sans-serif';
+                ctx.fillStyle = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+                ctx.textAlign = 'center';
+
+                for (const year in years) {
+                    const yearData = years[year];
+                    const midPoint = (yearData.min + yearData.max) / 2;
+                    const xPos = x.getPixelForValue(midPoint);
+                    
+                    if (xPos >= left && xPos <= right) {
+                         ctx.fillText(year, xPos, bottom + 55);
+                    }
+                }
+                ctx.restore();
+            }
+        };
+
         function showIndividualTickerChart(ticker, period = 'last_calendar') {
+            const modal = document.getElementById('tickerModal');
             const tickerData = allData.filter(d => d.ticker === ticker);
             if (tickerData.length === 0) return;
 
-            document.getElementById('modalTickerName').textContent = `${tickerData[0].name} (${ticker})`;
-            document.querySelectorAll('#modal-time-controls button').forEach(btn => {
+            const name = tickerData[0].name;
+            document.getElementById('modalTickerName').textContent = `${name} (${ticker})`;
+            
+            const timeControls = document.getElementById('modal-time-controls');
+            timeControls.querySelectorAll('button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.period === period);
                 btn.onclick = () => showIndividualTickerChart(ticker, btn.dataset.period);
             });
 
+            const tempDate = new Date(latestDataDate);
             let startDate;
             switch(period) {
-                case '3m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 3)); break;
-                case '6m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 6)); break;
-                case 'ytd': startDate = new Date(latestDataDate.getFullYear(), 0, 1); break;
-                case '5y': startDate = new Date(new Date(latestDataDate).setFullYear(latestDataDate.getFullYear() - 5)); break;
-                default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1);
+                case '3m': startDate = new Date(new Date(tempDate).setMonth(tempDate.getMonth() - 3)); break;
+                case '6m': startDate = new Date(new Date(tempDate).setMonth(tempDate.getMonth() - 6)); break;
+                case 'ytd': startDate = new Date(tempDate.getFullYear(), 0, 1); break;
+                case '5y': startDate = new Date(new Date(tempDate).setFullYear(tempDate.getFullYear() - 5)); break;
+                default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1); break; // last_calendar
             }
 
             const chartData = tickerData.filter(d => d.date >= startDate).map(d => ({ x: d.date.getTime(), y: d.price }));
-            const canvasId = 'individualTickerChart';
-            if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
             
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            const canvasId = 'individualTickerChart';
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
 
-            activeCharts[canvasId] = new Chart(document.getElementById(canvasId), {
-                type: 'line', 
-                data: { datasets: [{ label: 'Price', data: chartData, borderColor: '#4a90e2', backgroundColor: 'rgba(74, 144, 226, 0.2)', fill: true, pointRadius: 0 }] },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    scales: { 
-                        x: { type: 'time', grid: { color: gridColor }, ticks: { color: textColor } },
-                        y: { grid: { color: gridColor }, ticks: { color: textColor } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
+            if (chartData.length < 2) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.font = "16px sans-serif";
+                ctx.fillStyle = "#888";
+                ctx.textAlign = "center";
+                ctx.fillText("Not enough data to display chart for this period.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+            } else {
+                let minPoint = chartData[0], maxPoint = chartData[0];
+                chartData.forEach(p => {
+                    if (p.y < minPoint.y) minPoint = p;
+                    if (p.y > maxPoint.y) maxPoint = p;
+                });
+
+                const getLabelAnnotation = (point, content, defaultYAdjust) => {
+                    const label = {
+                        type: 'label', xValue: point.x, yValue: point.y, content: content,
+                        font: { size: 12 }, yAdjust: defaultYAdjust,
+                        backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(50,50,50,0.85)' : 'rgba(255, 255, 255, 0.85)',
+                        color: document.body.classList.contains('dark-mode') ? '#f0f0f0' : '#333',
+                        padding: 4, borderRadius: 4,
+                    };
+                    const pointIndex = chartData.findIndex(p => p.x === point.x);
+                    if (pointIndex < chartData.length / 2) {
+                        label.xAdjust = 5; label.textAlign = 'left';
+                    } else {
+                        label.xAdjust = -5; label.textAlign = 'right';
+                    }
+                    return label;
+                };
+                
+                const yearAnnotations = {};
+                const yearsInData = {};
+                chartData.forEach(d => {
+                    const year = new Date(d.x).getFullYear();
+                    if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
+                    else {
+                        if (d.x < yearsInData[year].min) yearsInData[year].min = d.x;
+                        if (d.x > yearsInData[year].max) yearsInData[year].max = d.x;
+                    }
+                });
+
+                Object.keys(yearsInData).sort().forEach((year, index) => {
+                    if (index > 0) {
+                        const yearStartDate = new Date(parseInt(year), 0, 1).getTime();
+                        yearAnnotations[`yearLine${year}`] = {
+                            type: 'line', xMin: yearStartDate, xMax: yearStartDate,
+                            borderColor: 'rgba(128, 128, 128, 0.5)', borderWidth: 1, borderDash: [6, 6]
+                        };
+                    }
+                });
+                
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                const textColor = isDarkMode ? '#a0a0a0' : '#555';
+
+                activeCharts[canvasId] = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets: [{ 
+                        label: 'Price', data: chartData, borderColor: 'rgba(74, 144, 226, 1)', 
+                        backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 2, 
+                        fill: true, pointRadius: 0, tension: 0.1 
+                    }] },
+                    plugins: [yearAxisPlugin],
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        layout: { padding: { bottom: 40 } },
+                        scales: {
+                            x: {
+                                type: 'time', time: { unit: 'month', displayFormats: { month: 'MMM' } },
+                                ticks: { source: 'auto', maxRotation: 0, autoSkip: true, color: textColor },
+                                grid: { color: gridColor }
+                            },
+                            y: { 
+                                position: 'right', title: { display: true, text: 'Price' },
+                                ticks: { color: textColor },
+                                grid: { color: gridColor }
+                            }
+                        },
+                        plugins: {
+                            yearAxis: { years: yearsInData },
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false, callbacks: {
+                                title: (tooltipItems) => formatDateMMDD(new Date(tooltipItems[0].parsed.x))
+                            }},
+                            annotation: {
+                                annotations: {
+                                    ...yearAnnotations,
+                                    highPoint: { type: 'point', xValue: maxPoint.x, yValue: maxPoint.y, backgroundColor: 'rgba(220, 53, 69, 0.8)', radius: 5 },
+                                    highLabel: getLabelAnnotation(maxPoint, `High: ${maxPoint.y.toFixed(2)}`, -15),
+                                    lowPoint: { type: 'point', xValue: minPoint.x, yValue: minPoint.y, backgroundColor: 'rgba(40, 167, 69, 0.8)', radius: 5 },
+                                    lowLabel: getLabelAnnotation(minPoint, `Low: ${minPoint.y.toFixed(2)}`, 15)
+                                }
+                            }
+                        }
+                    }
+                });
+            }
             openModal('tickerModal');
         }
 
-
         // --- Event Listeners & Interactions ---
-        function addTableEventListeners(market, data) {
+        function addTableEventListeners(market) {
             const marketId = market.replace(/\s/g, '-');
-            document.querySelectorAll(`#perf-table-${marketId} tbody tr`).forEach(row => row.addEventListener('click', () => showIndividualTickerChart(row.dataset.ticker)));
-            document.querySelectorAll(`#perf-table-${marketId} th[data-sort-key]`).forEach(header => {
-                header.addEventListener('click', () => {
-                   // Sorting logic can be re-added here if needed
+            const tableBody = document.querySelector(`#perf-table-${marketId} tbody`);
+            if (tableBody) {
+                tableBody.addEventListener('click', (event) => {
+                    const row = event.target.closest('tr');
+                    if (row && row.dataset.ticker) {
+                        showIndividualTickerChart(row.dataset.ticker);
+                    }
                 });
-            });
+            }
         }
+
         function addSummaryTooltipEvents() {
             const tooltip = document.getElementById('chart-tooltip');
             document.querySelectorAll('.summary-card tbody tr[data-ticker]').forEach(row => {
@@ -912,8 +1336,18 @@
                 if (!ticker) return;
                 row.addEventListener('mouseenter', (e) => showTooltipChart(e, ticker));
                 row.addEventListener('mousemove', (e) => { 
-                    tooltip.style.left = `${e.clientX + 15}px`; 
-                    tooltip.style.top = `${e.clientY + 15}px`; 
+                    const tooltipWidth = tooltip.offsetWidth;
+                    const tooltipHeight = tooltip.offsetHeight;
+                    let left = e.clientX + 15;
+                    let top = e.clientY + 15;
+                    if (left + tooltipWidth > window.innerWidth) {
+                        left = e.clientX - tooltipWidth - 15;
+                    }
+                    if (top + tooltipHeight > window.innerHeight) {
+                        top = e.clientY - tooltipHeight - 15;
+                    }
+                    tooltip.style.left = `${left}px`; 
+                    tooltip.style.top = `${top}px`; 
                 });
                 row.addEventListener('mouseleave', hideTooltipChart);
             });
@@ -921,32 +1355,89 @@
 
         function showTooltipChart(event, ticker) {
             const tooltip = document.getElementById('chart-tooltip');
-            tooltip.style.left = `${event.clientX + 15}px`;
-            tooltip.style.top = `${event.clientY + 15}px`;
-            tooltip.classList.add('visible');
-
-            let startDate;
+            
+            let startDate, endDate = new Date(latestDataDate);
             if (currentSummaryPeriod.period && currentSummaryPeriod.period !== 'custom') {
-                 startDate = getStartDate(currentSummaryPeriod.period, latestDataDate);
+                 startDate = getStartDate(currentSummaryPeriod.period, endDate);
             } else if (currentSummaryPeriod.start) {
                 startDate = new Date(currentSummaryPeriod.start);
+                if(currentSummaryPeriod.end) {
+                    endDate = new Date(currentSummaryPeriod.end);
+                }
             } else {
                 startDate = getStartDate('ytd', latestDataDate); // Fallback
             }
+
+            if (!startDate || isNaN(startDate.getTime()) || !endDate || isNaN(endDate.getTime())) {
+                return;
+            }
            
-            const chartData = allData.filter(d => d.ticker === ticker && d.date >= startDate).map(d => ({x: d.date.getTime(), y: d.price}));
+            const chartData = allData
+                .filter(d => d.ticker === ticker && d.date >= startDate && d.date <= endDate)
+                .map(d => ({x: d.date.getTime(), y: d.price}));
             
             if (tooltipChart) tooltipChart.destroy();
-            tooltipChart = new Chart(document.getElementById('tooltip-canvas'), {
-                type: 'line',
-                data: { datasets: [{ data: chartData, borderColor: '#4a90e2', borderWidth: 2, pointRadius: 0 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { x: { display: false }, y: { display: false } },
-                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                    animation: { duration: 0 }
-                }
+
+            if(chartData.length < 2) {
+                tooltip.classList.remove('visible');
+                return;
+            }
+            
+            tooltip.classList.add('visible');
+
+            let minPoint = chartData[0], maxPoint = chartData[0];
+            chartData.forEach(p => {
+                if (p.y < minPoint.y) minPoint = p;
+                if (p.y > maxPoint.y) maxPoint = p;
             });
+
+            const getTooltipLabel = (point, content, yAdjust) => ({
+                type: 'label',
+                xValue: point.x,
+                yValue: point.y,
+                content: content,
+                font: { size: 10 },
+                yAdjust: yAdjust,
+                xAdjust: point === minPoint ? 15 : -15,
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                color: 'white',
+                padding: 2,
+                borderRadius: 2
+            });
+            
+            setTimeout(() => {
+                const ctx = document.getElementById('tooltip-canvas');
+                if (!ctx) return;
+                tooltipChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets: [{ 
+                        data: chartData, 
+                        borderColor: 'rgba(74, 144, 226, 1)', 
+                        borderWidth: 1.5, 
+                        pointRadius: 0, 
+                        tension: 0.1, 
+                        fill: true,
+                        backgroundColor: 'rgba(74, 144, 226, 0.2)'
+                    }] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { x: { display: false }, y: { display: false } },
+                        plugins: { 
+                            legend: { display: false }, 
+                            tooltip: { enabled: false },
+                             annotation: {
+                                annotations: {
+                                    highPoint: { type: 'point', xValue: maxPoint.x, yValue: maxPoint.y, backgroundColor: 'rgba(220, 53, 69, 0.8)', radius: 3 },
+                                    highLabel: getTooltipLabel(maxPoint, `H: ${maxPoint.y.toFixed(2)}`, -10),
+                                    lowPoint: { type: 'point', xValue: minPoint.x, yValue: minPoint.y, backgroundColor: 'rgba(40, 167, 69, 0.8)', radius: 3 },
+                                    lowLabel: getTooltipLabel(minPoint, `L: ${minPoint.y.toFixed(2)}`, 10)
+                                }
+                            }
+                        },
+                        animation: { duration: 0 }
+                    }
+                });
+            }, 0);
         }
         function hideTooltipChart() {
             document.getElementById('chart-tooltip').classList.remove('visible');
@@ -958,6 +1449,8 @@
             const applyBtn = document.getElementById('applyCustomDate');
             if (context === 'summary') {
                 applyBtn.onclick = applyCustomDateToSummary;
+            } else if (context === 'cross-market') {
+                applyBtn.onclick = applyCustomDateToCrossMarket;
             } else {
                 applyBtn.onclick = () => applyCustomDateToTable(context);
             }
@@ -967,7 +1460,7 @@
         function applyCustomDateToSummary() {
             const start = document.getElementById('customStartDate').value;
             const end = document.getElementById('customEndDate').value;
-            if (!start || !end || new Date(start) > new Date(end)) { alert('Please select a valid date range.'); return; }
+            if (!start || !end || new Date(start) > new Date(end)) { return; }
             
             const customPeriod = { start, end };
             const customButton = document.querySelector('.summary-period-controls button[data-period="custom"]');
@@ -975,10 +1468,22 @@
             closeModal('datePickerModal');
         }
 
+        function applyCustomDateToCrossMarket() {
+            const start = document.getElementById('customStartDate').value;
+            const end = document.getElementById('customEndDate').value;
+            if (!start || !end || new Date(start) > new Date(end)) { return; }
+            
+            const customPeriod = { start, end };
+            const customButton = document.querySelector('.cross-market-controls button[data-period="custom"]');
+            updateCrossMarketChart(customPeriod, customButton);
+            closeModal('datePickerModal');
+        }
+
+
         function applyCustomDateToTable(market) {
             const startDate = new Date(document.getElementById('customStartDate').value);
             const endDate = new Date(document.getElementById('customEndDate').value);
-            if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) { alert('Please select a valid date range.'); return; }
+            if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) { return; }
 
             const marketId = market.replace(/\s/g, '-');
             const table = document.getElementById(`perf-table-${marketId}`);
@@ -1006,7 +1511,7 @@
             });
 
             const header = table.querySelector('.custom-date-header');
-            header.textContent = `${formatDateMMDD(startDate)}-${formatDateMMDD(endDate)} Perf.`;
+            header.innerHTML = `${formatDateMMDD(startDate)}-<br>${formatDateMMDD(endDate)} Perf.`;
             closeModal('datePickerModal');
         }
 
@@ -1028,14 +1533,35 @@
         function openModal(modalId) { const m = document.getElementById(modalId); m.style.display='block'; setTimeout(() => m.classList.add('show'), 10); document.body.style.overflow = 'hidden'; }
         function closeModal(modalId) {
             const m = document.getElementById(modalId);
+            if(!m) return;
             m.classList.remove('show');
-            setTimeout(() => { m.style.display = 'none'; }, 300);
-            if (!document.querySelector('.modal.show')) document.body.style.overflow = '';
+            setTimeout(() => { 
+                m.style.display = 'none';
+                if (!document.querySelector('.modal.show')) {
+                    document.body.style.overflow = '';
+                }
+            }, 300);
+
+            if (modalId === 'tickerModal') {
+                const canvasId = 'individualTickerChart';
+                if (activeCharts[canvasId]) {
+                    activeCharts[canvasId].destroy();
+                    delete activeCharts[canvasId];
+                }
+            }
         }
         function openTab(evt, tabName) {
             document.querySelectorAll(".tab-content, .tab-link").forEach(el => el.classList.remove("active"));
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
+            
+            // BUG FIX: When switching to the Market tab, ensure the Cross Market chart renders correctly.
+            if (tabName === 'market') {
+                const activeSubTab = document.querySelector('#market-sub-tabs-container .market-sub-tab-link.active');
+                if (activeSubTab && activeSubTab.textContent === 'Cross Market') {
+                    updateCrossMarketChart(currentCrossMarketPeriod);
+                }
+            }
         }
         function initTheme() {
             const isDarkMode = localStorage.getItem('theme') === 'dark';
@@ -1059,6 +1585,14 @@
                     if (chart.options.scales.y) chart.options.scales.y.grid.color = gridColor;
                     if(chart.options.plugins.legend) {
                        chart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#333';
+                    }
+                    if(chart.canvas.id === 'individualTickerChart' && chart.options.plugins.annotation) {
+                        Object.values(chart.options.plugins.annotation.annotations).forEach(annotation => {
+                            if(annotation.type === 'label') {
+                                annotation.backgroundColor = isDarkMode ? 'rgba(50,50,50,0.85)' : 'rgba(255, 255, 255, 0.85)';
+                                annotation.color = isDarkMode ? '#f0f0f0' : '#333';
+                            }
+                        });
                     }
                     chart.update();
                 }
