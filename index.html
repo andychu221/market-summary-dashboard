@@ -441,6 +441,14 @@
         };
 
         // --- Utility Functions ---
+        function formatNumberWithCommas(num) {
+            if (num === null || num === undefined) return 'N/A';
+            const numStr = String(num);
+            const parts = numStr.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            return parts.join('.');
+        }
+
         function getStartDate(period, referenceDate) {
             const d = new Date(referenceDate);
             d.setHours(0,0,0,0);
@@ -593,7 +601,7 @@
                 if (val === null || isNaN(val)) return 'N/A';
                 if (type === 'bps') return `${val.toFixed(0)} bps`;
                 if (type === 'percent') return `${val.toFixed(2)}%`;
-                if (type === 'points') return val.toFixed(market === 'FX' ? 4 : 2);
+                if (type === 'points') return formatNumberWithCommas(val.toFixed(market === 'FX' ? 4 : 2));
                 return val;
             };
 
@@ -611,7 +619,8 @@
                 ticker, 
                 name: tickerData[0].name, 
                 market, 
-                lastPrice: lastPrice.toFixed(market === 'FX' ? 4 : 2), 
+                lastPrice: lastPrice, // Store as raw number for sorting
+                lastPriceFormatted: formatNumberWithCommas(lastPrice.toFixed(market === 'FX' ? 4 : 2)), // Store formatted string for display
                 lastDate: formatDateMMDD(refDate),
                 lastTime: lastTime
             };
@@ -619,22 +628,30 @@
             const prevPrice1d = tickerData.length > 1 ? tickerData[tickerData.length - 2].price : null;
             const perf1d = calcPerf(prevPrice1d, lastPrice, isRate, invertedFx);
             perf['1d'] = formatValue(perf1d, isRate ? 'bps' : 'percent');
+            perf['1d_raw'] = perf1d; // Store raw value for sorting
             perf['1d_pts'] = formatValue(prevPrice1d !== null ? (lastPrice - prevPrice1d) : null, 'points');
+            perf['1d_pts_raw'] = prevPrice1d !== null ? (lastPrice - prevPrice1d) : null;
             
             ['1w', 'mtd', '1m', '3m', 'ytd', '1y'].forEach(p => {
                 const startDate = getStartDate(p, refDate);
                 const startPrice = findPriceOnOrBefore(startDate);
                 const pPerf = calcPerf(startPrice, lastPrice, isRate, invertedFx);
+                const pPts = startPrice !== null ? (lastPrice - startPrice) : null;
                 perf[p] = formatValue(pPerf, isRate ? 'bps' : 'percent');
-                perf[p + '_pts'] = formatValue(startPrice !== null ? (lastPrice - startPrice) : null, 'points');
+                perf[p + '_raw'] = pPerf;
+                perf[p + '_pts'] = formatValue(pPts, 'points');
+                perf[p + '_pts_raw'] = pPts;
             });
 
             const lastYearDates = getStartDate('lastYear', refDate);
             const startPriceLY = findPriceOnOrBefore(lastYearDates.start);
             const endPriceLY = findPriceOnOrBefore(lastYearDates.end);
             const perfLY = calcPerf(startPriceLY, endPriceLY, isRate, invertedFx);
+            const pPtsLY = (startPriceLY !== null && endPriceLY !== null) ? endPriceLY - startPriceLY : null;
             perf.lastYear = formatValue(perfLY, isRate ? 'bps' : 'percent');
-            perf.lastYear_pts = formatValue((startPriceLY !== null && endPriceLY !== null) ? endPriceLY - startPriceLY : null, 'points');
+            perf.lastYear_raw = perfLY;
+            perf.lastYear_pts = formatValue(pPtsLY, 'points');
+            perf.lastYear_pts_raw = pPtsLY;
 
             perf.findPriceOnOrBefore = findPriceOnOrBefore;
             perf.calcPerf = calcPerf;
@@ -698,7 +715,7 @@
                                 periodDisplayValue = (rawPerf === null || isNaN(rawPerf)) ? 'N/A' : `${rawPerf.toFixed(2)}%`;
                             } else {
                                 const rawDiff = (startPrice !== null && endPrice !== null) ? endPrice - startPrice : null;
-                                periodDisplayValue = (rawDiff === null || isNaN(rawDiff)) ? 'N/A' : rawDiff.toFixed(item.market === 'FX' ? 4 : 2);
+                                periodDisplayValue = (rawDiff === null || isNaN(rawDiff)) ? 'N/A' : formatNumberWithCommas(rawDiff.toFixed(item.market === 'FX' ? 4 : 2));
                             }
                         }
                     } else {
@@ -706,10 +723,10 @@
                     }
 
                     const day1DisplayValue = isRate ? item['1d'] : item['1d' + keySuffix];
-                    const colorClass = val => (val === 'N/A' || parseFloat(val) === 0) ? '' : parseFloat(val) > 0 ? 'text-positive' : 'text-negative';
+                    const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
                     
                     tableHTML += `<tr data-ticker="${item.ticker}">
-                        <td title="${item.name}">${item.name}</td><td>${item.lastDate}</td><td>${item.lastTime}</td><td>${item.lastPrice}</td>
+                        <td title="${item.name}">${item.name}</td><td>${item.lastDate}</td><td>${item.lastTime}</td><td>${item.lastPriceFormatted}</td>
                         <td class="${colorClass(day1DisplayValue)}">${day1DisplayValue}</td>
                         <td class="${colorClass(periodDisplayValue)}">${periodDisplayValue}</td>
                     </tr>`;
@@ -780,7 +797,7 @@
             
             container.innerHTML = `
                 <div class="view-toggle-tabs" style="display: flex; justify-content: space-between; align-items: center; width:100%;">
-                    <div>
+                    <div style="display: flex;">
                         <div class="view-toggle-tab active" data-view="table" onclick="switchMarketView('${market}', 'table')">Table</div>
                         <div class="view-toggle-tab" data-view="chart" onclick="switchMarketView('${market}', 'chart')">Chart</div>
                     </div>
@@ -798,8 +815,7 @@
             const isRate = market === 'US Rates';
             const isPercent = performanceDisplayMode === 'percent';
             const suffix = isRate ? ' (bps)' : isPercent ? ' (%)' : ' (Pts)';
-            const keySuffix = isPercent ? '' : '_pts';
-
+            
             let tableHTML = `<thead><tr>
                 <th data-sort-key="name">Name <span class="sort-icon"></span></th>
                 <th data-sort-key="lastDate">Date <span class="sort-icon"></span></th>
@@ -815,9 +831,11 @@
             </tr></thead><tbody>`;
 
             data.forEach(item => {
-                const colorClass = val => (val === 'N/A' || parseFloat(val) === 0) ? '' : parseFloat(val) > 0 ? 'text-positive' : 'text-negative';
+                const keySuffix = isPercent ? '' : '_pts';
+                const colorClass = val => (val === null || val === undefined || val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
+                
                 tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
-                    <td>${item.name}</td><td>${item.lastDate}</td><td>${item.lastTime}</td><td>${item.lastPrice}</td>
+                    <td>${item.name}</td><td>${item.lastDate}</td><td>${item.lastTime}</td><td>${item.lastPriceFormatted}</td>
                     ${['1d', '1w', 'mtd', '1m', '3m', 'ytd'].map(p => {
                         const displayValue = isRate ? item[p] : item[p + keySuffix];
                         return `<td class="${colorClass(displayValue)}">${displayValue}</td>`
@@ -1407,9 +1425,9 @@
                                 annotations: {
                                     ...yearAnnotations,
                                     highPoint: { type: 'point', xValue: maxPoint.x, yValue: maxPoint.y, backgroundColor: 'rgba(220, 53, 69, 0.8)', radius: 5 },
-                                    highLabel: getLabelAnnotation(maxPoint, `High: ${maxPoint.y.toFixed(2)}`, -15),
+                                    highLabel: getLabelAnnotation(maxPoint, `High: ${formatNumberWithCommas(maxPoint.y.toFixed(2))}`, -15),
                                     lowPoint: { type: 'point', xValue: minPoint.x, yValue: minPoint.y, backgroundColor: 'rgba(40, 167, 69, 0.8)', radius: 5 },
-                                    lowLabel: getLabelAnnotation(minPoint, `Low: ${minPoint.y.toFixed(2)}`, 15)
+                                    lowLabel: getLabelAnnotation(minPoint, `Low: ${formatNumberWithCommas(minPoint.y.toFixed(2))}`, 15)
                                 }
                             }
                         }
@@ -1446,25 +1464,20 @@
                 const bPerf = allPerformanceData.get(b.dataset.ticker);
                 let valA, valB;
 
-                if (['1d', '1w', 'mtd', '1m', '3m', 'ytd'].includes(sortKey) || sortKey === 'lastPrice') {
-                    const keySuffix = (performanceDisplayMode === 'percent' && !isRate) ? '' : '_pts';
-                    const key = (isRate && sortKey !== 'lastPrice') ? sortKey : sortKey + keySuffix;
-                     if (sortKey === 'lastPrice') {
-                        valA = parseFloat(aPerf.lastPrice);
-                        valB = parseFloat(bPerf.lastPrice);
-                    } else {
-                        valA = parseFloat(aPerf[key]);
-                        valB = parseFloat(bPerf[key]);
-                    }
-                } else { // name or date
+                if (sortKey === 'name' || sortKey === 'lastDate') {
                     valA = aPerf[sortKey];
                     valB = bPerf[sortKey];
+                } else {
+                    const keySuffix = (performanceDisplayMode === 'percent' && !isRate) ? '_raw' : '_pts_raw';
+                    let key = sortKey === 'lastPrice' ? 'lastPrice' : sortKey + (isRate ? '_raw' : keySuffix);
+                    valA = aPerf[key];
+                    valB = bPerf[key];
                 }
                 
-                if (valA === 'N/A' || isNaN(valA)) valA = direction === 'asc' ? Infinity : -Infinity;
-                if (valB === 'N/A' || isNaN(valB)) valB = direction === 'asc' ? Infinity : -Infinity;
+                if (valA === null || valA === undefined || isNaN(valA)) valA = direction === 'asc' ? Infinity : -Infinity;
+                if (valB === null || valB === undefined || isNaN(valB)) valB = direction === 'asc' ? Infinity : -Infinity;
 
-                if (sortKey === 'name') {
+                if (typeof valA === 'string') {
                     return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 } else {
                     if (valA < valB) return direction === 'asc' ? -1 : 1;
@@ -1516,31 +1529,19 @@
             });
         }
 
-        // --- MODIFICATION: Rewrote tooltip logic for stability ---
         function showTooltipChart(event, ticker) {
-            // Clear any pending timeout from a previous hover to prevent drawing an old chart
             if (tooltipTimeout) {
                 clearTimeout(tooltipTimeout);
             }
-
-            // Set a new timeout to draw the chart. This debounce prevents flickering on rapid mouse movements.
             tooltipTimeout = setTimeout(() => {
                 const tooltip = document.getElementById('chart-tooltip');
                 if (!tooltip) return;
 
-                // 1. Get Data for the chart
-                let startDate, endDate = new Date(latestDataDate);
-                if (currentSummaryPeriod.period && currentSummaryPeriod.period !== 'custom') {
-                     startDate = getStartDate(currentSummaryPeriod.period, endDate);
-                } else if (currentSummaryPeriod.start) {
-                    startDate = new Date(currentSummaryPeriod.start);
-                    if(currentSummaryPeriod.end) endDate = new Date(currentSummaryPeriod.end);
-                } else {
-                    startDate = getStartDate('ytd', latestDataDate);
-                }
+                const endDate = new Date(latestDataDate);
+                const startDate = getStartDate('ytd', endDate);
 
-                if (!startDate || isNaN(startDate.getTime()) || !endDate || isNaN(endDate.getTime())) {
-                    hideTooltipChart(); // Hide if dates are somehow invalid
+                if (!startDate || isNaN(startDate.getTime())) {
+                    hideTooltipChart();
                     return;
                 }
                
@@ -1548,115 +1549,109 @@
                     .filter(d => d.ticker === ticker && d.date >= startDate && d.date <= endDate)
                     .map(d => ({x: d.date.getTime(), y: d.price}));
                 
-                // 2. Clean up any previous chart instance before drawing a new one
                 if (tooltipChart) {
                     tooltipChart.destroy();
                     tooltipChart = null;
                 }
 
-                // 3. Check if there's enough data to draw a line
                 if (chartData.length < 2) {
-                    hideTooltipChart(); // Hide if not enough data
+                    hideTooltipChart();
                     return;
                 }
                 
-                // 4. Make the tooltip visible and get the canvas to draw on
                 tooltip.classList.add('visible');
                 
-                const canvas = document.getElementById('tooltip-canvas');
-                if (!canvas) return; 
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return;
-                
-                // 5. Chart creation logic (annotations for high/low points)
-                let minPoint = chartData[0], maxPoint = chartData[0];
-                chartData.forEach(p => {
-                    if (p.y < minPoint.y) minPoint = p;
-                    if (p.y > maxPoint.y) maxPoint = p;
-                });
+                requestAnimationFrame(() => {
+                    const canvas = document.getElementById('tooltip-canvas');
+                    if (!canvas || !tooltip.classList.contains('visible')) return; 
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    
+                    let minPoint = chartData[0], maxPoint = chartData[0];
+                    chartData.forEach(p => {
+                        if (p.y < minPoint.y) minPoint = p;
+                        if (p.y > maxPoint.y) maxPoint = p;
+                    });
 
-                const getLabelAnnotation = (point, content, defaultYAdjust) => {
-                    const label = {
-                        type: 'label', xValue: point.x, yValue: point.y, content: content,
-                        font: { size: 10 }, yAdjust: defaultYAdjust,
-                        backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(50,50,50,0.85)' : 'rgba(255, 255, 255, 0.85)',
-                        color: document.body.classList.contains('dark-mode') ? '#f0f0f0' : '#333',
-                        padding: 2, borderRadius: 2
-                    };
-                    const pointIndex = chartData.findIndex(p => p.x === point.x);
-                    if (pointIndex < chartData.length / 2) { label.xAdjust = 5; label.textAlign = 'left'; } 
-                    else { label.xAdjust = -5; label.textAlign = 'right'; }
-                    return label;
-                };
-
-                const yearAnnotations = {};
-                const yearsInData = {};
-                chartData.forEach(d => {
-                    const year = new Date(d.x).getFullYear();
-                    if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
-                    else {
-                        yearsInData[year].min = Math.min(yearsInData[year].min, d.x);
-                        yearsInData[year].max = Math.max(yearsInData[year].max, d.x);
-                    }
-                });
-                
-                Object.keys(yearsInData).sort().forEach((year, index) => {
-                    if (index > 0) {
-                        const yearStartDate = new Date(parseInt(year), 0, 1).getTime();
-                        yearAnnotations[`yearLine${year}`] = {
-                            type: 'line', xMin: yearStartDate, xMax: yearStartDate,
-                            borderColor: 'rgba(128, 128, 128, 0.5)', borderWidth: 1, borderDash: [2, 2]
+                    const getLabelAnnotation = (point, content, defaultYAdjust) => {
+                        const label = {
+                            type: 'label', xValue: point.x, yValue: point.y, content: content,
+                            font: { size: 10 }, yAdjust: defaultYAdjust,
+                            backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(50,50,50,0.85)' : 'rgba(255, 255, 255, 0.85)',
+                            color: document.body.classList.contains('dark-mode') ? '#f0f0f0' : '#333',
+                            padding: 2, borderRadius: 2
                         };
-                    }
-                });
+                        const pointIndex = chartData.findIndex(p => p.x === point.x);
+                        if (pointIndex < chartData.length / 2) { label.xAdjust = 5; label.textAlign = 'left'; } 
+                        else { label.xAdjust = -5; label.textAlign = 'right'; }
+                        return label;
+                    };
 
-                // 6. Create the new Chart instance
-                tooltipChart = new Chart(ctx, {
-                    type: 'line',
-                    data: { datasets: [{ 
-                        data: chartData, borderColor: 'rgba(74, 144, 226, 1)', 
-                        backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 1.5, 
-                        fill: true, pointRadius: 0, tension: 0.1 
-                    }] },
-                    plugins: [tooltipYearAxisPlugin],
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        layout: { padding: { top: 15, bottom: 25, left: 5, right: 5 } },
-                        scales: { x: { display: false }, y: { display: false } },
-                        plugins: {
-                            yearAxis: { years: yearsInData },
-                            legend: { display: false },
-                            tooltip: { enabled: false },
-                            annotation: {
-                                annotations: {
-                                    ...yearAnnotations,
-                                    highPoint: { type: 'point', xValue: maxPoint.x, yValue: maxPoint.y, backgroundColor: 'rgba(220, 53, 69, 0.8)', radius: 3 },
-                                    highLabel: getLabelAnnotation(maxPoint, `H: ${maxPoint.y.toFixed(2)}`, -10),
-                                    lowPoint: { type: 'point', xValue: minPoint.x, yValue: minPoint.y, backgroundColor: 'rgba(40, 167, 69, 0.8)', radius: 3 },
-                                    lowLabel: getLabelAnnotation(minPoint, `L: ${minPoint.y.toFixed(2)}`, 10)
+                    const yearAnnotations = {};
+                    const yearsInData = {};
+                    chartData.forEach(d => {
+                        const year = new Date(d.x).getFullYear();
+                        if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
+                        else {
+                            yearsInData[year].min = Math.min(yearsInData[year].min, d.x);
+                            yearsInData[year].max = Math.max(yearsInData[year].max, d.x);
+                        }
+                    });
+                    
+                    Object.keys(yearsInData).sort().forEach((year, index) => {
+                        if (index > 0) {
+                            const yearStartDate = new Date(parseInt(year), 0, 1).getTime();
+                            yearAnnotations[`yearLine${year}`] = {
+                                type: 'line', xMin: yearStartDate, xMax: yearStartDate,
+                                borderColor: 'rgba(128, 128, 128, 0.5)', borderWidth: 1, borderDash: [2, 2]
+                            };
+                        }
+                    });
+
+                    tooltipChart = new Chart(ctx, {
+                        type: 'line',
+                        data: { datasets: [{ 
+                            data: chartData, borderColor: 'rgba(74, 144, 226, 1)', 
+                            backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 1.5, 
+                            fill: true, pointRadius: 0, tension: 0.1 
+                        }] },
+                        plugins: [tooltipYearAxisPlugin],
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            layout: { padding: { top: 15, bottom: 25, left: 5, right: 5 } },
+                            scales: { x: { display: false }, y: { display: false } },
+                            plugins: {
+                                yearAxis: { years: yearsInData },
+                                legend: { display: false },
+                                tooltip: { enabled: false },
+                                annotation: {
+                                    annotations: {
+                                        ...yearAnnotations,
+                                        highPoint: { type: 'point', xValue: maxPoint.x, yValue: maxPoint.y, backgroundColor: 'rgba(220, 53, 69, 0.8)', radius: 3 },
+                                        highLabel: getLabelAnnotation(maxPoint, `H: ${formatNumberWithCommas(maxPoint.y.toFixed(2))}`, -10),
+                                        lowPoint: { type: 'point', xValue: minPoint.x, yValue: minPoint.y, backgroundColor: 'rgba(40, 167, 69, 0.8)', radius: 3 },
+                                        lowLabel: getLabelAnnotation(minPoint, `L: ${formatNumberWithCommas(minPoint.y.toFixed(2))}`, 10)
+                                    }
                                 }
-                            }
-                        },
-                        animation: { duration: 0 }
-                    }
+                            },
+                            animation: { duration: 0 }
+                        }
+                    });
                 });
-            }, 50); // A 50ms delay is a good balance between responsiveness and stability
+            }, 50); 
         }
         
         function hideTooltipChart() {
-            // Always clear any pending chart draw operation when the mouse leaves
             if (tooltipTimeout) {
                 clearTimeout(tooltipTimeout);
                 tooltipTimeout = null;
             }
             
-            // Hide the tooltip container
             const tooltip = document.getElementById('chart-tooltip');
             if (tooltip) {
                 tooltip.classList.remove('visible');
             }
             
-            // If a chart instance exists, destroy it to free up resources and prevent conflicts
             if (tooltipChart) { 
                 tooltipChart.destroy(); 
                 tooltipChart = null; 
@@ -1729,7 +1724,7 @@
                          perfValue = (rawValue === null || isNaN(rawValue)) ? 'N/A' : `${rawValue.toFixed(2)}%`;
                     } else {
                          rawValue = (startPrice !== null && endPrice !== null) ? endPrice - startPrice : null;
-                         perfValue = (rawValue === null || isNaN(rawValue)) ? 'N/A' : rawValue.toFixed(perfData.market === 'FX' ? 4 : 2);
+                         perfValue = (rawValue === null || isNaN(rawValue)) ? 'N/A' : formatNumberWithCommas(rawValue.toFixed(perfData.market === 'FX' ? 4 : 2));
                     }
                 }
 
