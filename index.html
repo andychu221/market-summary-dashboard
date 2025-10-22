@@ -246,8 +246,8 @@
         }
         .summary-card table { font-size: 0.9rem; table-layout: fixed; }
         .summary-card th, .summary-card td { padding: 6px 8px; }
-        /* Make table rows non-clickable by default, tooltip will still trigger */
-        .summary-card tbody tr { cursor: default; } 
+        .summary-card tbody tr { cursor: default; } /* Changed from pointer */
+        .summary-card td:first-child, .summary-card th:first-child { width: 35%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         #summary-news-content {
             white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;
@@ -271,7 +271,7 @@
 
         #chart-tooltip {
             position: fixed; z-index: 9999;
-            width: 350px; height: 220px;
+            width: 320px; height: 200px;
             background: var(--modal-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px; box-shadow: var(--shadow-strong);
@@ -325,9 +325,9 @@
                             <button data-period="1y" onclick="updateSummaryView({period: '1y'}, this)">1-Year</button>
                             <button data-period="custom" onclick="openCustomDateModal('summary')">Custom</button>
                         </div>
-                        <button class="display-mode-toggle print-btn" style="padding: 8px 12px; font-size: 0.9rem; background-color: #6c757d;" onclick="togglePerformanceDisplayMode()">Show Points</button>
                     </div>
-                    <button class="print-btn" onclick="window.print()">Print Summary (PDF)</button>
+                    <!-- *** MOVED "Show Points" button here and REMOVED "Print" button *** -->
+                    <button class="display-mode-toggle print-btn" style="padding: 8px 12px; font-size: 0.9rem; background-color: #6c757d;" onclick="togglePerformanceDisplayMode()">Show Points</button>
                 </div>
                 <div id="summary-content-to-print">
                     <div class="summary-section">
@@ -416,7 +416,7 @@
 
     <script>
         // --- Global Variables ---
-        let allData = [], dataByMarket = {}, dataByTicker = {}, allNewsData = [], newsByCategory = {};
+        let allData = [], dataByMarket = {}, allNewsData = [], newsByCategory = {};
         let activeCharts = {}, allPerformanceData = new Map();
         let latestDataDate = null, marketSortState = {};
         let currentSummaryPeriod = { period: 'ytd' };
@@ -425,6 +425,7 @@
         let activeCustomDateContext = null;
         let currentCrossMarketPeriod = { period: 'ytd' };
         let performanceDisplayMode = 'percent'; // 'percent' or 'points'
+        let intradayDataCache = new Map(); // *** ADDED cache for intraday data ***
         
         // --- Chart Colors ---
         const CHART_COLORS = [
@@ -480,7 +481,7 @@
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     return await response.json();
                 } catch (error) {
-                    console.error(`Attempt ${i + 1} failed for ${url}: ${error.message}`);
+                    console.log(`Attempt ${i + 1} failed for ${url}: ${error.message}`);
                     if (i < retries - 1) await new Promise(res => setTimeout(res, delay)); else throw error;
                 }
             }
@@ -542,9 +543,10 @@
                 loadingText.textContent = 'Processing news data...';
                 if (newsResult && Array.isArray(newsResult.reports)) {
                     allNewsData = newsResult.reports.map(r => ({...r, datetime: new Date(`${r.Date}T${r.Time}`)})).filter(n => n.datetime.getTime()).sort((a, b) => b.datetime - a.datetime);
+                    processNewsData();
+                } else {
+                    processNewsData();
                 }
-                processNewsData();
-
 
                 loadingOverlay.style.opacity = '0';
                 setTimeout(() => { loadingOverlay.style.display = 'none'; }, 300);
@@ -556,23 +558,15 @@
 
         function processPriceData() {
             allPerformanceData.clear();
-            
-            // OPTIMIZATION: Group data by market and by ticker in a single pass for efficiency
-            dataByMarket = {};
-            dataByTicker = {};
-            allData.forEach(row => {
-                // Group by Market
-                if (!dataByMarket[row.market]) dataByMarket[row.market] = [];
-                dataByMarket[row.market].push(row);
+            dataByMarket = allData.reduce((acc, row) => {
+                if (!acc[row.market]) acc[row.market] = [];
+                acc[row.market].push(row);
+                return acc;
+            }, {});
 
-                // Group by Ticker
-                if (!dataByTicker[row.ticker]) dataByTicker[row.ticker] = [];
-                dataByTicker[row.ticker].push(row);
-            });
-
-            const allTickers = Object.keys(dataByTicker); // Use keys from our new map
+            const allTickers = [...new Set(allData.map(d => d.ticker))];
             allTickers.forEach(ticker => {
-                const market = dataByTicker[ticker][0]?.market || 'Unknown';
+                const market = allData.find(d => d.ticker === ticker)?.market || 'Unknown';
                 allPerformanceData.set(ticker, calculatePerformanceForTicker(ticker, market));
             });
             
@@ -582,8 +576,7 @@
 
         // --- Performance Calculation ---
         function calculatePerformanceForTicker(ticker, market) {
-            // OPTIMIZATION: Use pre-grouped dataByTicker instead of filtering allData
-            const tickerData = dataByTicker[ticker] || [];
+            const tickerData = allData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
             if(tickerData.length === 0) return {};
 
             const lastDataPoint = tickerData[tickerData.length - 1];
@@ -627,8 +620,8 @@
                 ticker, 
                 name: tickerData[0].name, 
                 market, 
-                lastPrice: lastPrice,
-                lastPriceFormatted: formatNumberWithCommas(lastPrice.toFixed(market === 'FX' ? 4 : 2)),
+                lastPrice: lastPrice, // Store as raw number for sorting
+                lastPriceFormatted: formatNumberWithCommas(lastPrice.toFixed(market === 'FX' ? 4 : 2)), // Store formatted string for display
                 lastDate: formatDateMMDD(refDate),
                 lastTime: lastTime
             };
@@ -636,7 +629,7 @@
             const prevPrice1d = tickerData.length > 1 ? tickerData[tickerData.length - 2].price : null;
             const perf1d = calcPerf(prevPrice1d, lastPrice, isRate, invertedFx);
             perf['1d'] = formatValue(perf1d, isRate ? 'bps' : 'percent');
-            perf['1d_raw'] = perf1d;
+            perf['1d_raw'] = perf1d; // Store raw value for sorting
             perf['1d_pts'] = formatValue(prevPrice1d !== null ? (lastPrice - prevPrice1d) : null, 'points');
             perf['1d_pts_raw'] = prevPrice1d !== null ? (lastPrice - prevPrice1d) : null;
             
@@ -710,10 +703,9 @@
                         const start = new Date(currentSummaryPeriod.start);
                         const end = new Date(currentSummaryPeriod.end);
                         const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
-                        // OPTIMIZATION: Use pre-grouped data
-                        const tickerDataForCustom = dataByTicker[item.ticker] || [];
-                        const startPrice = item.findPriceOnOrBefore(start, tickerDataForCustom);
-                        const endPrice = item.findPriceOnOrBefore(end, tickerDataForCustom);
+                        const tickerData = allData.filter(d => d.ticker === item.ticker);
+                        const startPrice = item.findPriceOnOrBefore(start, tickerData);
+                        const endPrice = item.findPriceOnOrBefore(end, tickerData);
                         
                         if (isRate) {
                             const rawPerf = item.calcPerf(startPrice, endPrice, true, false);
@@ -1235,12 +1227,10 @@
                 endDate = new Date(timeConfig.end);
             }
             
+            const filteredData = allData.filter(d => d.date >= startDate && d.date <= endDate);
             const isRate = market === 'US Rates';
             const datasets = tickers.map((ticker, index) => {
-                // OPTIMIZATION: Use pre-grouped data
-                const tickerAllData = dataByTicker[ticker] || [];
-                const tickerData = tickerAllData.filter(d => d.date >= startDate && d.date <= endDate);
-
+                const tickerData = filteredData.filter(d => d.ticker === ticker);
                 if (tickerData.length === 0) return null;
                 const color = CHART_COLORS[index % CHART_COLORS.length];
                 
@@ -1293,10 +1283,34 @@
             }
         };
 
+        const tooltipYearAxisPlugin = {
+            id: 'tooltipYearAxis',
+            afterDraw: (chart) => {
+                const years = chart.options.plugins.yearAxis.years;
+                if (!years || Object.keys(years).length === 0) return;
+                const { ctx, chartArea: { bottom, left, right }, scales: { x } } = chart;
+                
+                ctx.save();
+                ctx.font = '10px sans-serif';
+                ctx.fillStyle = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+                ctx.textAlign = 'center';
+
+                for (const year in years) {
+                    const yearData = years[year];
+                    const midPoint = (yearData.min + yearData.max) / 2;
+                    const xPos = x.getPixelForValue(midPoint);
+                    
+                    if (xPos >= left && xPos <= right) {
+                         ctx.fillText(year, xPos, bottom + 15);
+                    }
+                }
+                ctx.restore();
+            }
+        };
+
         function showIndividualTickerChart(ticker, period = 'last_calendar') {
             const modal = document.getElementById('tickerModal');
-            // OPTIMIZATION: Use pre-grouped data
-            const tickerData = dataByTicker[ticker] || [];
+            const tickerData = allData.filter(d => d.ticker === ticker);
             if (tickerData.length === 0) return;
 
             const name = tickerData[0].name;
@@ -1424,6 +1438,85 @@
             openModal('tickerModal');
         }
 
+        // *** MODIFIED function to fetch intraday data ***
+        async function fetchIntradayData(ticker) {
+            const perfData = allPerformanceData.get(ticker);
+            if (!perfData) return null;
+            
+            const market = perfData.market;
+
+            // Try to get market-level data from cache
+            let marketData = intradayDataCache.get(market);
+
+            if (marketData === undefined) { // Not cached yet
+                let marketFile = market.replace(/\s/g, '_');
+                
+                const url = `https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/intraday_market_data/${marketFile}.json`;
+                
+                try {
+                    const response = await fetch(`${url}?v=${new Date().getTime()}`);
+                    if (!response.ok) throw new Error(`Network response was not ok for ${url}`);
+                    marketData = await response.json();
+                    intradayDataCache.set(market, marketData); // Cache the whole market object
+                } catch (error) {
+                    console.error(`Failed to fetch/process intraday market data for ${market} (${url}):`, error);
+                    intradayDataCache.set(market, null); // Cache failure
+                    return null;
+                }
+            }
+
+            if (!marketData) return null; // Fetch failed previously
+
+            // *** NEW LOGIC: Parse object format ***
+            const tickerDetails = marketData[ticker];
+
+            if (!tickerDetails || !tickerDetails.data) {
+                // This is not an error, some tickers just don't have intraday data
+                return null;
+            }
+
+            try {
+                // Find the latest date string from existing historical data
+                const tickerDailyData = allData.filter(d => d.ticker === ticker);
+                if (tickerDailyData.length === 0) throw new Error('No historical data for ticker');
+                
+                const latestDayDate = tickerDailyData[tickerDailyData.length - 1].date;
+                // Get the date part as a string, e.g., "2025-10-16"
+                const latestDateString = latestDayDate.toISOString().split('T')[0];
+                
+                const intradayData = tickerDetails.data; // This is the object {"2025-10-16 09:30": 181.67, ...}
+                
+                const chartData = [];
+                // Loop through all datetime strings in the intraday data object
+                for (const dateStr in intradayData) {
+                    // Check if this intraday timestamp (e.g., "2025-10-16 09:30") belongs to the latest trading day
+                    if (dateStr.startsWith(latestDateString)) {
+                        const timestamp = new Date(dateStr).getTime();
+                        const price = parseFloat(intradayData[dateStr]);
+                        
+                        if (!isNaN(timestamp) && !isNaN(price)) {
+                            chartData.push({ x: timestamp, y: price });
+                        }
+                    }
+                }
+                // *** END OF NEW LOGIC ***
+
+
+                if (chartData.length === 0) {
+                    // This can happen if intraday data is stale or not available for the latest day
+                    // console.log(`No *current* intraday data points found for ${ticker} on ${latestDateString}`);
+                    return null;
+                }
+
+                chartData.sort((a, b) => a.x - b.x); // Ensure data is sorted by time
+                return chartData;
+
+            } catch (error) {
+                console.error(`Error processing intraday data for ${ticker}:`, error);
+                return null;
+            }
+        }
+
         // --- Event Listeners & Interactions ---
         function sortTable(market, sortKey, thElement) {
             const marketId = market.replace(/\s/g, '-');
@@ -1441,7 +1534,7 @@
             }
             marketSortState[market] = { key: sortKey, dir: direction };
             
-            table.querySelectorAll('th .sort-icon').forEach(icon => icon.textContent = '');
+            table.querySelectorAll('th .sort-icon').forEach(icon => icon.textContent = '↕');
             thElement.querySelector('.sort-icon').textContent = direction === 'asc' ? '▲' : '▼';
             
             const isRate = market === 'US Rates';
@@ -1498,85 +1591,46 @@
         
         function addSummaryTooltipEvents() {
             const tooltip = document.getElementById('chart-tooltip');
-            let lastHoveredTicker = null;
-
-            // OPTIMIZATION: Use event delegation for better performance
-            document.querySelectorAll('.summary-card tbody').forEach(tbody => {
-                tbody.addEventListener('mouseover', e => {
-                    const row = e.target.closest('tr[data-ticker]');
-                    if (row) {
-                        const ticker = row.dataset.ticker;
-                        // Only show new chart if ticker is different
-                        if (ticker !== lastHoveredTicker) {
-                            lastHoveredTicker = ticker;
-                            showTooltipChart(e, ticker);
-                        }
-                    }
+            document.querySelectorAll('.summary-card tbody tr[data-ticker]').forEach(row => {
+                const ticker = row.dataset.ticker;
+                if (!ticker) return;
+                row.addEventListener('mouseenter', (e) => showTooltipChart(e, ticker));
+                row.addEventListener('mousemove', (e) => { 
+                    const tooltipWidth = tooltip.offsetWidth;
+                    const tooltipHeight = tooltip.offsetHeight;
+                    let left = e.clientX + 15;
+                    let top = e.clientY + 15;
+                    if (left + tooltipWidth > window.innerWidth) left = e.clientX - tooltipWidth - 15;
+                    if (top + tooltipHeight > window.innerHeight) top = e.clientY - tooltipHeight - 15;
+                    tooltip.style.left = `${left}px`; 
+                    tooltip.style.top = `${top}px`; 
                 });
-                
-                tbody.addEventListener('mousemove', e => {
-                    const row = e.target.closest('tr[data-ticker]');
-                    if (row && tooltip.classList.contains('visible')) {
-                        // Position tooltip relative to cursor
-                        const tooltipWidth = tooltip.offsetWidth;
-                        const tooltipHeight = tooltip.offsetHeight;
-                        let left = e.clientX + 15;
-                        let top = e.clientY + 15;
-                        if (left + tooltipWidth > window.innerWidth) left = e.clientX - tooltipWidth - 15;
-                        if (top + tooltipHeight > window.innerHeight) top = e.clientY - tooltipHeight - 15;
-                        tooltip.style.left = `${left}px`; 
-                        tooltip.style.top = `${top}px`; 
-                    }
-                });
-
-                tbody.addEventListener('mouseleave', () => {
-                    lastHoveredTicker = null;
-                    hideTooltipChart();
-                });
+                row.addEventListener('mouseleave', hideTooltipChart);
             });
         }
 
+        // *** REPLACED function to use intraday data ***
         function showTooltipChart(event, ticker) {
             clearTimeout(tooltipTimeout);
-            
-            tooltipTimeout = setTimeout(() => {
+            hideTooltipChart(); // This clears the old chart
+
+            tooltipTimeout = setTimeout(async () => {
                 const tooltip = document.getElementById('chart-tooltip');
                 if (!tooltip) return;
                 
-                // Position the tooltip first before drawing
-                const tooltipWidth = 350;
-                const tooltipHeight = 220;
-                let left = event.clientX + 15;
-                let top = event.clientY + 15;
-                if (left + tooltipWidth > window.innerWidth) left = event.clientX - tooltipWidth - 15;
-                if (top + tooltipHeight > window.innerHeight) top = event.clientY - tooltipHeight - 15;
-                tooltip.style.left = `${left}px`; 
-                tooltip.style.top = `${top}px`;
+                // Show tooltip immediately to feel responsive
+                tooltip.classList.add('visible');
                 
-                // --- Start Chart Drawing ---
-                // REQUIREMENT: Use the period from the summary page controls
-                let startDate, endDate = new Date(latestDataDate);
-                if (currentSummaryPeriod.period && currentSummaryPeriod.period !== 'custom') {
-                    startDate = getStartDate(currentSummaryPeriod.period, endDate);
-                } else if (currentSummaryPeriod.start) {
-                    startDate = new Date(currentSummaryPeriod.start);
-                    endDate = new Date(currentSummaryPeriod.end);
-                } else {
-                    startDate = getStartDate('ytd', endDate); // Default fallback
-                }
-                if (!startDate) return;
+                const chartData = await fetchIntradayData(ticker);
 
-                const tickerAllData = dataByTicker[ticker] || [];
-                const chartData = tickerAllData
-                    .filter(d => d.date >= startDate && d.date <= endDate)
-                    .map(d => ({ x: d.date.getTime(), y: d.price }));
-
-                if (chartData.length < 2) {
-                    hideTooltipChart();
+                if (!chartData || chartData.length < 2) {
+                    // If fetch fails or no data, hide tooltip
+                    tooltip.classList.remove('visible');
                     return;
                 }
-                
-                tooltip.classList.add('visible');
+
+                // Check if tooltip is still supposed to be visible (mouse might have left)
+                if (!tooltip.classList.contains('visible')) return;
 
                 const canvas = document.getElementById('tooltip-canvas');
                 const ctx = canvas.getContext('2d');
@@ -1584,8 +1638,26 @@
                 
                 if (tooltipChart) tooltipChart.destroy();
                 
+                let minPoint = chartData[0], maxPoint = chartData[0];
+                chartData.forEach(p => {
+                    if (p.y < minPoint.y) minPoint = p;
+                    if (p.y > maxPoint.y) maxPoint = p;
+                });
+
+                const getLabelAnnotation = (point, content, defaultYAdjust) => ({
+                    type: 'label', xValue: point.x, yValue: point.y, content: content, font: { size: 10 }, yAdjust: defaultYAdjust,
+                    backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(50,50,50,0.85)' : 'rgba(255, 255, 255, 0.85)',
+                    color: document.body.classList.contains('dark-mode') ? '#f0f0f0' : '#333',
+                    padding: 2, borderRadius: 2,
+                    xAdjust: chartData.findIndex(p => p.x === point.x) < chartData.length / 2 ? 5 : -5,
+                    textAlign: chartData.findIndex(p => p.x === point.x) < chartData.length / 2 ? 'left' : 'right'
+                });
+
+                // Get date for x-axis title
+                const chartDate = new Date(chartData[0].x);
+                const dateString = `${chartDate.getFullYear()}-${(chartDate.getMonth() + 1).toString().padStart(2, '0')}-${chartDate.getDate().toString().padStart(2, '0')}`;
+
                 const isDarkMode = document.body.classList.contains('dark-mode');
-                const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
                 const textColor = isDarkMode ? '#a0a0a0' : '#555';
 
                 tooltipChart = new Chart(ctx, {
@@ -1596,39 +1668,65 @@
                     }] },
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        layout: { padding: 5 },
+                        layout: { padding: { top: 15, bottom: 20, left: 5, right: 5 } }, // Added bottom padding for x-axis
                         scales: { 
-                            // REQUIREMENT: Display axes
                             x: { 
-                                type: 'time', display: true,
+                                type: 'time', 
+                                display: true, // Show x-axis
+                                time: { 
+                                    unit: 'hour',
+                                    displayFormats: {
+                                        hour: 'HH:mm'
+                                    }
+                                },
                                 ticks: { 
-                                    color: textColor, maxRotation: 0, autoSkip: true,
-                                    maxTicksLimit: 4, font: { size: 10 }
+                                    color: textColor,
+                                    maxRotation: 0,
+                                    autoSkip: true,
+                                    maxTicksLimit: 6 // Limit ticks to avoid crowding
                                 },
                                 grid: { display: false },
-                                time: { tooltipFormat: 'MMM d', unit: 'day' }
+                                title: { // Add date title
+                                    display: true,
+                                    text: dateString,
+                                    color: textColor,
+                                    font: { size: 10 }
+                                }
                             }, 
+                            // *** MODIFICATION: Show Y-axis ***
                             y: { 
-                                display: true, position: 'right',
-                                ticks: { color: textColor, maxTicksLimit: 5, font: { size: 10 } },
-                                grid: { color: gridColor }
-                            } 
+                                display: true, 
+                                position: 'right',
+                                ticks: {
+                                    color: textColor,
+                                    maxTicksLimit: 5,
+                                    font: { size: 10 }
+                                },
+                                grid: { display: false }
+                            }
+                            // *** END MODIFICATION ***
                         },
                         plugins: {
                             legend: { display: false }, 
-                            tooltip: { // Use Chart.js's native tooltip
-                                enabled: true, mode: 'index', intersect: false,
+                            tooltip: { // Enable tooltip for intraday
+                                mode: 'index',
+                                intersect: false,
                                 callbacks: {
-                                    title: (tooltipItems) => formatDateMMDD(new Date(tooltipItems[0].parsed.x))
+                                    title: (tooltipItems) => {
+                                        const date = new Date(tooltipItems[0].parsed.x);
+                                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                    }
                                 }
                             },
-                            // REQUIREMENT: Remove annotations for high/low points
-                            annotation: { enabled: false }
+                            // *** MODIFICATION: Removed annotation plugin ***
+                            // (Annotation plugin configuration removed)
+                            // *** END MODIFICATION ***
                         },
                         animation: false
                     }
                 });
-            }, 100); // 100ms delay to prevent flicker on quick mouse movements
+
+            }, 100); // Keep the 100ms delay to avoid flickering
         }
 
         function hideTooltipChart() {
@@ -1697,8 +1795,7 @@
                 if (!perfData) return;
                 
                 const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => ticker.includes(inv));
-                // OPTIMIZATION: Use pre-grouped data
-                const tickerData = dataByTicker[ticker] || [];
+                const tickerData = allData.filter(d => d.ticker === ticker);
 
                 const startPrice = perfData.findPriceOnOrBefore(startDate, tickerData);
                 const endPrice = perfData.findPriceOnOrBefore(endDate, tickerData);
@@ -1749,7 +1846,7 @@
             } else if (activeTab.textContent === 'Market') {
                 const activeMarketTab = document.querySelector('#market-sub-tabs-container .market-sub-tab-link.active');
                 if (activeMarketTab) {
-                    openMarketSubTab(activeMarketTab.textContent);
+                    renderMarketData(activeMarketTab.textContent);
                 }
             }
         }
@@ -1814,13 +1911,12 @@
                 if (chart && chart.options) {
                     const textColor = isDarkMode ? '#a0a0a0' : '#555';
                     const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                    if (chart.options.scales.x) {
-                        chart.options.scales.x.ticks.color = textColor;
-                        chart.options.scales.x.grid.color = gridColor;
-                    }
-                    if (chart.options.scales.y) {
-                        chart.options.scales.y.ticks.color = textColor;
-                        chart.options.scales.y.grid.color = gridColor;
+                    if (chart.options.scales.x) chart.options.scales.x.ticks.color = textColor;
+                    if (chart.options.scales.y) chart.options.scales.y.ticks.color = textColor;
+                    if (chart.options.scales.x) chart.options.scales.x.grid.color = gridColor;
+                    if (chart.options.scales.y) chart.options.scales.y.grid.color = gridColor;
+                    if (chart.options.scales.x) { // *** Handle intraday chart x-axis title ***
+                        if(chart.options.scales.x.title) chart.options.scales.x.title.color = textColor;
                     }
                     if(chart.options.plugins.legend) {
                        chart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#333';
@@ -1833,10 +1929,12 @@
                             }
                         });
                     }
-                    chart.update('none');
+                    // *** BUG FIX: Removed the block for 'tooltip-canvas' annotations ***
+                    chart.update();
                 }
             });
         }
     </script>
 </body>
 </html>
+
