@@ -25,6 +25,8 @@
             --primary-color: #4a90e2;
             --positive-color: #28a745;
             --negative-color: #dc3545;
+            --tooltip-width: 380px; /* Increased tooltip size */
+            --tooltip-height: 240px; /* Increased tooltip size */
         }
 
         body.dark-mode {
@@ -65,6 +67,11 @@
             animation: spin 1s ease infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .small-spinner {
+            border: 2px solid rgba(128, 128, 128, 0.3); width: 24px; height: 24px;
+            border-radius: 50%; border-left-color: var(--primary-color);
+            animation: spin 0.8s ease infinite; margin: 10px auto;
+        }
         #loading-text { margin-top: 20px; font-size: 1.2rem; font-weight: 500; }
         
         .main-content {
@@ -240,15 +247,29 @@
             border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;
             background: var(--bg-color); display: flex; flex-direction: column;
         }
-        .summary-card h3 { 
-            margin-bottom: 10px; font-size: 1.2rem; color: var(--text-primary); 
-            border-bottom: 1px solid var(--border-color); padding-bottom: 8px;
+        .summary-card-header {
+             display: flex; justify-content: space-between; align-items: center;
+             margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;
+        }
+        .summary-card-header h3 { 
+           font-size: 1.2rem; color: var(--text-primary); margin: 0; padding: 0; border: none; /* Reset h3 styles */
+        }
+        .summary-card-header .toggle-buttons button {
+            padding: 4px 8px; font-size: 0.85rem; margin-left: 5px;
         }
         .summary-card table { font-size: 0.9rem; table-layout: fixed; }
         .summary-card th, .summary-card td { padding: 6px 8px; }
         .summary-card tbody tr { cursor: default; } /* Changed from pointer */
         .summary-card td:first-child, .summary-card th:first-child { width: 35%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+        .news-title-area {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .news-nav-buttons button {
+            background: none; border: none; cursor: pointer; font-size: 1.5rem; padding: 0 5px; color: var(--text-secondary);
+        }
+        .news-nav-buttons button:hover { color: var(--primary-color); }
+        .news-nav-buttons button:disabled { cursor: default; } /* Style disabled buttons */
         #summary-news-content {
             white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;
             overflow-y: auto; flex-grow: 1; color: var(--text-secondary);
@@ -271,7 +292,8 @@
 
         #chart-tooltip {
             position: fixed; z-index: 9999;
-            width: 320px; height: 200px;
+            width: var(--tooltip-width); /* Use variable */
+            height: var(--tooltip-height); /* Use variable */
             background: var(--modal-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px; box-shadow: var(--shadow-strong);
@@ -279,9 +301,33 @@
             opacity: 0; visibility: hidden;
             transition: opacity 0.2s ease, visibility 0.2s ease;
             padding: 10px;
+            display: flex; /* Use flexbox for layout */
+            flex-direction: column; /* Stack title, spinner, chart vertically */
         }
         #chart-tooltip.visible { opacity: 1; visibility: visible; }
-        #chart-tooltip canvas {
+        #tooltip-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #tooltip-spinner-container {
+             flex-grow: 1; /* Allow spinner container to fill space */
+             display: flex;
+             justify-content: center;
+             align-items: center;
+        }
+        #tooltip-canvas-container {
+            flex-grow: 1; /* Allow canvas container to fill space */
+            position: relative; /* Needed for Chart.js */
+            display: none; /* Hide initially */
+        }
+        #tooltip-canvas {
+            display: block; /* Make canvas fill container */
             width: 100%;
             height: 100%;
         }
@@ -326,7 +372,6 @@
                             <button data-period="custom" onclick="openCustomDateModal('summary')">Custom</button>
                         </div>
                     </div>
-                    <!-- *** MOVED "Show Points" button here and REMOVED "Print" button *** -->
                     <button class="display-mode-toggle print-btn" style="padding: 8px 12px; font-size: 0.9rem; background-color: #6c757d;" onclick="togglePerformanceDisplayMode()">Show Points</button>
                 </div>
                 <div id="summary-content-to-print">
@@ -341,8 +386,7 @@
                     </div>
                      <div class="summary-section">
                         <div id="summary-news-card" class="summary-card">
-                             <h3>Latest News Summary</h3>
-                            <div id="summary-news-content"><p>Loading news...</p></div>
+                            <!-- News content will be rendered here by JS -->
                         </div>
                     </div>
                 </div>
@@ -412,7 +456,15 @@
         </div>
     </div>
 
-    <div id="chart-tooltip"><canvas id="tooltip-canvas"></canvas></div>
+    <div id="chart-tooltip">
+        <div id="tooltip-title"></div> <!-- Title for ticker name/date/change -->
+        <div id="tooltip-spinner-container"> <!-- Container for spinner -->
+             <div class="small-spinner"></div>
+        </div>
+        <div id="tooltip-canvas-container"> <!-- Container for canvas -->
+            <canvas id="tooltip-canvas"></canvas>
+        </div>
+    </div>
 
     <script>
         // --- Global Variables ---
@@ -425,7 +477,9 @@
         let activeCustomDateContext = null;
         let currentCrossMarketPeriod = { period: 'ytd' };
         let performanceDisplayMode = 'percent'; // 'percent' or 'points'
-        let intradayDataCache = new Map(); // *** ADDED cache for intraday data ***
+        let intradayDataCache = new Map(); 
+        let currentSummaryNewsIndex = 0; // For news navigation
+        let currentSummaryStockType = 'US'; // 'US' or 'TW' for stock toggle
         
         // --- Chart Colors ---
         const CHART_COLORS = [
@@ -545,7 +599,7 @@
                     allNewsData = newsResult.reports.map(r => ({...r, datetime: new Date(`${r.Date}T${r.Time}`)})).filter(n => n.datetime.getTime()).sort((a, b) => b.datetime - a.datetime);
                     processNewsData();
                 } else {
-                    processNewsData();
+                    processNewsData(); // Still setup even if no news
                 }
 
                 loadingOverlay.style.opacity = '0';
@@ -599,7 +653,7 @@
             const isRate = market === 'US Rates';
 
             const formatValue = (val, type) => {
-                if (val === null || isNaN(val)) return 'N/A';
+                if (val === null || val === undefined || isNaN(val)) return 'N/A';
                 if (type === 'bps') return `${val.toFixed(0)} bps`;
                 if (type === 'percent') return `${val.toFixed(2)}%`;
                 if (type === 'points') return formatNumberWithCommas(val.toFixed(market === 'FX' ? 4 : 2));
@@ -669,12 +723,29 @@
             renderSummaryTab();
         }
 
+        // --- NEW: Switch Summary Stock Type ---
+        function switchSummaryStockType(type) {
+            currentSummaryStockType = type;
+            renderSummaryTab(); // Re-render the entire summary tab
+        }
+
         function renderSummaryTab() {
+            const usStocksTickers = ['NVDA.O', 'AAPL.O', 'MSFT.O', 'GOOGL.O', 'META.O', 'AMZN.O', 'TSLA.O', 'AVGO.O', 'TSM.N', 'AMD.O', 'INTC.O'];
+            // --- MODIFIED: Ensure TW Stocks data exists before mapping ---
+            const twStocksTickers = (dataByMarket['TW Stocks'] || [])
+                .map(d => d.ticker)
+                .filter((v, i, a) => a.indexOf(v) === i); // Get unique TW tickers
+
+
             const summaryConfig = {
                 'index': { title: 'Index', tickers: ['.SPX', '.IXIC', '.SOX', '.TWII'], container: 'summary-index' },
                 'rate': { title: 'US Rates', tickers: ['US3MT=RR', 'US2YT=RR', 'US10YT=RR', 'US30YT=RR'], container: 'summary-rate' },
                 'fx': { title: 'FX', tickers: ['.DXY', 'EUR=', 'JPY=', 'TWD='], container: 'summary-fx' },
-                'stocks': { title: 'Stocks', tickers: ['NVDA.O', 'AAPL.O', 'MSFT.O', 'GOOGL.O', 'META.O', 'AMZN.O', 'TSLA.O', 'AVGO.O', 'TSM.N', 'AMD.O', 'INTC.O'], container: 'summary-stocks' },
+                'stocks': { 
+                    title: 'Stocks', 
+                    container: 'summary-stocks',
+                    // Tickers will be determined by currentSummaryStockType
+                },
                 'commodity': { title: 'Commodity', tickers: ['CLc1', 'GCc1'], container: 'summary-commodity'}
             };
             const periodLabels = {'1d': '1-Day', '1w':'1-Week', 'mtd': 'MTD', '1m':'1-Month', '3m':'3-Month', 'ytd':'YTD', '1y':'1-Year'};
@@ -684,16 +755,34 @@
             
             const isPercent = performanceDisplayMode === 'percent';
 
-            Object.values(summaryConfig).forEach(config => {
+            Object.entries(summaryConfig).forEach(([key, config]) => {
                 const container = document.getElementById(config.container);
                 if (!container) return;
-                const data = config.tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
+
+                let currentTickers = config.tickers;
+                // Special handling for Stocks section
+                if (key === 'stocks') {
+                    currentTickers = (currentSummaryStockType === 'TW') ? twStocksTickers : usStocksTickers;
+                }
+
+                const data = currentTickers.map(t => allPerformanceData.get(t)).filter(Boolean);
                 
                 const isRate = config.title === 'US Rates';
                 const unit = isRate ? '(bps)' : isPercent ? '(%)' : '(Pts)';
                 const keySuffix = isPercent ? '' : '_pts';
                 
-                let tableHTML = `<h3>${config.title}</h3><table><thead><tr>
+                let headerHTML = `<div class="summary-card-header"><h3>${config.title}</h3>`;
+                 // Add toggle buttons only for the Stocks section
+                if (key === 'stocks') {
+                    headerHTML += `<div class="toggle-buttons summary-period-controls"> <!-- Reuse styles -->
+                        <button class="${currentSummaryStockType === 'US' ? 'active' : ''}" onclick="switchSummaryStockType('US')">US</button>
+                        <button class="${currentSummaryStockType === 'TW' ? 'active' : ''}" onclick="switchSummaryStockType('TW')">TW</button>
+                    </div>`;
+                }
+                 headerHTML += `</div>`;
+
+
+                let tableHTML = `<table><thead><tr>
                     <th>Name</th><th>Date</th><th>Time</th><th>Last</th><th>1-Day ${unit}</th><th>${perfHeader} ${unit}</th>
                 </tr></thead><tbody>`;
                 
@@ -732,12 +821,17 @@
                         <td class="${colorClass(periodDisplayValue)}">${periodDisplayValue}</td>
                     </tr>`;
                 });
-                container.innerHTML = tableHTML + '</tbody></table>';
+                container.innerHTML = headerHTML + tableHTML + '</tbody></table>';
             });
+            
+            // Re-render news after table structure is set
+            renderNewsSummary(currentSummaryNewsIndex); 
+
             addSummaryTooltipEvents();
             adjustSummaryNewsHeight();
             document.getElementById('summary-title').textContent = 'Market Summary';
         }
+
 
         // --- Market Tab ---
         function setupMarketTabs() {
@@ -747,6 +841,7 @@
             const markets = ['Cross Market', 'Equity Index', 'US Stocks', 'TW Stocks', 'FX', 'US Rates', 'Commodity'];
             
             markets.forEach((market, index) => {
+                // --- MODIFIED: Check if market exists in dataByMarket ---
                 const marketDataExists = dataByMarket[market] || market === 'Cross Market';
                 if (marketDataExists) {
                     const isActive = index === 0;
@@ -1063,24 +1158,55 @@
 
         // --- News Tab ---
         function processNewsData() {
-            renderNewsSummary();
+            currentSummaryNewsIndex = 0; // Reset index on data load
+            renderNewsSummary(currentSummaryNewsIndex);
             setupNewsTabs();
         }
 
-        function renderNewsSummary() {
+        // --- MODIFIED: Added index parameter and navigation buttons ---
+        function renderNewsSummary(index = 0) {
             const container = document.getElementById('summary-news-card');
-            const latestNews = allNewsData.length > 0 ? allNewsData[0] : null;
+            if (!container) return; // Exit if container doesn't exist yet
+
+             if (allNewsData.length === 0) {
+                 container.innerHTML = `<div class="summary-card-header"><h3>Latest News Summary</h3></div><div id="summary-news-content"><p>No news available.</p></div>`;
+                 return;
+             }
+
+            // Ensure index is within bounds
+             if (index < 0) index = 0;
+             if (index >= allNewsData.length) index = allNewsData.length - 1;
+             currentSummaryNewsIndex = index; // Update global index
+
+            const newsItem = allNewsData[index];
             
-            if (latestNews) {
-                container.innerHTML = `
-                    <h3>${latestNews.Title}</h3>
-                    <div class="news-meta"><span>${latestNews.Date || ''} ${latestNews.Time || ''}</span> | <span>Source: ${latestNews.Source || 'N/A'}</span></div>
-                    <div id="summary-news-content">${latestNews.Content || 'No content available.'}</div>`;
-            } else {
-                container.innerHTML = `<h3>Latest News Summary</h3><div id="summary-news-content"><p>No news available.</p></div>`;
-            }
-            adjustSummaryNewsHeight();
+            container.innerHTML = `
+                <div class="summary-card-header news-title-area">
+                     <h3 title="${newsItem.Title}">${newsItem.Title}</h3>
+                     <div class="news-nav-buttons">
+                        <button onclick="showPreviousSummaryNews()" ${index === 0 ? 'disabled style="opacity: 0.3;"' : ''}>&lt;</button>
+                        <span>${index + 1} / ${allNewsData.length}</span>
+                        <button onclick="showNextSummaryNews()" ${index === allNewsData.length - 1 ? 'disabled style="opacity: 0.3;"' : ''}>&gt;</button>
+                    </div>
+                </div>
+                <div class="news-meta"><span>${newsItem.Date || ''} ${newsItem.Time || ''}</span> | <span>Source: ${newsItem.Source || 'N/A'}</span></div>
+                <div id="summary-news-content">${newsItem.Content || 'No content available.'}</div>`;
+            
+            adjustSummaryNewsHeight(); // Adjust height after rendering
         }
+
+        function showPreviousSummaryNews() {
+            if (currentSummaryNewsIndex > 0) {
+                renderNewsSummary(currentSummaryNewsIndex - 1);
+            }
+        }
+
+        function showNextSummaryNews() {
+            if (currentSummaryNewsIndex < allNewsData.length - 1) {
+                renderNewsSummary(currentSummaryNewsIndex + 1);
+            }
+        }
+        // --- END News Navigation ---
         
         function setupNewsTabs() {
             const tabsContainer = document.getElementById('news-sub-tabs-container');
@@ -1438,7 +1564,7 @@
             openModal('tickerModal');
         }
 
-        // *** MODIFIED function to fetch intraday data ***
+        // --- MODIFIED function to fetch intraday data ---
         async function fetchIntradayData(ticker) {
             const perfData = allPerformanceData.get(ticker);
             if (!perfData) return null;
@@ -1591,17 +1717,43 @@
         
         function addSummaryTooltipEvents() {
             const tooltip = document.getElementById('chart-tooltip');
+            const tooltipTitleEl = document.getElementById('tooltip-title');
+            const spinnerContainer = document.getElementById('tooltip-spinner-container');
+            const canvasContainer = document.getElementById('tooltip-canvas-container');
+
             document.querySelectorAll('.summary-card tbody tr[data-ticker]').forEach(row => {
                 const ticker = row.dataset.ticker;
                 if (!ticker) return;
-                row.addEventListener('mouseenter', (e) => showTooltipChart(e, ticker));
+
+                row.addEventListener('mouseenter', (e) => {
+                    const perfData = allPerformanceData.get(ticker);
+                    if(!perfData) return;
+
+                    // --- MODIFIED: Show 1d change in title immediately ---
+                    const isRate = perfData.market === 'US Rates';
+                    const keySuffix = (performanceDisplayMode === 'percent' && !isRate) ? '' : '_pts';
+                    const changeValue = isRate ? perfData['1d'] : perfData['1d' + keySuffix];
+                    const changeClass = parseFloat(String(changeValue).replace(/,/g, '')) > 0 ? 'text-positive' : parseFloat(String(changeValue).replace(/,/g, '')) < 0 ? 'text-negative' : '';
+                    tooltipTitleEl.innerHTML = `${perfData.name} (<span class="${changeClass}">${changeValue}</span>)`;
+                    tooltipTitleEl.title = tooltipTitleEl.textContent; // Add full text to title attr
+
+                    spinnerContainer.style.display = 'flex'; // Show spinner
+                    canvasContainer.style.display = 'none'; // Hide canvas
+                    tooltip.classList.add('visible'); // Show tooltip frame
+                    
+                    // Trigger chart rendering
+                    showTooltipChart(e, ticker); 
+                });
                 row.addEventListener('mousemove', (e) => { 
                     const tooltipWidth = tooltip.offsetWidth;
                     const tooltipHeight = tooltip.offsetHeight;
                     let left = e.clientX + 15;
                     let top = e.clientY + 15;
-                    if (left + tooltipWidth > window.innerWidth) left = e.clientX - tooltipWidth - 15;
-                    if (top + tooltipHeight > window.innerHeight) top = e.clientY - tooltipHeight - 15;
+                    // Adjust position if tooltip goes off-screen
+                    if (left + tooltipWidth > window.innerWidth - 10) left = e.clientX - tooltipWidth - 15;
+                    if (top + tooltipHeight > window.innerHeight - 10) top = e.clientY - tooltipHeight - 15;
+                    if (left < 10) left = 10;
+                    if (top < 10) top = 10;
                     tooltip.style.left = `${left}px`; 
                     tooltip.style.top = `${top}px`; 
                 });
@@ -1609,124 +1761,143 @@
             });
         }
 
-        // *** REPLACED function to use intraday data ***
-        function showTooltipChart(event, ticker) {
+        // --- MODIFIED: Tooltip Chart Rendering ---
+        async function showTooltipChart(event, ticker) {
             clearTimeout(tooltipTimeout);
-            hideTooltipChart(); // This clears the old chart
 
-            tooltipTimeout = setTimeout(async () => {
-                const tooltip = document.getElementById('chart-tooltip');
-                if (!tooltip) return;
-                
-                // Show tooltip immediately to feel responsive
-                tooltip.classList.add('visible');
-                
-                const chartData = await fetchIntradayData(ticker);
+            // Fetch performance data again to ensure we have the latest info for title
+            const perfData = allPerformanceData.get(ticker);
+             if (!perfData) {
+                 hideTooltipChart(); // Hide if no performance data found
+                 return;
+             }
+             
+            // Show spinner while fetching data
+             const spinnerContainer = document.getElementById('tooltip-spinner-container');
+             const canvasContainer = document.getElementById('tooltip-canvas-container');
+             spinnerContainer.style.display = 'flex';
+             canvasContainer.style.display = 'none';
 
-                if (!chartData || chartData.length < 2) {
-                    // If fetch fails or no data, hide tooltip
-                    tooltip.classList.remove('visible');
-                    return;
-                }
 
-                // Check if tooltip is still supposed to be visible (mouse might have left)
-                if (!tooltip.classList.contains('visible')) return;
+            // Fetch intraday data
+            const chartData = await fetchIntradayData(ticker);
 
-                const canvas = document.getElementById('tooltip-canvas');
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return;
-                
-                if (tooltipChart) tooltipChart.destroy();
-                
-                let minPoint = chartData[0], maxPoint = chartData[0];
-                chartData.forEach(p => {
-                    if (p.y < minPoint.y) minPoint = p;
-                    if (p.y > maxPoint.y) maxPoint = p;
-                });
+            // Check if mouse is still over the row (tooltip should still be visible)
+            const tooltip = document.getElementById('chart-tooltip');
+            if (!tooltip || !tooltip.classList.contains('visible')) {
+                return; // Abort if tooltip was hidden
+            }
 
-                const getLabelAnnotation = (point, content, defaultYAdjust) => ({
-                    type: 'label', xValue: point.x, yValue: point.y, content: content, font: { size: 10 }, yAdjust: defaultYAdjust,
-                    backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(50,50,50,0.85)' : 'rgba(255, 255, 255, 0.85)',
-                    color: document.body.classList.contains('dark-mode') ? '#f0f0f0' : '#333',
-                    padding: 2, borderRadius: 2,
-                    xAdjust: chartData.findIndex(p => p.x === point.x) < chartData.length / 2 ? 5 : -5,
-                    textAlign: chartData.findIndex(p => p.x === point.x) < chartData.length / 2 ? 'left' : 'right'
-                });
+            if (!chartData || chartData.length < 2) {
+                // If fetch fails or no data, hide tooltip spinner and show "No Data" message maybe?
+                // For now, just hide the tooltip
+                 hideTooltipChart();
+                 return;
+            }
 
-                // Get date for x-axis title
-                const chartDate = new Date(chartData[0].x);
-                const dateString = `${chartDate.getFullYear()}-${(chartDate.getMonth() + 1).toString().padStart(2, '0')}-${chartDate.getDate().toString().padStart(2, '0')}`;
+            // --- Render Chart ---
+            const tooltipTitleEl = document.getElementById('tooltip-title');
+            const canvas = document.getElementById('tooltip-canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            
+            if (tooltipChart) tooltipChart.destroy();
 
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            // --- Update title with date ---
+            const chartDate = new Date(chartData[0].x);
+            const dateString = `${chartDate.getFullYear()}-${(chartDate.getMonth() + 1).toString().padStart(2, '0')}-${chartDate.getDate().toString().padStart(2, '0')}`;
+            const isRate = perfData.market === 'US Rates';
+            const keySuffix = (performanceDisplayMode === 'percent' && !isRate) ? '' : '_pts';
+            const changeValue = isRate ? perfData['1d'] : perfData['1d' + keySuffix];
+            const changeClass = parseFloat(String(changeValue).replace(/,/g, '')) > 0 ? 'text-positive' : parseFloat(String(changeValue).replace(/,/g, '')) < 0 ? 'text-negative' : '';
+            tooltipTitleEl.innerHTML = `${perfData.name} (${dateString}) (<span class="${changeClass}">${changeValue}</span>)`;
+            tooltipTitleEl.title = tooltipTitleEl.textContent; // Update hover title
 
-                tooltipChart = new Chart(ctx, {
-                    type: 'line',
-                    data: { datasets: [{ 
-                        data: chartData, borderColor: 'rgba(74, 144, 226, 1)', backgroundColor: 'rgba(74, 144, 226, 0.2)', 
-                        borderWidth: 1.5, fill: true, pointRadius: 0, tension: 0.1 
-                    }] },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        layout: { padding: { top: 15, bottom: 20, left: 5, right: 5 } }, // Added bottom padding for x-axis
-                        scales: { 
-                            x: { 
-                                type: 'time', 
-                                display: true, // Show x-axis
-                                time: { 
-                                    unit: 'hour',
-                                    displayFormats: {
-                                        hour: 'HH:mm'
+
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            const lastDataPoint = chartData[chartData.length - 1];
+
+            tooltipChart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets: [{ 
+                    data: chartData, 
+                    borderColor: 'rgba(74, 144, 226, 1)', 
+                    backgroundColor: 'rgba(74, 144, 226, 0.2)', 
+                    borderWidth: 1.5, 
+                    fill: true, 
+                    pointRadius: 0, 
+                    tension: 0.1 
+                }] },
+                // *** BUG FIX: Removed direct reference to ChartAnnotation ***
+                // plugins: [ChartAnnotation], // This was causing the error
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 5, bottom: 0, left: 0, right: 0 } }, // Minimal padding
+                    scales: { 
+                        x: { 
+                            type: 'time', 
+                            display: true, 
+                            time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+                            ticks: { 
+                                color: textColor, maxRotation: 0, autoSkip: true, 
+                                maxTicksLimit: 5, font: { size: 9 } // Smaller font
+                            },
+                            grid: { display: false },
+                            title: { display: false } // Date moved to main title
+                        }, 
+                        y: { 
+                            display: true, position: 'right',
+                            ticks: { 
+                                color: textColor, maxTicksLimit: 4, 
+                                font: { size: 9 }, // Smaller font
+                                callback: function(value, index, values) { // Format Y axis labels concisely
+                                    // Check if value is a valid number before formatting
+                                    if (typeof value === 'number' && !isNaN(value)) {
+                                         return value.toFixed(isRate ? 0 : 2); 
                                     }
-                                },
-                                ticks: { 
-                                    color: textColor,
-                                    maxRotation: 0,
-                                    autoSkip: true,
-                                    maxTicksLimit: 6 // Limit ticks to avoid crowding
-                                },
-                                grid: { display: false },
-                                title: { // Add date title
-                                    display: true,
-                                    text: dateString,
-                                    color: textColor,
-                                    font: { size: 10 }
-                                }
-                            }, 
-                            // *** MODIFICATION: Show Y-axis ***
-                            y: { 
-                                display: true, 
-                                position: 'right',
-                                ticks: {
-                                    color: textColor,
-                                    maxTicksLimit: 5,
-                                    font: { size: 10 }
-                                },
-                                grid: { display: false }
-                            }
-                            // *** END MODIFICATION ***
-                        },
-                        plugins: {
-                            legend: { display: false }, 
-                            tooltip: { // Enable tooltip for intraday
-                                mode: 'index',
-                                intersect: false,
-                                callbacks: {
-                                    title: (tooltipItems) => {
-                                        const date = new Date(tooltipItems[0].parsed.x);
-                                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                    }
+                                    return value; // Return original value if not a number
                                 }
                             },
-                            // *** MODIFICATION: Removed annotation plugin ***
-                            // (Annotation plugin configuration removed)
-                            // *** END MODIFICATION ***
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }, 
+                        tooltip: { 
+                            mode: 'index', intersect: false, 
+                            titleFont: { size: 10 }, bodyFont: { size: 10 }, 
+                            padding: 4,
+                            callbacks: {
+                                title: (tooltipItems) => {
+                                    const date = new Date(tooltipItems[0].parsed.x);
+                                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                }
+                            }
                         },
-                        animation: false
-                    }
-                });
+                        annotation: { // Add annotation for the last point
+                            annotations: {
+                                lastPoint: {
+                                    type: 'point',
+                                    xValue: lastDataPoint.x,
+                                    yValue: lastDataPoint.y,
+                                    backgroundColor: 'rgba(242, 142, 43, 0.8)', // Orange-yellow
+                                    radius: 4,
+                                    borderColor: 'rgba(255, 255, 255, 0.5)', // Optional white border
+                                    borderWidth: 1
+                                }
+                            }
+                        }
+                    },
+                    animation: false // Disable animation for faster rendering
+                }
+            });
 
-            }, 100); // Keep the 100ms delay to avoid flickering
+            // Hide spinner, show canvas
+            spinnerContainer.style.display = 'none';
+            canvasContainer.style.display = 'block';
+
         }
 
         function hideTooltipChart() {
@@ -1736,6 +1907,10 @@
             const tooltip = document.getElementById('chart-tooltip');
             if (tooltip) {
                 tooltip.classList.remove('visible');
+                 // Reset title and hide canvas/show spinner for next hover
+                 document.getElementById('tooltip-title').textContent = '';
+                 document.getElementById('tooltip-spinner-container').style.display = 'flex';
+                 document.getElementById('tooltip-canvas-container').style.display = 'none';
             }
 
             if (tooltipChart) {
@@ -1857,11 +2032,14 @@
                 const stocksCard = document.getElementById('summary-stocks');
                 const newsCard = document.getElementById('summary-news-card');
                 if (fxCard && stocksCard && newsCard && window.innerWidth > 1250) { 
-                    newsCard.style.height = `${fxCard.offsetHeight + stocksCard.offsetHeight + 20}px`;
+                     // Ensure cards exist before accessing offsetHeight
+                    const fxHeight = fxCard.offsetHeight || 0;
+                    const stocksHeight = stocksCard.offsetHeight || 0;
+                    newsCard.style.height = `${fxHeight + stocksHeight + 20}px`; // Add 20px gap
                 } else if (newsCard) {
-                    newsCard.style.height = 'auto';
+                    newsCard.style.height = 'auto'; // Reset height on smaller screens
                 }
-            }, 100);
+            }, 150); // Slightly increased delay
         }
         function openModal(modalId) { const m = document.getElementById(modalId); m.style.display='block'; setTimeout(() => m.classList.add('show'), 10); document.body.style.overflow = 'hidden'; }
         function closeModal(modalId) {
@@ -1893,6 +2071,9 @@
                 if (activeSubTab && activeSubTab.textContent === 'Cross Market') {
                     updateCrossMarketChart(currentCrossMarketPeriod);
                 }
+            } else if (tabName === 'summary') {
+                 // Ensure news height is recalculated when switching to summary tab
+                 adjustSummaryNewsHeight();
             }
         }
         function initTheme() {
@@ -1907,21 +2088,28 @@
             document.getElementById('theme-icon-sun').style.display = isDarkMode ? 'none' : 'block';
             document.getElementById('theme-icon-moon').style.display = isDarkMode ? 'block' : 'none';
             
+            // Update active chart colors
             Object.values(activeCharts).forEach(chart => {
                 if (chart && chart.options) {
                     const textColor = isDarkMode ? '#a0a0a0' : '#555';
                     const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                    if (chart.options.scales.x) chart.options.scales.x.ticks.color = textColor;
-                    if (chart.options.scales.y) chart.options.scales.y.ticks.color = textColor;
-                    if (chart.options.scales.x) chart.options.scales.x.grid.color = gridColor;
-                    if (chart.options.scales.y) chart.options.scales.y.grid.color = gridColor;
-                    if (chart.options.scales.x) { // *** Handle intraday chart x-axis title ***
-                        if(chart.options.scales.x.title) chart.options.scales.x.title.color = textColor;
+                    
+                    // Update scales
+                    if (chart.options.scales) {
+                        Object.values(chart.options.scales).forEach(scale => {
+                            if (scale.ticks) scale.ticks.color = textColor;
+                            if (scale.grid) scale.grid.color = gridColor;
+                            if (scale.title) scale.title.color = textColor;
+                        });
                     }
-                    if(chart.options.plugins.legend) {
+                    
+                    // Update legend
+                    if(chart.options.plugins?.legend?.labels) {
                        chart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#333';
                     }
-                    if(chart.canvas.id === 'individualTickerChart' && chart.options.plugins.annotation) {
+
+                    // Update annotations (specifically for individual ticker chart labels)
+                    if(chart.canvas.id === 'individualTickerChart' && chart.options.plugins?.annotation?.annotations) {
                         Object.values(chart.options.plugins.annotation.annotations).forEach(annotation => {
                             if(annotation.type === 'label') {
                                 annotation.backgroundColor = isDarkMode ? 'rgba(50,50,50,0.85)' : 'rgba(255, 255, 255, 0.85)';
@@ -1929,10 +2117,21 @@
                             }
                         });
                     }
-                    // *** BUG FIX: Removed the block for 'tooltip-canvas' annotations ***
-                    chart.update();
+                    
+                    chart.update('none'); // Update without animation
                 }
             });
+
+             // Update tooltip chart colors if it exists
+             if (tooltipChart && tooltipChart.options) {
+                 const textColor = isDarkMode ? '#a0a0a0' : '#555';
+                 if (tooltipChart.options.scales.x.ticks) tooltipChart.options.scales.x.ticks.color = textColor;
+                 if (tooltipChart.options.scales.y.ticks) tooltipChart.options.scales.y.ticks.color = textColor;
+                  // Date is now in title, not x-axis title
+                 // if (tooltipChart.options.scales.x.title) tooltipChart.options.scales.x.title.color = textColor; 
+                 // Note: Tooltip chart annotations update is handled within showTooltipChart for simplicity
+                 tooltipChart.update('none');
+             }
         }
     </script>
 </body>
