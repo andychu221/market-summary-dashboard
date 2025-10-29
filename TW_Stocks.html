@@ -4,13 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 標題更新 -->
-    <title>Market Dashboard (Auto-updating) V5</title>
+    <title>Market Dashboard (Auto-updating) V6</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
-    
-    <!-- Jspreadsheet is removed -->
 
     <style>
         :root {
@@ -49,15 +46,15 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
-            background: var(--bg-gradient); 
-            min-height: 100vh; 
-            color: var(--text-primary); 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: var(--text-primary);
             transition: background-color 0.3s, color 0.3s;
         }
         .container { max-width: 1800px; margin: 0 auto; padding: 15px; }
-        
+
         #loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.8); display: flex;
@@ -71,7 +68,7 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #loading-text { margin-top: 20px; font-size: 1.2rem; font-weight: 500; }
-        
+
         .main-content {
             background: var(--bg-color); border-radius: 12px;
             padding: 25px; box-shadow: var(--shadow-light);
@@ -88,70 +85,70 @@
         }
         #theme-toggle svg { width: 24px; height: 24px; fill: var(--text-primary); }
 
-        .tabs { 
+        .tabs {
             display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 20px;
             position: sticky; top: 0; background: var(--bg-color); z-index: 100;
         }
-        .tab-link { 
-            padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; 
+        .tab-link {
+            padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent;
             margin-bottom: -2px; font-size: 1.1rem; font-weight: 500; transition: all 0.3s ease;
             color: var(--text-secondary);
         }
         .tab-link:hover { color: var(--primary-color); }
-        .tab-link.active { 
+        .tab-link.active {
             color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600;
         }
-        
+
         .tab-content { display: none; animation: fadeIn 0.5s; }
         .tab-content.active { display: block; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .chart-sub-tabs, .view-toggle-tabs, .chart-time-controls, .cross-market-controls { 
-            display: flex; 
-            border-bottom: 1px solid var(--border-color); 
-            margin-bottom: 15px; 
+
+        .chart-sub-tabs, .view-toggle-tabs, .chart-time-controls, .cross-market-controls {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
             flex-wrap: wrap;
-            align-items: center; 
+            align-items: center;
         }
         .chart-time-controls {
             justify-content: space-between;
             padding-bottom: 10px;
         }
 
-        .chart-sub-tab-link, .view-toggle-tab, 
-        .chart-time-controls div:first-child button, 
-        .chart-time-controls div:last-child button, 
+        .chart-sub-tab-link, .view-toggle-tab,
+        .chart-time-controls div:first-child button,
+        .chart-time-controls div:last-child button,
         .cross-market-controls button,
-        #modal-time-controls button /* 請求 2: Modal 按鈕樣式統一 */
+        #modal-time-controls button
          {
             padding: 8px 15px; cursor: pointer; font-size: 0.95rem; font-weight: 500;
             color: var(--text-secondary); border: none; background-color: var(--button-bg);
             margin: 0 5px 5px 0; border-radius: 6px; transition: all 0.3s ease;
         }
-        .chart-sub-tab-link:hover, .view-toggle-tab:hover, 
+        .chart-sub-tab-link:hover, .view-toggle-tab:hover,
         .chart-time-controls div:first-child button:hover,
         .chart-time-controls div:last-child button:hover,
         .cross-market-controls button:hover,
-        #modal-time-controls button:hover /* 請求 2: Modal 按鈕樣式統一 */
+        #modal-time-controls button:hover
          { color: var(--primary-color); }
-        
+
         .chart-sub-tabs { border-bottom-style: solid; border-bottom-width: 2px; }
         .chart-sub-tab-link { background: none; margin-bottom: -2px; border-bottom: 3px solid transparent; }
-        
-        .chart-sub-tab-link.active, .view-toggle-tab.active, 
+
+        .chart-sub-tab-link.active, .view-toggle-tab.active,
         .chart-time-controls div:first-child button.active,
         .chart-time-controls div:last-child button.active,
         .cross-market-controls button.active,
-        #modal-time-controls button.active /* 請求 2: Modal 按鈕樣式統一 */
+        #modal-time-controls button.active
          {
             color: var(--primary-color); background-color: var(--button-active-bg); font-weight: 600;
         }
-        body.dark-mode .chart-sub-tab-link.active, body.dark-mode .view-toggle-tab.active, 
+        body.dark-mode .chart-sub-tab-link.active, body.dark-mode .view-toggle-tab.active,
         body.dark-mode .chart-time-controls div:first-child button.active,
         body.dark-mode .chart-time-controls div:last-child button.active,
         body.dark-mode .cross-market-controls button.active,
-        body.dark-mode #modal-time-controls button.active /* 請求 2: Modal 按鈕樣式統一 */
+        body.dark-mode #modal-time-controls button.active
          {
             color: #fff;
         }
@@ -164,36 +161,36 @@
         .view-content { display: none; }
         .view-content.active { display: block; }
 
-        .table-container { 
+        .table-container {
             overflow: auto;
             border: 1px solid var(--border-color); border-radius: 8px;
-            margin-top: 20px; 
+            margin-top: 20px;
         }
         table { width: 100%; border-collapse: collapse; text-align: right; }
         th, td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 0.95rem;}
         th:first-child, td:first-child { text-align: left; }
-        th { 
+        th {
             background-color: var(--header-bg); font-weight: 600; user-select: none;
             position: sticky; top: 0; z-index: 10;
         }
         .summary-card th {
             cursor: context-menu;
         }
-        
+
         tr:hover { background-color: var(--hover-bg); }
         .clickable-row { cursor: pointer; }
         .text-positive { color: var(--positive-color) !important; font-weight: 500; }
         .text-negative { color: var(--negative-color) !important; font-weight: 500; }
-        
+
         .chart-controls { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; }
         .chart-controls label { font-weight: 500; }
         .chart-controls input {
-            flex-grow: 1; border: 1px solid var(--border-color); padding: 8px; 
+            flex-grow: 1; border: 1px solid var(--border-color); padding: 8px;
             border-radius: 6px; min-width: 250px; font-size: 1rem;
             background-color: var(--bg-color); color: var(--text-primary);
         }
         .controls-input {
-            border: 1px solid var(--border-color); padding: 8px; 
+            border: 1px solid var(--border-color); padding: 8px;
             border-radius: 6px; font-size: 0.95rem;
             background-color: var(--bg-color); color: var(--text-primary);
         }
@@ -202,17 +199,17 @@
         }
         .custom-date-inputs { display: none; gap: 10px; align-items: center; }
         .custom-date-inputs.active { display: flex; }
-        
+
         .modal {
             position: fixed; z-index: 1001; left: 0; top: 0;
             width: 100%; height: 100%; overflow: auto;
             background-color: var(--modal-overlay-bg);
-            opacity: 0; 
+            opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
         }
-        .modal.show { 
-            opacity: 1; 
+        .modal.show {
+            opacity: 1;
             pointer-events: auto;
         }
         .modal-content {
@@ -228,21 +225,6 @@
         }
         .modal-header { text-align: center; margin-bottom: 10px; color: var(--text-primary); }
         .modal-chart-container { position: relative; height: 500px; width: 100%; }
-        /* 請求 3: Chart 5 Grid Layout */
-        .chart-grid-2x2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 20px;
-            height: 700px; /* Adjust height as needed */
-            margin-bottom: 20px;
-        }
-        .chart-grid-item {
-            position: relative;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px;
-        }
 
         #tickerSelectionModal .modal-content, #confirmationModal .modal-content { max-width: 500px; }
         #ticker-selection-list { list-style: none; margin-top: 15px; max-height: 40vh; overflow-y: auto; }
@@ -270,26 +252,25 @@
             background-color: var(--hover-bg);
         }
 
-        /* --- Summary Tab 樣式更新 --- */
+        /* --- Summary Tab --- */
         #summary { padding: 10px 0; }
-        .summary-header { 
-            display: flex; justify-content: flex-start; align-items: center; 
+        .summary-header {
+            display: flex; justify-content: flex-start; align-items: center;
             margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
         }
         .summary-header label { font-size: 1.2rem; font-weight: 600; color: var(--text-primary); }
-        
+
         #summary-content-container {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-        .summary-card { 
+        .summary-card {
             border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;
             background: var(--bg-color); display: flex; flex-direction: column;
             box-shadow: var(--shadow-light);
             overflow: auto;
         }
-        /* 請求 1: Market name on top right */
         .summary-card-header {
             display: flex;
             justify-content: space-between;
@@ -298,7 +279,7 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px;
         }
-        .summary-card-header h3 { 
+        .summary-card-header h3 {
              margin: 0; font-size: 1.2rem; color: var(--text-primary); border: none; padding: 0;
         }
         .summary-card-header .market-tag {
@@ -337,7 +318,7 @@
         .custom-context-menu li:hover { background-color: var(--hover-bg); }
         .custom-context-menu li input { margin-right: 10px; cursor: pointer; }
 
-        /* --- Data Tab 樣式 (請求 4) --- */
+        /* --- Data Tab --- */
         #data-controls {
             display: flex;
             gap: 10px;
@@ -346,15 +327,15 @@
             flex-wrap: wrap;
         }
         .data-btn {
-            background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; 
+            background-color: var(--primary-color); color: white; border: none; padding: 10px 20px;
             border-radius: 8px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s, filter 0.3s;
         }
         .data-btn:hover {
             filter: brightness(110%);
         }
         #data-table-container {
-            max-height: 70vh; /* Allow vertical scrolling */
-            overflow: auto; /* Enable scrollbars */
+            max-height: 70vh;
+            overflow: auto;
             border: 1px solid var(--border-color);
             border-radius: 8px;
         }
@@ -362,15 +343,15 @@
         #data-table-container td:first-child {
             position: sticky;
             left: 0;
-            z-index: 11; /* Above other cells but below header */
-            background-color: var(--bg-color); /* Match background */
+            z-index: 11;
+            background-color: var(--bg-color);
         }
         #data-table-container th:first-child {
-            z-index: 12; /* Above sticky header */
+            z-index: 12;
             background-color: var(--header-bg);
         }
-        
-        /* --- News Tab Styles (請求 5) --- */
+
+        /* --- News Tab --- */
         #news-controls {
             display: flex;
             gap: 10px;
@@ -391,7 +372,7 @@
         #news-content {
             max-height: 70vh;
             overflow-y: auto;
-            padding-right: 10px; /* space for scrollbar */
+            padding-right: 10px;
         }
         .news-item {
             border: 1px solid var(--border-color);
@@ -417,11 +398,6 @@
         .news-meta {
             font-size: 0.85rem;
             color: var(--text-secondary);
-            margin-bottom: 10px;
-        }
-        .news-content-text {
-            font-size: 0.95rem;
-            line-height: 1.5;
         }
 
     </style>
@@ -448,11 +424,11 @@
             <div class="tabs">
                 <div class="tab-link active" onclick="openTab(event, 'summary')">Summary</div>
                 <div class="tab-link" onclick="openTab(event, 'chart-main')">Chart</div>
-                <!-- 請求 4, 5: Re-add News tab, update Data tab -->
-                <div class="tab-link" onclick="openTab(event, 'data')">Data</div>
+                <!-- Request 3: News tab moved before Data tab -->
                 <div class="tab-link" onclick="openTab(event, 'news')">News</div>
+                <div class="tab-link" onclick="openTab(event, 'data')">Data</div>
             </div>
-            
+
             <div id="summary" class="tab-content active">
                 <div class="summary-header">
                     <label for="summary-as-of-date">As of:</label>
@@ -460,26 +436,25 @@
                 </div>
                 <div id="summary-content-container">
                     <div id="summary-equity-index" class="summary-card">
-                        <!-- 請求 1: Header structure for Title + Market Tag -->
                         <div class="summary-card-header">
                             <h3>Equity Index</h3>
                             <span class="market-tag">Equity Index</span>
                         </div>
-                        <table><!-- 內容將由 JS 生成 --></table>
+                        <table><!-- Content generated by JS --></table>
                     </div>
                     <div id="summary-tw-stocks" class="summary-card">
                         <div class="summary-card-header">
                             <h3>TW Stocks</h3>
                             <span class="market-tag">TW Stocks</span>
                         </div>
-                        <table><!-- 內容將由 JS 生成 --></table>
+                        <table><!-- Content generated by JS --></table>
                     </div>
                     <div id="summary-us-stocks" class="summary-card">
                          <div class="summary-card-header">
                             <h3>US Stocks</h3>
                              <span class="market-tag">US Stocks</span>
                         </div>
-                        <table><!-- 內容將由 JS 生成 --></table>
+                        <table><!-- Content generated by JS --></table>
                     </div>
                 </div>
             </div>
@@ -489,7 +464,19 @@
                 <div id="chart-sub-content-container"></div>
             </div>
 
-            <!-- 請求 4: Data tab rework -->
+            <!-- Request 3: News tab -->
+            <div id="news" class="tab-content">
+                <div id="news-controls">
+                    <!-- Buttons will be generated by JS -->
+                </div>
+                <div id="news-content-wrapper">
+                    <p id="news-status">Please select a stock to view news.</p>
+                    <div id="news-content">
+                        <!-- News items will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
             <div id="data" class="tab-content">
                 <div id="data-controls">
                     <label for="data-start-date" class="chart-controls label">Start Date:</label>
@@ -503,19 +490,6 @@
                     <p>Loading data...</p>
                 </div>
             </div>
-            
-            <!-- 請求 5: News tab -->
-            <div id="news" class="tab-content">
-                <div id="news-controls">
-                    <!-- Buttons will be generated by JS -->
-                </div>
-                <div id="news-content-wrapper">
-                    <p id="news-status">Please select a stock to view news.</p>
-                    <div id="news-content">
-                        <!-- News items will be inserted here -->
-                    </div>
-                </div>
-            </div>
 
         </div>
     </div>
@@ -525,8 +499,7 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal('tickerModal')">&times;</span>
             <h2 id="modalTickerName" class="modal-header"></h2>
-            <!-- 請求 2: Modal buttons now share style with chart-time-controls -->
-            <div class="chart-time-controls" id="modal-time-controls" style="justify-content: flex-start; padding-bottom: 0;">
+            <div class="chart-time-controls" id="modal-time-controls" style="justify-content: flex-start; padding-bottom: 0; border-bottom: none;">
                  <button data-period="3m">3-Month</button>
                  <button data-period="6m">6-Month</button>
                  <button data-period="ytd">YTD</button>
@@ -579,27 +552,24 @@
 
     <script>
         // --- Global Variables ---
-        let allData = [], dataByMarket = {}, allNewsData = [], newsByCategory = {};
+        let allData = [], dataByMarket = {};
         let activeCharts = {}, allPerformanceData = new Map();
         let latestDataDate = null;
         let activeCustomDateContext = null;
-        
-        // Data Tab 變數
+
         let pivotedData = new Map();
         let pivotedDataHeaders = [];
         let isDataPivoted = false;
-        
-        // Summary Tab 變數
+
         let summaryReferenceDate = null;
         let hiddenSummaryColumns = {};
-        
-        // Chart Tab 預設 Tickers
+
         const DEFAULT_CHART_TICKERS = {
             'Chart-1': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
             'Chart-2': "3443.TW,6789.TW,.TWII,.SOX",
             'Chart-3': "NVDA.O,AVGO.O,INTC.O,AMD.O,.SOX,.TWII",
             'Chart-4': "3374.TWO,5347.TWO,.TWII",
-            'Chart-5': "3443.TW,6789.TW,5347.TWO,3374.TWO" // 請求 3
+            'Chart-5': "3443.TW,6789.TW,5347.TWO,3374.TWO"
         };
         let chartAxisUnits = { 'Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto', 'Chart-5': 'auto' };
 
@@ -639,12 +609,12 @@
                 default: return null;
             }
         }
-        
+
         function formatValue(val, type, market = 'Unknown') {
             if (val === null || isNaN(val)) return 'N/A';
             if (type === 'bps') return `${val.toFixed(0)} bps`;
             if (type === 'percent') return `${val.toFixed(2)}%`;
-            
+
             if (type === 'points') {
                 const decimals = (market === 'FX') ? 4 : 2;
                 return formatNumberWithCommas(val.toFixed(decimals));
@@ -671,7 +641,7 @@
             }, true);
             loadAllDataFromGitHub();
         });
-        
+
         async function fetchJsonWithRetry(url, retries = 3, delay = 1000) {
             for (let i = 0; i < retries; i++) {
                 try {
@@ -688,7 +658,7 @@
         async function loadAllDataFromGitHub() {
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingText = document.getElementById('loading-text');
-            
+
             const marketDataUrls = {
                 'Equity Index': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/Equity_Index.json',
                 'Commodity': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/Commodity.json',
@@ -697,7 +667,7 @@
                 'US Stocks': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/US_Stocks.json',
                 'US Rates': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/US_Rates.json'
             };
-            
+
             const tickersToExclude = [];
 
             try {
@@ -723,18 +693,17 @@
                         }
 
                         if (details && details.data) {
-                            // 請求 3: Process volume data
                             const volumeData = details.volume || {};
                             Object.entries(details.data).forEach(([dateStr, price]) => {
                                 if (price !== null) {
-                                    allData.push({ 
-                                        ticker, 
-                                        name: details.name, 
-                                        market: result.marketName, 
+                                    allData.push({
+                                        ticker,
+                                        name: details.name,
+                                        market: result.marketName,
                                         date: new Date(dateStr),
                                         price: parseFloat(price),
                                         volume: volumeData[dateStr] ? parseFloat(volumeData[dateStr]) : 0,
-                                        originalDateStr: dateStr 
+                                        originalDateStr: dateStr
                                     });
                                 }
                             });
@@ -753,7 +722,7 @@
                 processPriceData();
 
                 loadingText.textContent = 'Pivoting data for download...';
-                pivotDataForDownload(); 
+                pivotDataForDownload();
 
                 loadingOverlay.style.opacity = '0';
                 setTimeout(() => { loadingOverlay.style.display = 'none'; }, 300);
@@ -777,14 +746,12 @@
                 const market = allData.find(d => d.ticker === ticker)?.market || 'Unknown';
                 allPerformanceData.set(ticker, calculatePerformanceForTicker(ticker, market));
             });
-            
-            setupChartTabs(); 
+
+            setupChartTabs();
             renderSummaryTab();
-            // 請求 5: Setup News Tab
             setupNewsTab();
         }
 
-        // --- Performance Calculation (no major change) ---
         function calculatePerformanceForTicker(ticker, market) {
             const tickerData = allData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
             if(tickerData.length === 0) return {};
@@ -792,32 +759,32 @@
             const firstDataPoint = tickerData[0];
             const lastDataPoint = tickerData[tickerData.length - 1];
             const refDate = lastDataPoint.date;
-            
+
             let lastTime = 'c';
             if (lastDataPoint.originalDateStr && lastDataPoint.originalDateStr.includes(' ')) {
                 lastTime = lastDataPoint.originalDateStr.split(' ')[1];
             }
-            
+
             const findDataPointOnOrBefore = (date, data = tickerData) => {
                 if (!date || isNaN(date.getTime())) return null;
                 let closest = null;
                 const targetDate = new Date(date);
                 targetDate.setHours(23, 59, 59, 999);
-                
+
                 for (let i = data.length - 1; i >= 0; i--) {
-                    if (data[i].date <= targetDate) { 
-                        closest = data[i]; 
-                        break; 
+                    if (data[i].date <= targetDate) {
+                        closest = data[i];
+                        break;
                     }
                 }
                 return closest;
             };
-            
+
             const findPriceOnOrBefore = (date, data = tickerData) => {
                 const point = findDataPointOnOrBefore(date, data);
                 return point ? point.price : null;
             };
-            
+
             const isRate = market === 'US Rates';
 
             const calcPerf = (startPrice, endPrice, isRate, isInverted) => {
@@ -829,25 +796,25 @@
 
             const lastPrice = lastDataPoint.price;
             const invertedFx = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => ticker.includes(inv));
-            
-            const perf = { 
-                ticker, 
-                name: tickerData[0].name, 
-                market, 
+
+            const perf = {
+                ticker,
+                name: tickerData[0].name,
+                market,
                 lastPrice: lastPrice,
                 lastPriceFormatted: formatNumberWithCommas(lastPrice.toFixed(market === 'FX' ? 4 : 2)),
                 lastDate: formatDateMMDD(refDate),
                 lastTime: lastTime,
                 firstDate: firstDataPoint.date
             };
-            
+
             const prevPrice1d = tickerData.length > 1 ? tickerData[tickerData.length - 2].price : null;
             const perf1d = calcPerf(prevPrice1d, lastPrice, isRate, invertedFx);
             perf['1d'] = formatValue(perf1d, isRate ? 'bps' : 'percent');
             perf['1d_raw'] = perf1d;
             perf['1d_pts'] = formatValue(prevPrice1d !== null ? (lastPrice - prevPrice1d) : null, 'points', market);
             perf['1d_pts_raw'] = prevPrice1d !== null ? (lastPrice - prevPrice1d) : null;
-            
+
             ['1w', 'mtd', '1m', '3m', 'ytd', '1y'].forEach(p => {
                 const startDate = getStartDate(p, refDate);
                 const startPrice = findPriceOnOrBefore(startDate);
@@ -878,14 +845,13 @@
 
 
         // --- Summary Tab ---
-        
         function showColumnContextMenu(event, tableId) {
             event.preventDefault();
             const menu = document.getElementById('summary-context-menu');
-            
+
             const headers = Array.from(document.querySelectorAll(`#${tableId} th`));
             let menuHTML = '<ul>';
-            
+
             headers.forEach((th, index) => {
                 const colName = th.textContent;
                 if (hiddenSummaryColumns[colName] === undefined) {
@@ -902,7 +868,7 @@
             });
             menuHTML += '</ul>';
             menu.innerHTML = menuHTML;
-            
+
             menu.style.display = 'block';
             const pageX = Math.min(event.pageX, window.innerWidth - menu.offsetWidth - 10);
             const pageY = Math.min(event.pageY, window.innerHeight - menu.offsetHeight - 10);
@@ -957,7 +923,7 @@
                 renderSummaryTab();
             }
         }
-        
+
         function renderSummaryTab() {
             const dateInput = document.getElementById('summary-as-of-date');
             if (dateInput) {
@@ -966,39 +932,39 @@
             }
 
             const summaryConfig = {
-                'equity-index': { 
-                    title: 'Equity Index', 
-                    tickers: ['.SPX','.IXIC', '.SOX', '.TWII'], 
-                    container: 'summary-equity-index' 
+                'equity-index': {
+                    title: 'Equity Index',
+                    tickers: ['.SPX','.IXIC', '.SOX', '.TWII'],
+                    container: 'summary-equity-index'
                 },
-                'tw-stocks': { 
-                    title: 'TW Stocks', 
-                    tickers: ['3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO'], 
-                    container: 'summary-tw-stocks' 
+                'tw-stocks': {
+                    title: 'TW Stocks',
+                    tickers: ['3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO'],
+                    container: 'summary-tw-stocks'
                 },
-                'us-stocks': { 
-                    title: 'US Stocks', 
-                    tickers: ['NVDA.O', 'AVGO.O', 'INTC.O', 'AMD.O'], 
-                    container: 'summary-us-stocks' 
+                'us-stocks': {
+                    title: 'US Stocks',
+                    tickers: ['NVDA.O', 'AVGO.O', 'INTC.O', 'AMD.O'],
+                    container: 'summary-us-stocks'
                 }
             };
-            
+
             const refDate = summaryReferenceDate;
             const refYear = refDate.getFullYear();
             const ytdStartDate = new Date(refYear, 0, 1);
             const sinceStartDate = new Date(refYear - 1, 0, 1);
             const sinceHeader = `Since ${refYear - 1}`;
-            
+
             const weekAgoDate = new Date(refDate.getTime());
             weekAgoDate.setDate(weekAgoDate.getDate() - 7);
             const monthAgoDate = new Date(refDate.getTime());
             monthAgoDate.setMonth(monthAgoDate.getMonth() - 1);
-            
+
             Object.values(summaryConfig).forEach(config => {
                 const container = document.getElementById(config.container);
                 if (!container) return;
                 const data = config.tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
-                
+
                 const tableId = `table-${config.container}`;
                 let tableHTML = `<table id="${tableId}"><thead><tr>
                     <th>Name</th>
@@ -1011,13 +977,13 @@
                     <th>YTD (%)</th>
                     <th class="custom-date-header">${sinceHeader} (%)</th>
                 </tr></thead><tbody>`;
-                
+
                 data.forEach(item => {
-                    const isRate = item.market === 'US Rates'; 
+                    const isRate = item.market === 'US Rates';
                     const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
-                    
+
                     const dataPointOnRefDate = item.findDataPointOnOrBefore(refDate);
-                    
+
                     if (!dataPointOnRefDate) {
                         tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
                             <td title="${item.name}">${item.name}</td>
@@ -1027,7 +993,7 @@
                         </tr>`;
                         return;
                     }
-                    
+
                     const priceOnRefDate = dataPointOnRefDate.price;
                     const dateOnRefDate = formatDateMMDD(dataPointOnRefDate.date);
                     const timeOnRefDate = dataPointOnRefDate.originalDateStr.includes(' ') ? dataPointOnRefDate.originalDateStr.split(' ')[1] : 'c';
@@ -1043,7 +1009,7 @@
                     const perfSince = item.calcPerf(priceSince, priceOnRefDate, isRate, inverted);
 
                     const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
-                    
+
                     tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
                         <td title="${item.name}">${item.name}</td>
                         <td>${item.ticker}</td>
@@ -1056,10 +1022,9 @@
                         <td class="${colorClass(perfSince)}">${formatValue(perfSince, 'percent')}</td>
                     </tr>`;
                 });
-                // Find the table's parent to replace its content
                  const tableParent = container.querySelector('table')?.parentElement || container;
                  tableParent.innerHTML = tableHTML + '</tbody></table>';
-                
+
                 document.querySelectorAll(`#${tableId} th`).forEach(th => {
                     th.addEventListener('contextmenu', (e) => showColumnContextMenu(e, tableId));
                 });
@@ -1082,10 +1047,9 @@
             const tabsContainer = document.getElementById('chart-sub-tabs-container');
             const contentContainer = document.getElementById('chart-sub-content-container');
             tabsContainer.innerHTML = ''; contentContainer.innerHTML = '';
-            
-            // 請求 3: Add Chart 5
+
             const charts = ['Chart 1', 'Chart 2', 'Chart 3', 'Chart 4', 'Chart 5'];
-            
+
             charts.forEach((chartName, index) => {
                 const isActive = index === 0;
                 const chartId = chartName.replace(/\s/g, '-');
@@ -1094,7 +1058,7 @@
                 if (isActive) openChartSubTab(chartId);
             });
         }
-        
+
         function openChartSubTab(chartId) {
             document.querySelectorAll('#chart-sub-tabs-container .chart-sub-tab-link').forEach(link => link.classList.toggle('active', link.textContent === chartId.replace('-', ' ')));
             document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
@@ -1108,69 +1072,50 @@
 
         function renderChartTab(chartId) {
             const container = document.getElementById(`chart-content-${chartId}`);
-            if (!container) return; 
-            
+            if (!container) return;
+
             const defaultTickers = DEFAULT_CHART_TICKERS[chartId] || '';
             const currentUnit = chartAxisUnits[chartId] || 'auto';
-
-            // 請求 3: Chart 5 has a different layout
-            if (chartId === 'Chart-5') {
-                 container.innerHTML = `
-                    <div class="chart-controls">
-                        <label>Displaying Volume for TW Stocks: ${defaultTickers}</label>
-                    </div>
-                     <div class="chart-time-controls" id="time-controls-${chartId}">
-                        <div>
-                            <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
-                            <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
-                            <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
-                            <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
-                        </div>
-                    </div>
-                    <div id="volume-chart-container-${chartId}" class="chart-grid-2x2">
-                        <!-- 2x2 grid charts will be rendered here -->
-                    </div>
-                    <div class="table-container" id="perf-table-container-${chartId}">
-                        <table id="perf-table-${chartId}"><!-- Stats table will be rendered here --></table>
-                    </div>
-                `;
-            } else {
-                 container.innerHTML = `
-                    <div class="chart-controls">
-                        <label for="ticker-input-${chartId}">Tickers:</label>
-                        <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
-                        <div class="custom-date-inputs" id="custom-date-${chartId}">
-                            <input type="date" id="chart-start-${chartId}" class="controls-input">
-                            <input type="date" id="chart-end-${chartId}" class="controls-input">
-                        </div>
-                        <button class="update-btn" onclick="updateComparisonChartFromUI('${chartId}')">Update Chart</button>
-                    </div>
-                    <div class="chart-time-controls" id="time-controls-${chartId}">
-                        <div>
-                            <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
-                            <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
-                            <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
-                            <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
-                            <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
-                        </div>
-                        <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;">
-                            <span style="margin-right: 10px; font-weight: 500; color: var(--text-secondary);">X-Axis Unit:</span>
-                            <button data-unit="auto" class="${currentUnit === 'auto' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'auto', this)">Auto</button>
-                            <button data-unit="week" class="${currentUnit === 'week' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'week', this)">Week</button>
-                            <button data-unit="month" class="${currentUnit === 'month' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'month', this)">Month</button>
-                            <button data-unit="quarter" class="${currentUnit === 'quarter' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'quarter', this)">Quarter</button>
-                            <input type="number" id="axis-interval-${chartId}" min="1" value="1" 
-                                   style="width: 60px; display: ${currentUnit === 'auto' ? 'none' : 'block'}; margin-left: 10px; padding: 8px;" 
-                                   class="controls-input"
-                                   onchange="updateComparisonChartFromUI('${chartId}')">
-                        </div>
-                    </div>
-                    <div class="modal-chart-container" style="height: 500px;"><canvas id="canvas-chart-${chartId}"></canvas></div>
-                    <div class="table-container" id="perf-table-container-${chartId}">
-                        <table id="perf-table-${chartId}"></table>
-                    </div>`;
-            }
             
+            // Request 4: Chart 5 is now flexible like the others
+            const chartTitle = (chartId === 'Chart-5') ? 'Volume Comparison' : 'Performance Comparison';
+
+            container.innerHTML = `
+                <h3 style="margin-bottom: 15px; text-align: center; font-weight: 600;">${chartTitle}</h3>
+                <div class="chart-controls">
+                    <label for="ticker-input-${chartId}">Tickers:</label>
+                    <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
+                    <div class="custom-date-inputs" id="custom-date-${chartId}">
+                        <input type="date" id="chart-start-${chartId}" class="controls-input">
+                        <input type="date" id="chart-end-${chartId}" class="controls-input">
+                    </div>
+                    <button class="update-btn" onclick="updateComparisonChartFromUI('${chartId}')">Update Chart</button>
+                </div>
+                <div class="chart-time-controls" id="time-controls-${chartId}">
+                    <div>
+                        <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
+                        <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
+                        <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
+                        <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
+                        <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
+                    </div>
+                    <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;">
+                        <span style="margin-right: 10px; font-weight: 500; color: var(--text-secondary);">X-Axis Unit:</span>
+                        <button data-unit="auto" class="${currentUnit === 'auto' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'auto', this)">Auto</button>
+                        <button data-unit="week" class="${currentUnit === 'week' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'week', this)">Week</button>
+                        <button data-unit="month" class="${currentUnit === 'month' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'month', this)">Month</button>
+                        <button data-unit="quarter" class="${currentUnit === 'quarter' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'quarter', this)">Quarter</button>
+                        <input type="number" id="axis-interval-${chartId}" min="1" value="1"
+                               style="width: 60px; display: ${currentUnit === 'auto' ? 'none' : 'block'}; margin-left: 10px; padding: 8px;"
+                               class="controls-input"
+                               onchange="updateComparisonChartFromUI('${chartId}')">
+                    </div>
+                </div>
+                <div class="modal-chart-container" style="height: 500px;"><canvas id="canvas-chart-${chartId}"></canvas></div>
+                <div class="table-container" id="perf-table-container-${chartId}">
+                    <table id="perf-table-${chartId}"></table>
+                </div>`;
+
             updateComparisonChartFromUI(chartId);
         }
 
@@ -1178,199 +1123,28 @@
             chartAxisUnits[chartId] = unit;
             document.querySelectorAll(`#axis-controls-${chartId} button`).forEach(b => b.classList.remove('active'));
             element.classList.add('active');
-            
+
             const intervalInput = document.getElementById(`axis-interval-${chartId}`);
             intervalInput.style.display = (unit === 'auto') ? 'none' : 'block';
-            
+
             updateComparisonChartFromUI(chartId);
         }
 
-
-        // --- Cross Market Tab logic (preserved but unused by UI) ---
-        function updateCrossMarketChart(periodConfig, element, canvasId) {
-            if(element){
-                const controlsId = (canvasId === 'summaryCrossMarketChart') ? 'summary-cross-market-controls' : 'cross-market-controls';
-                if (document.getElementById(controlsId)) {
-                    document.querySelectorAll(`#${controlsId} button`).forEach(b => b.classList.remove('active'));
-                    element.classList.add('active');
-                }
-            }
-            
-            let startDate, endDate = latestDataDate;
-            if (periodConfig.period) {
-                startDate = getStartDate(periodConfig.period, latestDataDate);
-            } else {
-                startDate = new Date(periodConfig.start);
-                endDate = new Date(periodConfig.end);
-            }
-
-            const chartData = crossMarketAssets.tickers.map(ticker => {
-                const perfData = allPerformanceData.get(ticker);
-                if (!perfData) return 0;
-                
-                const isRate = perfData.market === 'US Rates';
-                const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => ticker.includes(inv));
-                
-                const startPrice = perfData.findPriceOnOrBefore(startDate);
-                const endPrice = perfData.findPriceOnOrBefore(endDate);
-
-                return perfData.calcPerf(startPrice, endPrice, isRate, inverted) || 0;
-            });
-            createCrossMarketChart(crossMarketAssets.labels, chartData, crossMarketAssets.types, canvasId);
-        }
-
-        function createCrossMarketChart(labels, data, types, canvasId) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-            if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
-
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const textColor = isDarkMode ? '#a0a0a0' : '#555';
-            const mutedTextColor = isDarkMode ? '#bbb' : '#777';
-            
-            const categoryLabelPlugin = {
-                id: 'categoryLabels',
-                afterDraw: (chart) => {
-                    const { ctx, chartArea: { bottom }, scales: { x } } = chart;
-                    ctx.save();
-                    ctx.font = 'bold 13px sans-serif';
-                    ctx.fillStyle = mutedTextColor;
-                    ctx.textAlign = 'center';
-
-                    const assetGroups = [
-                        { label: 'Equity Index', start: 0, end: 1 }, { label: 'Stocks', start: 2, end: 3 },
-                        { label: 'US Rates', start: 4, end: 5 }, { label: 'FX', start: 6, end: 7 },
-                        { label: 'Commodity', start: 8, end: 8 }
-                    ];
-
-                    assetGroups.forEach(group => {
-                        const startPixel = x.getPixelForValue(group.start);
-                        const endPixel = x.getPixelForValue(group.end);
-                        const middlePixel = startPixel + (endPixel - startPixel) / 2;
-                        ctx.fillText(group.label, middlePixel, bottom + 45);
-                    });
-                    ctx.restore();
-                }
-            };
-            
-            activeCharts[canvasId] = new Chart(ctx, {
-                type: 'bar', data: { labels: labels, datasets: [{
-                        label: 'Performance', data: data,
-                        backgroundColor: data.map(v => v >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)'),
-                        borderColor: data.map(v => v >= 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'),
-                        borderWidth: 1
-                    }] },
-                plugins: [categoryLabelPlugin],
-                options: {
-                    responsive: true, maintainAspectRatio: false, indexAxis: 'x', layout: { padding: { bottom: 55 } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: textColor, font: { weight: '500' } } },
-                        y: { grid: { color: gridColor }, ticks: { color: textColor }, title: { display: true, text: 'Performance (% or bps)'} }
-                    },
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const index = elements[0].index;
-                            if (index !== undefined && crossMarketAssets.labels[index]) {
-                                showTickerChangeConfirmation(index, canvasId);
-                            }
-                        }
-                    },
-                    plugins: { legend: { display: false }, tooltip: { callbacks: {
-                                label: function(context) {
-                                    const value = context.raw.toFixed(2);
-                                    const type = types[context.dataIndex];
-                                    return `${context.dataset.label || ''}: ${value} ${type === 'bps' ? 'bps' : '%'}`;
-                                }
-                            }},
-                        annotation: { annotations: {
-                                line1: { type: 'line', xMin: 1.5, xMax: 1.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] },
-                                line2: { type: 'line', xMin: 3.5, xMax: 3.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] },
-                                line3: { type: 'line', xMin: 5.5, xMax: 5.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] },
-                                line4: { type: 'line', xMin: 7.5, xMax: 7.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] }
-                            }}
-                    }
-                }
-            });
-        }
-
-        function showTickerChangeConfirmation(index, canvasId) {
-            const group = crossMarketAssets.groups[index];
-            const label = crossMarketAssets.labels[index];
-            document.getElementById('confirmationMessage').innerHTML = `Would you like to select a different ticker for the <b style="color:var(--primary-color)">'${group}'</b> category?<br>(Currently: ${label})`;
-            const confirmBtnYes = document.getElementById('confirmBtnYes');
-            const newConfirmBtnYes = confirmBtnYes.cloneNode(true);
-            confirmBtnYes.parentNode.replaceChild(newConfirmBtnYes, confirmBtnYes);
-            newConfirmBtnYes.onclick = () => { closeModal('confirmationModal'); showTickerSelectionModal(index, canvasId); };
-            openModal('confirmationModal');
-        }
-
-        function showTickerSelectionModal(index, canvasId) {
-            const group = crossMarketAssets.groups[index];
-            if (!group) return;
-            document.getElementById('tickerSelectionTitle').textContent = `Select a Ticker for ${group}`;
-            const list = document.getElementById('ticker-selection-list');
-            list.innerHTML = '';
-            
-            let tickersToShow = (group === 'Stocks') ?
-                [...allPerformanceData.values()].filter(d => d.market === 'US Stocks' || d.market === 'TW Stocks') :
-                [...allPerformanceData.values()].filter(d => d.market === group);
-
-            tickersToShow.sort((a, b) => a.name.localeCompare(b.name));
-            tickersToShow.forEach(perfData => {
-                if (!perfData) return;
-                const li = document.createElement('li');
-                li.textContent = `${perfData.name} (${perfData.ticker})`;
-                li.onclick = () => selectNewTicker(index, perfData.ticker, canvasId);
-                list.appendChild(li);
-            });
-            openModal('tickerSelectionModal');
-        }
-
-        function selectNewTicker(index, newTicker, canvasId) {
-            const perfData = allPerformanceData.get(newTicker);
-            if (!perfData) return;
-            crossMarketAssets.tickers[index] = newTicker;
-            let displayName = perfData.name;
-            if (newTicker === 'TSM.N') displayName = 'TSM (ADR)';
-            if (newTicker === '2330.TW') displayName = 'TSMC (TW)';
-            crossMarketAssets.labels[index] = displayName;
-            crossMarketAssets.types[index] = (perfData.market === 'US Rates') ? 'bps' : 'perf';
-            closeModal('tickerSelectionModal');
-            
-            const controlsId = (canvasId === 'summaryCrossMarketChart') ? 'summary-cross-market-controls' : 'cross-market-controls';
-            const controlsElement = document.getElementById(controlsId);
-            if (!controlsElement) return;
-            
-            const activeElement = controlsElement.querySelector('button.active');
-            const period = activeElement.dataset.period;
-            
-            if (period === 'custom') {
-                 updateCrossMarketChart({ period: 'ytd' }, controlsElement.querySelector('button[data-period="ytd"]'), canvasId);
-            } else {
-                updateCrossMarketChart({ period }, activeElement, canvasId);
-            }
-        }
-
-
         // --- Charting Functions ---
-        
         function setComparisonChartPeriod(chartId, period, element) {
             document.querySelectorAll(`#time-controls-${chartId} div:first-child button`).forEach(b => b.classList.remove('active'));
             element.classList.add('active');
             const customDateEl = document.getElementById(`custom-date-${chartId}`);
             if(customDateEl) customDateEl.classList.toggle('active', period === 'custom');
-            
+
             if (period !== 'custom') {
                 updateComparisonChartFromUI(chartId);
             }
         }
-        
+
         function updateComparisonChartFromUI(chartId) {
             const tickerInput = document.getElementById(`ticker-input-${chartId}`);
-            // Chart 5 has no ticker input, it uses defaults
-            const tickers = (tickerInput ? tickerInput.value : DEFAULT_CHART_TICKERS[chartId])
-                            .split(',').map(t => t.trim()).filter(Boolean);
+            const tickers = (tickerInput.value).split(',').map(t => t.trim()).filter(Boolean);
 
             const activePeriodBtn = document.querySelector(`#time-controls-${chartId} div:first-child button.active`);
             if (!activePeriodBtn) { console.error("No active period button for", chartId); return; }
@@ -1378,7 +1152,7 @@
 
             let timeConfig = { period };
             let endDate = latestDataDate;
-            
+
             if (period === 'custom') {
                 const start = document.getElementById(`chart-start-${chartId}`).value;
                 const end = document.getElementById(`chart-end-${chartId}`).value;
@@ -1386,10 +1160,9 @@
                 timeConfig = { start, end };
                 endDate = new Date(end);
             }
-            
-            // 請求 3: Route to correct chart/table function
+
             if (chartId === 'Chart-5') {
-                createVolumeCharts(chartId, tickers, timeConfig);
+                createCombinedVolumeChart(chartId, tickers, timeConfig);
                 renderVolumeStatsTable(chartId, tickers, timeConfig);
             } else {
                 createComparisonChart(chartId, tickers, timeConfig);
@@ -1403,7 +1176,7 @@
                 const years = chart.options.plugins.yearAxis.years;
                 if (!years || Object.keys(years).length === 0) return;
                 const { ctx, chartArea: { bottom, left, right }, scales: { x } } = chart;
-                
+
                 ctx.save();
                 ctx.font = '14px sans-serif';
                 ctx.fillStyle = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
@@ -1413,7 +1186,7 @@
                     const yearData = years[year];
                     const midPoint = (yearData.min + yearData.max) / 2;
                     const xPos = x.getPixelForValue(midPoint);
-                    
+
                     if (xPos >= left && xPos <= right) {
                          ctx.fillText(year, xPos, bottom + 35);
                     }
@@ -1422,12 +1195,11 @@
             }
         };
 
-
         function createComparisonChart(chartId, tickers, timeConfig) {
             const canvasId = `canvas-chart-${chartId}`;
             const ctx = document.getElementById(canvasId);
             if (!ctx) return;
-            
+
             let startDate, endDate = latestDataDate;
             if (timeConfig.period) {
                  switch(timeConfig.period) {
@@ -1440,16 +1212,15 @@
                 startDate = new Date(timeConfig.start);
                 endDate = new Date(timeConfig.end);
             }
-            
+
             const filteredData = allData.filter(d => d.date >= startDate && d.date <= endDate);
-            
             const yearsInData = {};
-            
+
             const datasets = tickers.map((ticker, index) => {
                 const tickerData = filteredData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
                 if (tickerData.length === 0) return null;
                 const color = CHART_COLORS[index % CHART_COLORS.length];
-                
+
                 const perfData = allPerformanceData.get(ticker);
                 const isRate = perfData && perfData.market === 'US Rates';
 
@@ -1469,9 +1240,9 @@
                 const firstPricePoint = tickerData[0];
                 if(!firstPricePoint || firstPricePoint.price === 0) return null;
                 const firstPrice = firstPricePoint.price;
-                
+
                 const normalizedData = tickerData.map(d => ({ x: d.date.getTime(), y: ((d.price / firstPrice) - 1) * 100 }));
-                
+
                 normalizedData.forEach(d => {
                     const year = new Date(d.x).getFullYear();
                     if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
@@ -1480,10 +1251,10 @@
                         yearsInData[year].max = Math.max(yearsInData[year].max, d.x);
                     }
                 });
-                
+
                 return { label: tickerData[0].name, data: normalizedData, borderColor: color, backgroundColor: color + '33', borderWidth: 2, pointRadius: 0, yAxisID: 'yPerf' };
             }).filter(Boolean);
-            
+
             const hasPerf = datasets.some(ds => ds.yAxisID === 'yPerf');
             const hasRates = datasets.some(ds => ds.yAxisID === 'yRates');
 
@@ -1491,38 +1262,37 @@
             const isDarkMode = document.body.classList.contains('dark-mode');
             const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
             const textColor = isDarkMode ? '#a0a0a0' : '#555';
-            
+
             const timeUnit = chartAxisUnits[chartId] || 'auto';
             const intervalInput = document.getElementById(`axis-interval-${chartId}`);
             const interval = (intervalInput && timeUnit !== 'auto') ? parseInt(intervalInput.value) || 1 : undefined;
 
-
             activeCharts[canvasId] = new Chart(ctx, {
-                type: 'line', 
+                type: 'line',
                 data: { datasets },
                 plugins: [yearAxisPlugin],
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     layout: { padding: { bottom: 40 } },
-                    scales: { 
-                        x: { 
-                            type: 'time', 
-                            time: { 
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
                                 unit: timeUnit === 'auto' ? undefined : timeUnit,
                                 unitStepSize: interval,
-                                // 請求 3: Fix date format display
-                                displayFormats: { month: 'MMM' }
-                            }, 
-                            ticks: { 
-                                color: textColor, 
-                                source: timeUnit === 'auto' ? 'auto' : 'data',
+                                // Request 2: Fix date format display
+                                displayFormats: { week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }
+                            },
+                            ticks: {
+                                color: textColor,
+                                source: 'auto',
                                 maxRotation: 0, autoSkip: true
                             },
                             grid: { color: gridColor }
-                        }, 
-                        yPerf: { 
+                        },
+                        yPerf: {
                             display: hasPerf, position: 'left',
-                            title: { display: true, text: 'Cumulative Return (%)' }, 
+                            title: { display: true, text: 'Cumulative Return (%)' },
                             ticks: { color: textColor, callback: (value) => `${value}%` },
                             grid: { color: gridColor }
                         },
@@ -1533,7 +1303,7 @@
                             grid: { display: false }
                         }
                     },
-                    plugins: { 
+                    plugins: {
                         yearAxis: { years: yearsInData },
                         legend: { labels: { color: isDarkMode ? '#f0f0f0' : '#333' } },
                         tooltip: { mode: 'index', intersect: false }
@@ -1541,18 +1311,18 @@
                 }
             });
         }
-        
+
         function renderChartPerformanceTable(chartId, tickers, endDate) {
             const container = document.getElementById(`perf-table-container-${chartId}`);
             if (!container) return;
 
             const data = tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
             if (data.length === 0) { container.innerHTML = 'No data to display.'; return; }
-            
+
             const asOfDateStr = `As of: ${formatDateMMDD(endDate)}`;
             const endYear = endDate.getFullYear();
             const ytdStartDate = new Date(endYear, 0, 1);
-            
+
             const sinceStartDate = new Date(endYear - 1, 0, 1);
             const sinceHeader = `Since ${endYear - 1}`;
 
@@ -1574,11 +1344,9 @@
             data.forEach(item => {
                 const isRate = item.market === 'US Rates';
                 const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
-                
                 const priceOnEndDate = item.findPriceOnOrBefore(endDate);
                 const priceOnYTDStart = item.findPriceOnOrBefore(ytdStartDate);
                 const rawPerf = item.calcPerf(priceOnYTDStart, priceOnEndDate, isRate, inverted);
-                
                 const displayValue = formatValue(rawPerf, isRate ? 'bps' : 'percent');
                 const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
                 tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
@@ -1590,11 +1358,9 @@
             data.forEach(item => {
                 const isRate = item.market === 'US Rates';
                 const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
-                
                 const priceOnEndDate = item.findPriceOnOrBefore(endDate);
                 const priceOnSinceStart = item.findPriceOnOrBefore(sinceStartDate);
                 const rawPerf = item.calcPerf(priceOnSinceStart, priceOnEndDate, isRate, inverted);
-
                 const displayValue = formatValue(rawPerf, isRate ? 'bps' : 'percent');
                 const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
                 tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
@@ -1605,28 +1371,11 @@
             container.innerHTML = tableHTML;
         }
 
-        // --- Chart 5: Volume Chart Functions (請求 3) ---
-
-        function calculateMovingAverage(data, windowSize) {
-            let result = [];
-            for (let i = 0; i < data.length; i++) {
-                if (i < windowSize - 1) {
-                    result.push({ x: data[i].x, y: null }); // Not enough data for MA
-                } else {
-                    let sum = 0;
-                    for (let j = 0; j < windowSize; j++) {
-                        sum += data[i - j].y;
-                    }
-                    result.push({ x: data[i].x, y: sum / windowSize });
-                }
-            }
-            return result;
-        }
-
-        function createVolumeCharts(chartId, tickers, timeConfig) {
-            const container = document.getElementById(`volume-chart-container-${chartId}`);
-            if (!container) return;
-            container.innerHTML = ''; // Clear previous charts
+        // Request 4: New combined volume chart function for Chart 5
+        function createCombinedVolumeChart(chartId, tickers, timeConfig) {
+            const canvasId = `canvas-chart-${chartId}`;
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
 
             let startDate, endDate = latestDataDate;
             if (timeConfig.period) {
@@ -1640,88 +1389,79 @@
                 startDate = new Date(timeConfig.start);
                 endDate = new Date(timeConfig.end);
             }
-            
+
             const filteredData = allData.filter(d => d.date >= startDate && d.date <= endDate);
+            const yearsInData = {};
+
+            const datasets = tickers.map((ticker, index) => {
+                const perfData = allPerformanceData.get(ticker);
+                if (!perfData) return null;
+
+                const tickerData = filteredData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
+                if (tickerData.length === 0) return null;
+
+                const volumeData = tickerData.map(d => ({ x: d.date.getTime(), y: d.volume }));
+                volumeData.forEach(d => {
+                    const year = new Date(d.x).getFullYear();
+                    if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
+                    else {
+                        yearsInData[year].min = Math.min(yearsInData[year].min, d.x);
+                        yearsInData[year].max = Math.max(yearsInData[year].max, d.x);
+                    }
+                });
+
+                return {
+                    label: perfData.name,
+                    data: volumeData,
+                    backgroundColor: CHART_COLORS[index % CHART_COLORS.length] + 'B3', // Add alpha
+                    borderColor: CHART_COLORS[index % CHART_COLORS.length],
+                    borderWidth: 1
+                };
+            }).filter(Boolean);
+
+            if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
             const isDarkMode = document.body.classList.contains('dark-mode');
             const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
             const textColor = isDarkMode ? '#a0a0a0' : '#555';
 
-            tickers.forEach((ticker, index) => {
-                const perfData = allPerformanceData.get(ticker);
-                if (!perfData) return;
-
-                // Create container and canvas for each chart
-                const chartItem = document.createElement('div');
-                chartItem.className = 'chart-grid-item';
-                const canvas = document.createElement('canvas');
-                const canvasId = `volume-chart-${ticker.replace('.', '-')}`;
-                canvas.id = canvasId;
-                chartItem.appendChild(canvas);
-                container.appendChild(chartItem);
-                
-                const tickerData = filteredData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
-                if (tickerData.length === 0) return;
-
-                const volumeData = tickerData.map(d => ({ x: d.date.getTime(), y: d.volume }));
-                
-                // Assuming ~21 trading days in a month, 3 months is ~63 days
-                const maData = calculateMovingAverage(volumeData, 63);
-
-                if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
-                
-                activeCharts[canvasId] = new Chart(canvas.getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        datasets: [
-                        {
-                            label: '3M MA',
-                            data: maData,
-                            type: 'line',
-                            borderColor: '#dc3545',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Volume',
-                            data: volumeData,
-                            backgroundColor: 'rgba(128, 128, 128, 0.5)',
-                            borderColor: 'transparent',
-                            yAxisID: 'y'
-                        }]
+            activeCharts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: { datasets },
+                plugins: [yearAxisPlugin],
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { bottom: 40 } },
+                    plugins: {
+                        yearAxis: { years: yearsInData },
+                        legend: { labels: { color: isDarkMode ? '#f0f0f0' : '#333' } },
+                        tooltip: { mode: 'index', intersect: false }
                     },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            title: { display: true, text: `${perfData.name} (${ticker})`, color: textColor }
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'month', displayFormats: { month: 'MMM' }},
+                            ticks: { color: textColor, maxRotation: 0, autoSkip: true },
+                            grid: { display: false }
                         },
-                        scales: {
-                            x: {
-                                type: 'time',
-                                time: { unit: 'month', displayFormats: { month: 'MMM' }},
-                                ticks: { color: textColor, maxRotation: 0, autoSkip: true },
-                                grid: { display: false }
+                        y: {
+                            title: { display: true, text: 'Volume' },
+                            ticks: {
+                                color: textColor,
+                                callback: (value) => {
+                                    if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B';
+                                    if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+                                    if (value >= 1e3) return (value / 1e3).toFixed(1) + 'K';
+                                    return value;
+                                }
                             },
-                            y: {
-                                ticks: {
-                                    color: textColor,
-                                    callback: (value) => {
-                                        if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B';
-                                        if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
-                                        if (value >= 1e3) return (value / 1e3).toFixed(1) + 'K';
-                                        return value;
-                                    }
-                                },
-                                grid: { color: gridColor }
-                            }
+                            grid: { color: gridColor }
                         }
                     }
-                });
+                }
             });
         }
-        
+
+        // Request 4: Updated volume stats table to handle flexible tickers
         function renderVolumeStatsTable(chartId, tickers, timeConfig) {
              const container = document.getElementById(`perf-table-container-${chartId}`);
             if (!container) return;
@@ -1762,7 +1502,7 @@
                 }
             });
             tableHTML += '</tr>';
-            
+
             // Row 2: YTD Volume
             tableHTML += '<tr><td>YTD Volume</td>';
             tickers.forEach(ticker => {
@@ -1788,7 +1528,7 @@
                 const years = chart.options.plugins.yearAxis.years;
                 if (!years || Object.keys(years).length === 0) return;
                 const { ctx, chartArea: { bottom, left, right }, scales: { x } } = chart;
-                
+
                 ctx.save();
                 ctx.font = '14px sans-serif';
                 ctx.fillStyle = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
@@ -1798,7 +1538,7 @@
                     const yearData = years[year];
                     const midPoint = (yearData.min + yearData.max) / 2;
                     const xPos = x.getPixelForValue(midPoint);
-                    
+
                     if (xPos >= left && xPos <= right) {
                          ctx.fillText(year, xPos, bottom + 35);
                     }
@@ -1814,7 +1554,7 @@
 
             const name = tickerData[0].name;
             document.getElementById('modalTickerName').textContent = `${name} (${ticker})`;
-            
+
             const timeControls = document.getElementById('modal-time-controls');
             timeControls.querySelectorAll('button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.period === period);
@@ -1834,7 +1574,7 @@
             const chartData = tickerData
                 .filter(d => d.date >= startDate && d.date <= tempDate)
                 .map(d => ({ x: d.date.getTime(), y: d.price }));
-            
+
             const canvasId = 'individualTickerChart';
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
@@ -1842,136 +1582,107 @@
             if (chartData.length < 2) {
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                 ctx.font = "16px sans-serif"; ctx.fillStyle = "#888"; ctx.textAlign = "center";
-                ctx.fillText("Not enough data to display chart for this period.", ctx.canvas.width / 2, ctx.canvas.height / 2);
-            } else {
-                let minPoint = chartData[0], maxPoint = chartData[0];
-                chartData.forEach(p => {
-                    if (p.y < minPoint.y) minPoint = p;
-                    if (p.y > maxPoint.y) maxPoint = p;
-                });
+                ctx.fillText("Not enough data for this period.", ctx.canvas.width / 2, ctx.canvas.height / 2);
+                openModal('tickerModal');
+                return;
+            }
 
-                const getLabelAnnotation = (point, content, defaultYAdjust) => {
-                    const label = {
-                        type: 'label', xValue: point.x, yValue: point.y, content: content,
-                        font: { size: 12 }, yAdjust: defaultYAdjust,
-                        backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(50,50,50,0.85)' : 'rgba(255, 255, 255, 0.85)',
-                        color: document.body.classList.contains('dark-mode') ? '#f0f0f0' : '#333',
-                        padding: 4, borderRadius: 4,
-                    };
-                    const pointIndex = chartData.findIndex(p => p.x === point.x);
-                    if (pointIndex < chartData.length / 2) { label.xAdjust = 5; label.textAlign = 'left'; } 
-                    else { label.xAdjust = -5; label.textAlign = 'right'; }
-                    return label;
+            let minPoint = chartData[0], maxPoint = chartData[0];
+            chartData.forEach(p => {
+                if (p.y < minPoint.y) minPoint = p;
+                if (p.y > maxPoint.y) maxPoint = p;
+            });
+
+            const getLabelAnnotation = (point, content, defaultYAdjust) => {
+                const label = {
+                    type: 'label', xValue: point.x, yValue: point.y, content: content,
+                    font: { size: 12 }, yAdjust: defaultYAdjust,
+                    backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(50,50,50,0.85)' : 'rgba(255, 255, 255, 0.85)',
+                    color: document.body.classList.contains('dark-mode') ? '#f0f0f0' : '#333',
+                    padding: 4, borderRadius: 4,
                 };
-                
-                const yearAnnotations = {};
-                const yearsInData = {};
-                chartData.forEach(d => {
-                    const year = new Date(d.x).getFullYear();
-                    if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
-                    else {
-                        yearsInData[year].min = Math.min(yearsInData[year].min, d.x);
-                        yearsInData[year].max = Math.max(yearsInData[year].max, d.x);
-                    }
-                });
+                const pointIndex = chartData.findIndex(p => p.x === point.x);
+                if (pointIndex < chartData.length / 2) { label.xAdjust = 5; label.textAlign = 'left'; }
+                else { label.xAdjust = -5; label.textAlign = 'right'; }
+                return label;
+            };
 
-                Object.keys(yearsInData).sort().forEach((year, index) => {
-                    if (index > 0) {
-                        const yearStartDate = new Date(parseInt(year), 0, 1).getTime();
-                        yearAnnotations[`yearLine${year}`] = {
-                            type: 'line', xMin: yearStartDate, xMax: yearStartDate,
-                            borderColor: 'rgba(128, 128, 128, 0.5)', borderWidth: 1, borderDash: [6, 6]
-                        };
-                    }
-                });
-                
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            const yearAnnotations = {};
+            const yearsInData = {};
+            chartData.forEach(d => {
+                const year = new Date(d.x).getFullYear();
+                if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
+                else {
+                    yearsInData[year].min = Math.min(yearsInData[year].min, d.x);
+                    yearsInData[year].max = Math.max(yearsInData[year].max, d.x);
+                }
+            });
 
-                activeCharts[canvasId] = new Chart(ctx, {
-                    type: 'line',
-                    data: { datasets: [{ 
-                        label: 'Price', data: chartData, borderColor: 'rgba(74, 144, 226, 1)', 
-                        backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 2, 
-                        fill: true, pointRadius: 0, tension: 0.1 
-                    }] },
-                    plugins: [modalYearAxisPlugin, ChartAnnotation],
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        layout: { padding: { bottom: 40 } },
-                        scales: {
-                            x: {
-                                type: 'time', 
-                                time: { unit: 'month', displayFormats: { month: 'MMM' } },
-                                ticks: { source: 'auto', maxRotation: 0, autoSkip: true, color: textColor, callback: () => '' },
-                                grid: { color: gridColor }
-                            },
-                            y: { 
-                                position: 'right', title: { display: true, text: 'Price' },
-                                ticks: { color: textColor }, grid: { color: gridColor }
-                            }
+            Object.keys(yearsInData).sort().forEach((year, index) => {
+                if (index > 0) {
+                    const yearStartDate = new Date(parseInt(year), 0, 1).getTime();
+                    yearAnnotations[`yearLine${year}`] = {
+                        type: 'line', xMin: yearStartDate, xMax: yearStartDate,
+                        borderColor: 'rgba(128, 128, 128, 0.5)', borderWidth: 1, borderDash: [6, 6]
+                    };
+                }
+            });
+
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const textColor = isDarkMode ? '#a0a0a0' : '#555';
+
+            activeCharts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: { datasets: [{
+                    label: 'Price', data: chartData, borderColor: 'rgba(74, 144, 226, 1)',
+                    backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 2,
+                    fill: true, pointRadius: 0, tension: 0.1
+                }] },
+                // Request 1: Fixed broken chart by removing undefined variable from plugins array
+                plugins: [modalYearAxisPlugin],
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { bottom: 40 } },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'month', displayFormats: { month: 'MMM' } },
+                            ticks: { source: 'auto', maxRotation: 0, autoSkip: true, color: textColor, callback: () => '' },
+                            grid: { color: gridColor }
                         },
-                        plugins: {
-                            yearAxis: { years: yearsInData },
-                            legend: { display: false },
-                            tooltip: { mode: 'index', intersect: false, callbacks: {
-                                title: (tooltipItems) => formatDateMMDD(new Date(tooltipItems[0].parsed.x))
-                            }},
-                            annotation: {
-                                annotations: {
-                                    ...yearAnnotations,
-                                    highPoint: { type: 'point', xValue: maxPoint.x, yValue: maxPoint.y, backgroundColor: 'rgba(220, 53, 69, 0.8)', radius: 5 },
-                                    highLabel: getLabelAnnotation(maxPoint, `High: ${formatNumberWithCommas(maxPoint.y.toFixed(2))}`, -15),
-                                    lowPoint: { type: 'point', xValue: minPoint.x, yValue: minPoint.y, backgroundColor: 'rgba(40, 167, 69, 0.8)', radius: 5 },
-                                    lowLabel: getLabelAnnotation(minPoint, `Low: ${formatNumberWithCommas(minPoint.y.toFixed(2))}`, 15)
-                                }
+                        y: {
+                            position: 'right', title: { display: true, text: 'Price' },
+                            ticks: { color: textColor }, grid: { color: gridColor }
+                        }
+                    },
+                    plugins: {
+                        yearAxis: { years: yearsInData },
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false, callbacks: {
+                            title: (tooltipItems) => formatDateMMDD(new Date(tooltipItems[0].parsed.x))
+                        }},
+                        annotation: {
+                            annotations: {
+                                ...yearAnnotations,
+                                highPoint: { type: 'point', xValue: maxPoint.x, yValue: maxPoint.y, backgroundColor: 'rgba(220, 53, 69, 0.8)', radius: 5 },
+                                highLabel: getLabelAnnotation(maxPoint, `High: ${formatNumberWithCommas(maxPoint.y.toFixed(2))}`, -15),
+                                lowPoint: { type: 'point', xValue: minPoint.x, yValue: minPoint.y, backgroundColor: 'rgba(40, 167, 69, 0.8)', radius: 5 },
+                                lowLabel: getLabelAnnotation(minPoint, `Low: ${formatNumberWithCommas(minPoint.y.toFixed(2))}`, 15)
                             }
                         }
                     }
-                });
-            }
+                }
+            });
             openModal('tickerModal');
         }
 
-
-        function openCustomDateModal(context) {
-            activeCustomDateContext = context;
-            const applyBtn = document.getElementById('applyCustomDate');
-            
-            if (context.startsWith('chart-')) {
-                const chartId = context.split('-')[1];
-                applyBtn.onclick = () => { /* Chart tab controls handle this */ };
-            } else {
-                 applyBtn.onclick = () => { /* TBD */ };
-            }
-            openModal('datePickerModal');
-        }
-        
-        function applyCustomDateToCrossMarket(canvasId) {
-            const start = document.getElementById('customStartDate').value;
-            const end = document.getElementById('customEndDate').value;
-            if (!start || !end || new Date(start) > new Date(end)) { return; }
-            
-            const customPeriod = { start, end };
-            const controlsId = (canvasId === 'summaryCrossMarketChart') ? 'summary-cross-market-controls' : 'cross-market-controls';
-            
-            const controlsElement = document.getElementById(controlsId);
-            if (!controlsElement) return;
-            
-            const customButton = controlsElement.querySelector('button[data-period="custom"]');
-            updateCrossMarketChart(customPeriod, customButton, canvasId);
-            closeModal('datePickerModal');
-        }
-        
-        
-        // --- Data Tab Functions (請求 4: Rework) ---
-        
+        // --- Data Tab Functions ---
         function pivotDataForDownload() {
             try {
                 const uniqueDates = [...new Set(allData.map(d => d.originalDateStr.split(' ')[0]))].sort();
                 const uniqueTickers = [...new Set(allData.map(d => d.ticker))].sort();
-                
+
                 pivotedDataHeaders = ['Date', ...uniqueTickers];
 
                 const dataMap = new Map();
@@ -1986,7 +1697,7 @@
                     const priceArray = uniqueTickers.map(ticker => dateMap.get(ticker) || null);
                     pivotedData.set(date, priceArray);
                 });
-                
+
                 isDataPivoted = true;
                 if (document.getElementById('data').classList.contains('active')) {
                     renderDataTab();
@@ -2005,7 +1716,7 @@
             const startDateInput = document.getElementById('data-start-date');
             const endDateInput = document.getElementById('data-end-date');
             const container = document.getElementById('data-table-container');
-            
+
             if (pivotedData.size > 0) {
                 const dates = [...pivotedData.keys()];
                 const firstDate = dates[0];
@@ -2032,11 +1743,11 @@
                 '.SPX','.IXIC', '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO',
                 'NVDA.O', 'AVGO.O', 'INTC.O', 'AMD.O'
             ];
-            
+
             const allHeaders = pivotedDataHeaders;
             const tickerIndicesToKeep = [];
             const finalHeaders = ['Date'];
-            
+
             allHeaders.forEach((header, index) => {
                 if (index === 0) return;
                 if (summaryTickers.includes(header)) {
@@ -2049,7 +1760,7 @@
             finalHeaders.forEach(h => tableHTML += `<th>${h}</th>`);
             tableHTML += '</tr></thead><tbody>';
 
-            filteredDates.forEach(date => {
+            filteredDates.reverse().forEach(date => { // Show most recent first
                 tableHTML += '<tr>';
                 tableHTML += `<td>${date}</td>`;
                 const allPrices = pivotedData.get(date);
@@ -2059,7 +1770,7 @@
                 });
                 tableHTML += '</tr>';
             });
-            
+
             tableHTML += '</tbody></table>';
             container.innerHTML = tableHTML;
         }
@@ -2087,7 +1798,7 @@
                 console.error('Copy error:', err);
             });
         }
-        
+
         function downloadDataAsCSV() {
             const dataString = getTableDataAsString('data-table', ',');
             const blob = new Blob([dataString], { type: 'text/csv;charset=utf-8;' });
@@ -2101,12 +1812,12 @@
             document.body.removeChild(link);
         }
 
-        // --- News Tab Functions (請求 5) ---
+        // --- News Tab Functions ---
         function setupNewsTab() {
             const controlsContainer = document.getElementById('news-controls');
             if (!controlsContainer) return;
             controlsContainer.innerHTML = '';
-            
+
             const newsTickers = {'3443.TW': 'Unichip', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'Xintec'};
 
             Object.entries(newsTickers).forEach(([ticker, name]) => {
@@ -2133,24 +1844,24 @@
             contentContainer.innerHTML = '';
 
             const url = `https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${stockId}.json`;
-            
+
             try {
                 const newsData = await fetchJsonWithRetry(url);
                 if (!newsData || !newsData.reports || newsData.reports.length === 0) {
                     statusEl.textContent = `No news found for stock ID ${stockId}.`;
                     return;
                 }
-                
+
                 statusEl.textContent = `Displaying ${newsData.reports.length} reports. Last updated: ${new Date(newsData.last_updated).toLocaleString()}`;
                 let newsHTML = '';
                 newsData.reports.forEach(report => {
+                    // Request 3: Remove content, only show title and meta
                     newsHTML += `
                         <div class="news-item">
                             <h4><a href="${report.URL}" target="_blank" rel="noopener noreferrer">${report.Title}</a></h4>
                             <div class="news-meta">
                                 <strong>Source:</strong> ${report.Source} | <strong>Date:</strong> ${report.Date} ${report.Time}
                             </div>
-                            <p class="news-content-text">${report.Content}</p>
                         </div>
                     `;
                 });
@@ -2163,15 +1874,14 @@
         }
 
         // --- UI Utility Functions ---
-        
         function formatDateMMDD(date) { return date instanceof Date && !isNaN(date) ? `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}` : ''; }
-        
+
         function openModal(modalId) { const m = document.getElementById(modalId); m.style.display='block'; setTimeout(() => m.classList.add('show'), 10); document.body.style.overflow = 'hidden'; }
         function closeModal(modalId) {
             const m = document.getElementById(modalId);
             if(!m) return;
             m.classList.remove('show');
-            setTimeout(() => { 
+            setTimeout(() => {
                 m.style.display = 'none';
                 if (!document.querySelector('.modal.show')) {
                     document.body.style.overflow = '';
@@ -2190,7 +1900,7 @@
             document.querySelectorAll(".tab-content, .tab-link").forEach(el => el.classList.remove("active"));
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
-            
+
             if (tabName === 'chart-main') {
                 const firstSubTab = document.querySelector('#chart-sub-tabs-container .chart-sub-tab-link');
                 if (firstSubTab) {
@@ -2201,8 +1911,6 @@
                 }
             } else if (tabName === 'data' && isDataPivoted) {
                 renderDataTab();
-            } else if (tabName === 'news') {
-                 // News tab is ready on load, no special action needed here.
             }
         }
         function initTheme() {
@@ -2216,12 +1924,12 @@
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
             document.getElementById('theme-icon-sun').style.display = isDarkMode ? 'none' : 'block';
             document.getElementById('theme-icon-moon').style.display = isDarkMode ? 'block' : 'none';
-            
+
             Object.values(activeCharts).forEach(chart => {
                 if (chart && chart.options) {
                     const textColor = isDarkMode ? '#a0a0a0' : '#555';
                     const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                    
+
                     if(chart.options.plugins.title) chart.options.plugins.title.color = textColor;
                     if (chart.options.scales.x) {
                          chart.options.scales.x.ticks.color = textColor;
@@ -2233,7 +1941,7 @@
                             chart.options.scales[key].grid.color = gridColor;
                         }
                     });
-                    
+
                     if(chart.options.plugins.legend) {
                        chart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#333';
                     }
