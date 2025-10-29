@@ -1,19 +1,16 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 標題更新 -->
-    <title>Market Dashboard (Auto-updating) V4</title>
+    <title>Market Dashboard (Auto-updating) V5</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
     
-    <!-- 請求 3.1: Jspreadsheet CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@11.1.1/dist/jspreadsheet.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@11.1.1/dist/jspreadsheet.min.css" type="text/css" />
-    <script src="https://cdn.jsdelivr.net/npm/jsuites@5.1.0/dist/jsuites.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@5.1.0/dist/jsuites.min.css" type="text/css" />
+    <!-- Jspreadsheet is removed -->
 
     <style>
         :root {
@@ -110,25 +107,24 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* --- 樣式變更 (請求 2.2) --- */
         .chart-sub-tabs, .view-toggle-tabs, .chart-time-controls, .cross-market-controls { 
             display: flex; 
             border-bottom: 1px solid var(--border-color); 
             margin-bottom: 15px; 
             flex-wrap: wrap;
-            align-items: center; /* 請求 2.2: 垂直置中 */
+            align-items: center; 
         }
-        /* 請求 2.2: 讓 time-controls 左右對齊 */
         .chart-time-controls {
             justify-content: space-between;
-            padding-bottom: 10px; /* 和 border-bottom 增加間距 */
+            padding-bottom: 10px;
         }
 
-        /* 請求 2.2: 更新按鈕選擇器 */
         .chart-sub-tab-link, .view-toggle-tab, 
-        .chart-time-controls div:first-child button, /* Target buttons in first div */
-        .chart-time-controls div:last-child button, /* Target buttons in last div */
-        .cross-market-controls button {
+        .chart-time-controls div:first-child button, 
+        .chart-time-controls div:last-child button, 
+        .cross-market-controls button,
+        #modal-time-controls button /* 請求 2: Modal 按鈕樣式統一 */
+         {
             padding: 8px 15px; cursor: pointer; font-size: 0.95rem; font-weight: 500;
             color: var(--text-secondary); border: none; background-color: var(--button-bg);
             margin: 0 5px 5px 0; border-radius: 6px; transition: all 0.3s ease;
@@ -136,7 +132,9 @@
         .chart-sub-tab-link:hover, .view-toggle-tab:hover, 
         .chart-time-controls div:first-child button:hover,
         .chart-time-controls div:last-child button:hover,
-        .cross-market-controls button:hover { color: var(--primary-color); }
+        .cross-market-controls button:hover,
+        #modal-time-controls button:hover /* 請求 2: Modal 按鈕樣式統一 */
+         { color: var(--primary-color); }
         
         .chart-sub-tabs { border-bottom-style: solid; border-bottom-width: 2px; }
         .chart-sub-tab-link { background: none; margin-bottom: -2px; border-bottom: 3px solid transparent; }
@@ -144,17 +142,21 @@
         .chart-sub-tab-link.active, .view-toggle-tab.active, 
         .chart-time-controls div:first-child button.active,
         .chart-time-controls div:last-child button.active,
-        .cross-market-controls button.active {
+        .cross-market-controls button.active,
+        #modal-time-controls button.active /* 請求 2: Modal 按鈕樣式統一 */
+         {
             color: var(--primary-color); background-color: var(--button-active-bg); font-weight: 600;
         }
         body.dark-mode .chart-sub-tab-link.active, body.dark-mode .view-toggle-tab.active, 
         body.dark-mode .chart-time-controls div:first-child button.active,
         body.dark-mode .chart-time-controls div:last-child button.active,
-        body.dark-mode .cross-market-controls button.active {
+        body.dark-mode .cross-market-controls button.active,
+        body.dark-mode #modal-time-controls button.active /* 請求 2: Modal 按鈕樣式統一 */
+         {
             color: #fff;
         }
         .chart-sub-tab-link.active { border-bottom-color: var(--primary-color); background: none; }
-        .cross-market-controls { border-bottom: none; justify-content: flex-start; } /* 讓按鈕靠左 */
+        .cross-market-controls { border-bottom: none; justify-content: flex-start; }
 
 
         .chart-sub-tab-content { display: none; animation: fadeIn 0.4s; }
@@ -165,7 +167,7 @@
         .table-container { 
             overflow: auto;
             border: 1px solid var(--border-color); border-radius: 8px;
-            margin-top: 20px; /* 圖表和表格間距 */
+            margin-top: 20px; 
         }
         table { width: 100%; border-collapse: collapse; text-align: right; }
         th, td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 0.95rem;}
@@ -174,7 +176,6 @@
             background-color: var(--header-bg); font-weight: 600; user-select: none;
             position: sticky; top: 0; z-index: 10;
         }
-        /* 請求 1.3: Summary tab 表頭增加點擊樣式 */
         .summary-card th {
             cursor: context-menu;
         }
@@ -191,7 +192,6 @@
             border-radius: 6px; min-width: 250px; font-size: 1rem;
             background-color: var(--bg-color); color: var(--text-primary);
         }
-        /* Style for date inputs */
         .controls-input {
             border: 1px solid var(--border-color); padding: 8px; 
             border-radius: 6px; font-size: 0.95rem;
@@ -228,6 +228,21 @@
         }
         .modal-header { text-align: center; margin-bottom: 10px; color: var(--text-primary); }
         .modal-chart-container { position: relative; height: 500px; width: 100%; }
+        /* 請求 3: Chart 5 Grid Layout */
+        .chart-grid-2x2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 20px;
+            height: 700px; /* Adjust height as needed */
+            margin-bottom: 20px;
+        }
+        .chart-grid-item {
+            position: relative;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+        }
 
         #tickerSelectionModal .modal-content, #confirmationModal .modal-content { max-width: 500px; }
         #ticker-selection-list { list-style: none; margin-top: 15px; max-height: 40vh; overflow-y: auto; }
@@ -264,32 +279,45 @@
         .summary-header label { font-size: 1.2rem; font-weight: 600; color: var(--text-primary); }
         
         #summary-content-container {
-            display: flex; /* 改為 flex */
-            flex-direction: column; /* 垂直堆疊 */
+            display: flex;
+            flex-direction: column;
             gap: 20px;
         }
         .summary-card { 
             border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;
             background: var(--bg-color); display: flex; flex-direction: column;
             box-shadow: var(--shadow-light);
-            overflow: auto; /* 請求 1.3: 欄位隱藏時需要滾動條 */
+            overflow: auto;
         }
-        .summary-card h3 { 
-            margin-bottom: 10px; font-size: 1.2rem; color: var(--text-primary); 
-            border-bottom: 1px solid var(--border-color); padding-bottom: 8px;
+        /* 請求 1: Market name on top right */
+        .summary-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
         }
-        .summary-card table { font-size: 0.9rem; table-layout: auto; width: 100%; } /* table-layout: auto */
+        .summary-card-header h3 { 
+             margin: 0; font-size: 1.2rem; color: var(--text-primary); border: none; padding: 0;
+        }
+        .summary-card-header .market-tag {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background-color: var(--button-bg);
+            padding: 4px 8px;
+            border-radius: 5px;
+        }
+        .summary-card table { font-size: 0.9rem; table-layout: auto; width: 100%; }
         .summary-card th, .summary-card td { padding: 8px 10px; }
-        /* 移除固定寬度，讓表格自動調整 */
         .summary-card td:first-child, .summary-card th:first-child { width: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .summary-card .clickable-row:hover { background-color: var(--hover-bg); }
         .summary-card .custom-date-header {
-            /* 移除點擊樣式 */
             text-decoration: none;
             cursor: default;
         }
 
-        /* 請求 1.3: 隱藏欄位的 CSS */
         .summary-card th.hidden-col,
         .summary-card td.hidden-col {
             display: none;
@@ -304,31 +332,17 @@
             z-index: 1010;
             min-width: 180px;
         }
-        .custom-context-menu ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .custom-context-menu li {
-            padding: 5px 10px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-        .custom-context-menu li:hover {
-            background-color: var(--hover-bg);
-        }
-        .custom-context-menu li input {
-            margin-right: 10px;
-            cursor: pointer;
-        }
+        .custom-context-menu ul { list-style: none; padding: 0; margin: 0; }
+        .custom-context-menu li { padding: 5px 10px; display: flex; align-items: center; cursor: pointer; }
+        .custom-context-menu li:hover { background-color: var(--hover-bg); }
+        .custom-context-menu li input { margin-right: 10px; cursor: pointer; }
 
-        /* --- Data Tab 樣式 (請求 3.1) --- */
+        /* --- Data Tab 樣式 (請求 4) --- */
         #data-controls {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
-            align-items: center; /* 垂直對齊 */
+            align-items: center;
             flex-wrap: wrap;
         }
         .data-btn {
@@ -338,16 +352,78 @@
         .data-btn:hover {
             filter: brightness(110%);
         }
-        .data-btn:disabled {
-            background-color: #aaa;
-            cursor: not-allowed;
+        #data-table-container {
+            max-height: 70vh; /* Allow vertical scrolling */
+            overflow: auto; /* Enable scrollbars */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
         }
-        /* 移除 data-preview 樣式 */
-        #jspreadsheet-container {
-            min-height: 60vh;
-            /* Jspreadsheet CSS 將處理其餘樣式 */
+        #data-table-container th:first-child,
+        #data-table-container td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 11; /* Above other cells but below header */
+            background-color: var(--bg-color); /* Match background */
+        }
+        #data-table-container th:first-child {
+            z-index: 12; /* Above sticky header */
+            background-color: var(--header-bg);
         }
         
+        /* --- News Tab Styles (請求 5) --- */
+        #news-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .news-btn {
+            padding: 8px 15px; cursor: pointer; font-size: 0.95rem; font-weight: 500;
+            color: var(--text-secondary); border: none; background-color: var(--button-bg);
+            margin: 0 5px 5px 0; border-radius: 6px; transition: all 0.3s ease;
+        }
+        .news-btn.active {
+            color: var(--primary-color); background-color: var(--button-active-bg); font-weight: 600;
+        }
+        body.dark-mode .news-btn.active {
+             color: #fff;
+        }
+        #news-content {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px; /* space for scrollbar */
+        }
+        .news-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-light);
+        }
+        .news-item:hover {
+            border-color: var(--primary-color);
+        }
+        .news-item h4 {
+            margin: 0 0 10px 0;
+        }
+        .news-item h4 a {
+            text-decoration: none;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        .news-item h4 a:hover {
+            text-decoration: underline;
+        }
+        .news-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        .news-content-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
     </style>
 </head>
 <body>
@@ -371,69 +447,86 @@
         <div class="main-content">
             <div class="tabs">
                 <div class="tab-link active" onclick="openTab(event, 'summary')">Summary</div>
-                <!-- 'Market' tab 改名為 'Chart' -->
                 <div class="tab-link" onclick="openTab(event, 'chart-main')">Chart</div>
-                <!-- 'News' tab 移除, 新增 'Data' tab -->
+                <!-- 請求 4, 5: Re-add News tab, update Data tab -->
                 <div class="tab-link" onclick="openTab(event, 'data')">Data</div>
+                <div class="tab-link" onclick="openTab(event, 'news')">News</div>
             </div>
             
-            <!-- --- Summary Tab (大幅修改) --- -->
             <div id="summary" class="tab-content active">
                 <div class="summary-header">
-                    <!-- 請求 1.1: 標題改為 'As of:' -->
                     <label for="summary-as-of-date">As of:</label>
                     <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)">
                 </div>
-                <!-- 新的網格佈局 -->
                 <div id="summary-content-container">
                     <div id="summary-equity-index" class="summary-card">
-                        <h3>Equity Index</h3>
+                        <!-- 請求 1: Header structure for Title + Market Tag -->
+                        <div class="summary-card-header">
+                            <h3>Equity Index</h3>
+                            <span class="market-tag">Equity Index</span>
+                        </div>
                         <table><!-- 內容將由 JS 生成 --></table>
                     </div>
-                    <!-- 請求 2: 調整順序 -->
                     <div id="summary-tw-stocks" class="summary-card">
-                        <h3>TW Stocks</h3>
+                        <div class="summary-card-header">
+                            <h3>TW Stocks</h3>
+                            <span class="market-tag">TW Stocks</span>
+                        </div>
                         <table><!-- 內容將由 JS 生成 --></table>
                     </div>
                     <div id="summary-us-stocks" class="summary-card">
-                        <h3>US Stocks</h3>
+                         <div class="summary-card-header">
+                            <h3>US Stocks</h3>
+                             <span class="market-tag">US Stocks</span>
+                        </div>
                         <table><!-- 內容將由 JS 生成 --></table>
                     </div>
                 </div>
             </div>
 
-            <!-- --- 'Market' tab 改為 'Chart' tab (大幅修改) --- -->
             <div id="chart-main" class="tab-content">
                 <div id="chart-sub-tabs-container" class="chart-sub-tabs"></div>
                 <div id="chart-sub-content-container"></div>
             </div>
 
-            <!-- --- 'News' tab 移除 --- -->
-
-            <!-- --- Data' tab (請求 3.1) --- -->
+            <!-- 請求 4: Data tab rework -->
             <div id="data" class="tab-content">
                 <div id="data-controls">
-                    <!-- 日期選擇器保留 -->
                     <label for="data-start-date" class="chart-controls label">Start Date:</label>
                     <input type="date" id="data-start-date" class="controls-input" onchange="renderDataTab()">
                     <label for="data-end-date" class="chart-controls label">End Date:</label>
                     <input type="date" id="data-end-date" class="controls-input" onchange="renderDataTab()">
-                    <!-- 按鈕移除 -->
+                    <button id="copy-data-btn" class="data-btn" onclick="copyDataToClipboard()">Copy to Clipboard</button>
+                    <button id="download-data-btn" class="data-btn" onclick="downloadDataAsCSV()">Download CSV</button>
                 </div>
-                <!-- 容器改為 jspreadsheet -->
-                <div id="jspreadsheet-container" style="min-height: 60vh;">
-                    <pre id="data-preview">Loading and processing all data... Please wait.</pre>
+                <div id="data-table-container">
+                    <p>Loading data...</p>
                 </div>
             </div>
+            
+            <!-- 請求 5: News tab -->
+            <div id="news" class="tab-content">
+                <div id="news-controls">
+                    <!-- Buttons will be generated by JS -->
+                </div>
+                <div id="news-content-wrapper">
+                    <p id="news-status">Please select a stock to view news.</p>
+                    <div id="news-content">
+                        <!-- News items will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Modals (保持不變, 但 tickerSelectionModal 和 confirmationModal 現在也用於 Cross Market Chart) -->
+    <!-- Modals -->
     <div id="tickerModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('tickerModal')">&times;</span>
             <h2 id="modalTickerName" class="modal-header"></h2>
-            <div class="chart-time-controls" id="modal-time-controls">
+            <!-- 請求 2: Modal buttons now share style with chart-time-controls -->
+            <div class="chart-time-controls" id="modal-time-controls" style="justify-content: flex-start; padding-bottom: 0;">
                  <button data-period="3m">3-Month</button>
                  <button data-period="6m">6-Month</button>
                  <button data-period="ytd">YTD</button>
@@ -481,10 +574,8 @@
         </div>
     </div>
 
-    <!-- 請求 1.3: 欄位隱藏的右鍵菜單 -->
     <div id="summary-context-menu" class="custom-context-menu" style="display: none;"></div>
 
-    <!-- Tooltip chart 移除 -->
 
     <script>
         // --- Global Variables ---
@@ -497,30 +588,26 @@
         let pivotedData = new Map();
         let pivotedDataHeaders = [];
         let isDataPivoted = false;
-        let jss = null; // 請求 3.1: Jspreadsheet 實例
-
+        
         // Summary Tab 變數
-        let summaryReferenceDate = null; // 請求 1: 新增
-        let hiddenSummaryColumns = {}; // 請求 1.3: 隱藏欄位
+        let summaryReferenceDate = null;
+        let hiddenSummaryColumns = {};
         
         // Chart Tab 預設 Tickers
         const DEFAULT_CHART_TICKERS = {
             'Chart-1': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
             'Chart-2': "3443.TW,6789.TW,.TWII,.SOX",
             'Chart-3': "NVDA.O,AVGO.O,INTC.O,AMD.O,.SOX,.TWII",
-            'Chart-4': "3374.TWO,5347.TWO,.TWII"
+            'Chart-4': "3374.TWO,5347.TWO,.TWII",
+            'Chart-5': "3443.TW,6789.TW,5347.TWO,3374.TWO" // 請求 3
         };
-        // 請求 2.3: Chart Tab 預設時間單位改為 'auto'
-        let chartAxisUnits = { 'Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto' };
+        let chartAxisUnits = { 'Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto', 'Chart-5': 'auto' };
 
-        // --- Chart Colors ---
         const CHART_COLORS = [
             '#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F',
             '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC'
         ];
 
-        // --- Cross Market Chart Data (Global for modification) ---
-        // (保持不變，因為 Summary tab 仍會使用) -> (Summary Tab 不再使用，但 Chart Tab 可能會用到)
         let crossMarketAssets = {
             labels: ['S&P 500', 'TWSE Index', 'TSM (ADR)', 'TSMC (TW)', 'UST 2Y', 'UST 10Y', 'DXY Index', 'TWD', 'Gold'],
             tickers: ['.SPX', '.TWII', 'TSM.N', '2330.TW', 'US2YT=RR', 'US10YT=RR', '.DXY', 'TWD=', 'GCc1'],
@@ -529,12 +616,12 @@
         };
 
         // --- Utility Functions ---
-        function formatNumberWithCommas(num) {
-            if (num === null || num === undefined) return 'N/A';
-            const numStr = String(num);
-            const parts = numStr.split('.');
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            return parts.join('.');
+        function formatNumberWithCommas(num, decimals = -1) {
+             if (num === null || num === undefined) return 'N/A';
+             const numStr = (decimals >= 0) ? Number(num).toFixed(decimals) : String(num);
+             const parts = numStr.split('.');
+             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+             return parts.join('.');
         }
 
         function getStartDate(period, referenceDate) {
@@ -553,22 +640,18 @@
             }
         }
         
-        // *** BUG FIX: 將 formatValue 移至全域範圍 ***
-        function formatValue(val, type, market = 'Unknown') { // 
+        function formatValue(val, type, market = 'Unknown') {
             if (val === null || isNaN(val)) return 'N/A';
             if (type === 'bps') return `${val.toFixed(0)} bps`;
             if (type === 'percent') return `${val.toFixed(2)}%`;
             
-            // 修正: 
             if (type === 'points') {
-                // 使用傳入的 market 變數
                 const decimals = (market === 'FX') ? 4 : 2;
                 return formatNumberWithCommas(val.toFixed(decimals));
             }
             return val;
         }
 
-        // 請求 1: YYYY-MM-DD 格式化
         function formatDateYYYYMMDD(date) {
             if (!(date instanceof Date) || isNaN(date)) return "";
             const year = date.getFullYear();
@@ -582,7 +665,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-            // 請求 1.3: 增加全域點擊以關閉右鍵菜單
             document.addEventListener('click', () => {
                 const menu = document.getElementById('summary-context-menu');
                 if (menu) menu.style.display = 'none';
@@ -607,9 +689,6 @@
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingText = document.getElementById('loading-text');
             
-            // 請求 1: 只抓 Equity Index, TW Stocks, US Stocks
-            // 請求 5: Cross-Market Chart 需要 Rates, FX, Commodity
-            // -> 結論: 仍然需要抓取所有資料夾
             const marketDataUrls = {
                 'Equity Index': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/Equity_Index.json',
                 'Commodity': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/Commodity.json',
@@ -619,25 +698,19 @@
                 'US Rates': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/US_Rates.json'
             };
             
-            // 請求 2: '5347.TWO', '3443.TW', '3374.TWO', '6789.TW' 要被包含
-            // -> 從 tickersToExclude 移除
-            const tickersToExclude = []; // 原本: ['5347.TWO', '3443.TW', '3374.TWO', '6789.TW'];
+            const tickersToExclude = [];
 
             try {
                 loadingText.textContent = 'Loading market data...';
-                // 移除 News Promise
                 const marketPromises = Object.entries(marketDataUrls).map(([marketName, url]) => fetchJsonWithRetry(url).then(data => ({ marketName, data })).catch(() => ({ marketName, data: null })));
 
                 const marketResults = await Promise.all(marketPromises);
 
                 loadingText.textContent = 'Processing market data...';
                 allData = [];
-                // 新增: 追蹤新 TW Stocks 的名稱
                 const newTwStockNames = {
-                    '5347.TWO': 'Vanguard',
-                    '3443.TW': 'Unichip',
-                    '3374.TWO': 'Xintec',
-                    '6789.TW': 'VisEra'
+                    '5347.TWO': 'Vanguard', '3443.TW': 'Unichip',
+                    '3374.TWO': 'Xintec', '6789.TW': 'VisEra'
                 };
 
                 marketResults.forEach(result => {
@@ -645,12 +718,13 @@
                     Object.entries(result.data).forEach(([ticker, details]) => {
                         if (tickersToExclude.includes(ticker)) return;
 
-                        // 請求 2: 覆寫/指定新 TW Stocks 的名稱
                         if (newTwStockNames[ticker]) {
                             details.name = newTwStockNames[ticker];
                         }
 
                         if (details && details.data) {
+                            // 請求 3: Process volume data
+                            const volumeData = details.volume || {};
                             Object.entries(details.data).forEach(([dateStr, price]) => {
                                 if (price !== null) {
                                     allData.push({ 
@@ -659,6 +733,7 @@
                                         market: result.marketName, 
                                         date: new Date(dateStr),
                                         price: parseFloat(price),
+                                        volume: volumeData[dateStr] ? parseFloat(volumeData[dateStr]) : 0,
                                         originalDateStr: dateStr 
                                     });
                                 }
@@ -670,23 +745,22 @@
                 allData.sort((a, b) => a.date - b.date);
                 if (allData.length > 0) {
                     latestDataDate = new Date(Math.max(...allData.map(d => d.date)));
-                    summaryReferenceDate = latestDataDate; // 請求 1: 初始化
+                    summaryReferenceDate = latestDataDate;
                 } else {
                     loadingText.textContent = 'No market data found.'; return;
                 }
 
                 processPriceData();
 
-                // 移除 News 處理
                 loadingText.textContent = 'Pivoting data for download...';
-                pivotDataForDownload(); // 呼叫新的 pivot 函數
+                pivotDataForDownload(); 
 
                 loadingOverlay.style.opacity = '0';
                 setTimeout(() => { loadingOverlay.style.display = 'none'; }, 300);
 
             } catch (error) {
                 loadingText.textContent = `Failed to load data: ${error.message}`;
-                console.error(error); // 在 console 中顯示完整錯誤
+                console.error(error);
             }
         }
 
@@ -704,18 +778,17 @@
                 allPerformanceData.set(ticker, calculatePerformanceForTicker(ticker, market));
             });
             
-            // 請求 7: 設置 'Chart' tab (取代 'Market' tab)
             setupChartTabs(); 
-            // 請求 4: 渲染 'Summary' tab
             renderSummaryTab();
+            // 請求 5: Setup News Tab
+            setupNewsTab();
         }
 
-        // --- Performance Calculation (修改) ---
+        // --- Performance Calculation (no major change) ---
         function calculatePerformanceForTicker(ticker, market) {
             const tickerData = allData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
             if(tickerData.length === 0) return {};
 
-            // 請求 4: 新增 firstDate
             const firstDataPoint = tickerData[0];
             const lastDataPoint = tickerData[tickerData.length - 1];
             const refDate = lastDataPoint.date;
@@ -725,13 +798,11 @@
                 lastTime = lastDataPoint.originalDateStr.split(' ')[1];
             }
             
-            // 請求 1: 修改 findPriceOnOrBefore -> findDataPointOnOrBefore
             const findDataPointOnOrBefore = (date, data = tickerData) => {
                 if (!date || isNaN(date.getTime())) return null;
                 let closest = null;
-                // 
                 const targetDate = new Date(date);
-                targetDate.setHours(23, 59, 59, 999); // 確保包含當天
+                targetDate.setHours(23, 59, 59, 999);
                 
                 for (let i = data.length - 1; i >= 0; i--) {
                     if (data[i].date <= targetDate) { 
@@ -739,7 +810,7 @@
                         break; 
                     }
                 }
-                return closest; // 
+                return closest;
             };
             
             const findPriceOnOrBefore = (date, data = tickerData) => {
@@ -749,8 +820,6 @@
             
             const isRate = market === 'US Rates';
 
-            // *** BUG FIX: 將 calcPerf 移至全域範圍或保留在此處 ***
-            // 決定保留在此處並附加到物件上，因為它依賴 'isRate' 和 'invertedFx'
             const calcPerf = (startPrice, endPrice, isRate, isInverted) => {
                 if (startPrice === null || endPrice === null || startPrice === 0) return null;
                 if (isRate) return (endPrice - startPrice) * 100;
@@ -761,24 +830,22 @@
             const lastPrice = lastDataPoint.price;
             const invertedFx = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => ticker.includes(inv));
             
-            // *** BUG FIX: `formatValue` 已移至全域 ***
-            
             const perf = { 
                 ticker, 
                 name: tickerData[0].name, 
                 market, 
-                lastPrice: lastPrice, // Store as raw number for sorting
-                lastPriceFormatted: formatNumberWithCommas(lastPrice.toFixed(market === 'FX' ? 4 : 2)), // Store formatted string for display
+                lastPrice: lastPrice,
+                lastPriceFormatted: formatNumberWithCommas(lastPrice.toFixed(market === 'FX' ? 4 : 2)),
                 lastDate: formatDateMMDD(refDate),
                 lastTime: lastTime,
-                firstDate: firstDataPoint.date // 請求 4: 儲存第一筆資料日期
+                firstDate: firstDataPoint.date
             };
             
             const prevPrice1d = tickerData.length > 1 ? tickerData[tickerData.length - 2].price : null;
             const perf1d = calcPerf(prevPrice1d, lastPrice, isRate, invertedFx);
-            perf['1d'] = formatValue(perf1d, isRate ? 'bps' : 'percent'); // No market needed
-            perf['1d_raw'] = perf1d; // Store raw value for sorting
-            perf['1d_pts'] = formatValue(prevPrice1d !== null ? (lastPrice - prevPrice1d) : null, 'points', market); // Pass market
+            perf['1d'] = formatValue(perf1d, isRate ? 'bps' : 'percent');
+            perf['1d_raw'] = perf1d;
+            perf['1d_pts'] = formatValue(prevPrice1d !== null ? (lastPrice - prevPrice1d) : null, 'points', market);
             perf['1d_pts_raw'] = prevPrice1d !== null ? (lastPrice - prevPrice1d) : null;
             
             ['1w', 'mtd', '1m', '3m', 'ytd', '1y'].forEach(p => {
@@ -786,9 +853,9 @@
                 const startPrice = findPriceOnOrBefore(startDate);
                 const pPerf = calcPerf(startPrice, lastPrice, isRate, invertedFx);
                 const pPts = startPrice !== null ? (lastPrice - startPrice) : null;
-                perf[p] = formatValue(pPerf, isRate ? 'bps' : 'percent'); // No market needed
+                perf[p] = formatValue(pPerf, isRate ? 'bps' : 'percent');
                 perf[p + '_raw'] = pPerf;
-                perf[p + '_pts'] = formatValue(pPts, 'points', market); // Pass market
+                perf[p + '_pts'] = formatValue(pPts, 'points', market);
                 perf[p + '_pts_raw'] = pPts;
             });
 
@@ -797,22 +864,21 @@
             const endPriceLY = findPriceOnOrBefore(lastYearDates.end);
             const perfLY = calcPerf(startPriceLY, endPriceLY, isRate, invertedFx);
             const pPtsLY = (startPriceLY !== null && endPriceLY !== null) ? endPriceLY - startPriceLY : null;
-            perf.lastYear = formatValue(perfLY, isRate ? 'bps' : 'percent'); // No market needed
+            perf.lastYear = formatValue(perfLY, isRate ? 'bps' : 'percent');
             perf.lastYear_raw = perfLY;
-            perf.lastYear_pts = formatValue(pPtsLY, 'points', market); // Pass market
+            perf.lastYear_pts = formatValue(pPtsLY, 'points', market);
             perf.lastYear_pts_raw = pPtsLY;
 
-            perf.findDataPointOnOrBefore = findDataPointOnOrBefore; // 請求 1: 附加
+            perf.findDataPointOnOrBefore = findDataPointOnOrBefore;
             perf.findPriceOnOrBefore = findPriceOnOrBefore;
-            perf.calcPerf = calcPerf; // 將 calcPerf 附加到物件上
+            perf.calcPerf = calcPerf;
 
             return perf;
         }
 
 
-        // --- Summary Tab (大幅修改) ---
+        // --- Summary Tab ---
         
-        // 請求 1.3: 顯示右鍵菜單
         function showColumnContextMenu(event, tableId) {
             event.preventDefault();
             const menu = document.getElementById('summary-context-menu');
@@ -822,41 +888,34 @@
             
             headers.forEach((th, index) => {
                 const colName = th.textContent;
-                // 初始化 (如果不存在)
                 if (hiddenSummaryColumns[colName] === undefined) {
                     hiddenSummaryColumns[colName] = false;
                 }
                 const isHidden = hiddenSummaryColumns[colName];
-                // index+1 用於 nth-child
                 menuHTML += `
                     <li>
                         <label style="display: flex; align-items: center; width: 100%; cursor: pointer;">
                             <input type="checkbox" ${!isHidden ? 'checked' : ''} onchange="toggleSummaryColumn('${colName}', this.checked)">
                             ${colName}
                         </label>
-                    </li>
-                `;
+                    </li>`;
             });
             menuHTML += '</ul>';
             menu.innerHTML = menuHTML;
             
             menu.style.display = 'block';
-            // 確保菜單在視窗內
             const pageX = Math.min(event.pageX, window.innerWidth - menu.offsetWidth - 10);
             const pageY = Math.min(event.pageY, window.innerHeight - menu.offsetHeight - 10);
             menu.style.left = `${pageX}px`;
             menu.style.top = `${pageY}px`;
         }
 
-        // 請求 1.3: 切換欄位可見性
         function toggleSummaryColumn(colName, isVisible) {
             hiddenSummaryColumns[colName] = !isVisible;
             applyColumnVisibility();
         }
 
-        // 請求 1.3: 應用欄位可見性
         function applyColumnVisibility() {
-            // 遍歷所有 summary-card
             document.querySelectorAll('.summary-card').forEach(card => {
                 const table = card.querySelector('table');
                 if (!table) return;
@@ -866,7 +925,7 @@
 
                 headers.forEach((th, index) => {
                     const colName = th.textContent;
-                    const colIdx = index + 1; // nth-child 是 1-based
+                    const colIdx = index + 1;
                     const isHidden = hiddenSummaryColumns[colName];
 
                     if (isHidden) {
@@ -886,12 +945,9 @@
             });
         }
 
-
-        // 請求 1.1: 新增函數
         function updateSummaryReferenceDate(dateString) {
             const newDate = new Date(dateString);
             if (!isNaN(newDate)) {
-                // 確保不超過最新日期
                 if (newDate > latestDataDate) {
                     summaryReferenceDate = latestDataDate;
                     document.getElementById('summary-as-of-date').value = formatDateYYYYMMDD(latestDataDate);
@@ -903,14 +959,12 @@
         }
         
         function renderSummaryTab() {
-            // 請求 1: 設定日期選擇器
             const dateInput = document.getElementById('summary-as-of-date');
             if (dateInput) {
                 dateInput.value = formatDateYYYYMMDD(summaryReferenceDate);
                 dateInput.max = formatDateYYYYMMDD(latestDataDate);
             }
 
-            // 請求 2: 調整 Ticker 順序
             const summaryConfig = {
                 'equity-index': { 
                     title: 'Equity Index', 
@@ -929,7 +983,6 @@
                 }
             };
             
-            // 請求 1: 動態日期計算
             const refDate = summaryReferenceDate;
             const refYear = refDate.getFullYear();
             const ytdStartDate = new Date(refYear, 0, 1);
@@ -946,8 +999,6 @@
                 if (!container) return;
                 const data = config.tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
                 
-                // 請求 1.2: 移除 Market 欄位
-                // 請求 1.3: 增加 table ID
                 const tableId = `table-${config.container}`;
                 let tableHTML = `<table id="${tableId}"><thead><tr>
                     <th>Name</th>
@@ -965,18 +1016,16 @@
                     const isRate = item.market === 'US Rates'; 
                     const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
                     
-                    // 請求 1: 根據 refDate 重新計算所有值
                     const dataPointOnRefDate = item.findDataPointOnOrBefore(refDate);
                     
                     if (!dataPointOnRefDate) {
-                        // 如果在選定日期沒有數據，顯示 N/A
                         tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
                             <td title="${item.name}">${item.name}</td>
                             <td>${item.ticker}</td>
                             <td>N/A</td><td>N/A</td><td>N/A</td>
                             <td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td>
                         </tr>`;
-                        return; // 
+                        return;
                     }
                     
                     const priceOnRefDate = dataPointOnRefDate.price;
@@ -995,7 +1044,6 @@
 
                     const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
                     
-                    // 請求 1.2: 移除 item.market
                     tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
                         <td title="${item.name}">${item.name}</td>
                         <td>${item.ticker}</td>
@@ -1008,15 +1056,15 @@
                         <td class="${colorClass(perfSince)}">${formatValue(perfSince, 'percent')}</td>
                     </tr>`;
                 });
-                container.querySelector('table').parentElement.innerHTML = tableHTML + '</tbody></table>';
+                // Find the table's parent to replace its content
+                 const tableParent = container.querySelector('table')?.parentElement || container;
+                 tableParent.innerHTML = tableHTML + '</tbody></table>';
                 
-                // 請求 1.3: 為新表格標頭加上右鍵點擊事件
                 document.querySelectorAll(`#${tableId} th`).forEach(th => {
                     th.addEventListener('contextmenu', (e) => showColumnContextMenu(e, tableId));
                 });
             });
 
-            // 請求 1.4: 為新表格加上點擊事件 (並傳遞 summaryReferenceDate)
             document.querySelectorAll('#summary-content-container .summary-card table').forEach(table => {
                 table.addEventListener('click', (event) => {
                     const row = event.target.closest('tr');
@@ -1026,24 +1074,21 @@
                 });
             });
 
-            // 請求 1.3: 應用欄位可見性
             applyColumnVisibility();
-
-            // 請求 2 (follow-up): 移除 Cross Market Chart 的渲染
         }
 
-        // --- 'Market' Tab 改為 'Chart' Tab ---
+        // --- 'Chart' Tab ---
         function setupChartTabs() {
             const tabsContainer = document.getElementById('chart-sub-tabs-container');
             const contentContainer = document.getElementById('chart-sub-content-container');
             tabsContainer.innerHTML = ''; contentContainer.innerHTML = '';
             
-            // 請求 7: 建立 4 個 Chart tab
-            const charts = ['Chart 1', 'Chart 2', 'Chart 3', 'Chart 4'];
+            // 請求 3: Add Chart 5
+            const charts = ['Chart 1', 'Chart 2', 'Chart 3', 'Chart 4', 'Chart 5'];
             
             charts.forEach((chartName, index) => {
                 const isActive = index === 0;
-                const chartId = chartName.replace(/\s/g, '-'); // e.g., "Chart-1"
+                const chartId = chartName.replace(/\s/g, '-');
                 tabsContainer.innerHTML += `<div class="chart-sub-tab-link ${isActive ? 'active' : ''}" onclick="openChartSubTab('${chartId}')">${chartName}</div>`;
                 contentContainer.innerHTML += `<div id="chart-content-${chartId}" class="chart-sub-tab-content ${isActive ? 'active' : ''}"></div>`;
                 if (isActive) openChartSubTab(chartId);
@@ -1055,94 +1100,97 @@
             document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
                 const isActive = content.id === `chart-content-${chartId}`;
                 content.classList.toggle('active', isActive);
-                // 請求 3: 延遲渲染
                 if (isActive && !content.hasChildNodes()) {
                     setTimeout(() => renderChartTab(chartId), 0);
                 }
             });
         }
 
-        // 請求 8: 新增函數來渲染 Chart tab 的 UI
-        // 請求 2.2 / 2.3: 修改
         function renderChartTab(chartId) {
             const container = document.getElementById(`chart-content-${chartId}`);
-            // 
             if (!container) return; 
             
             const defaultTickers = DEFAULT_CHART_TICKERS[chartId] || '';
-            const currentUnit = chartAxisUnits[chartId] || 'auto'; // 請求 2.3
+            const currentUnit = chartAxisUnits[chartId] || 'auto';
 
-            container.innerHTML = `
-                <div class="chart-controls">
-                    <label for="ticker-input-${chartId}">Tickers:</label>
-                    <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
-                    <div class="custom-date-inputs" id="custom-date-${chartId}">
-                        <input type="date" id="chart-start-${chartId}" class="controls-input">
-                        <input type="date" id="chart-end-${chartId}" class="controls-input">
+            // 請求 3: Chart 5 has a different layout
+            if (chartId === 'Chart-5') {
+                 container.innerHTML = `
+                    <div class="chart-controls">
+                        <label>Displaying Volume for TW Stocks: ${defaultTickers}</label>
                     </div>
-                    <button class="update-btn" onclick="updateComparisonChartFromUI('${chartId}')">Update Chart</button>
-                </div>
-                
-                <!-- 請求 2.2: 佈局修改 -->
-                <div class="chart-time-controls" id="time-controls-${chartId}">
-                    <div> <!-- Wrapper for period buttons -->
-                        <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
-                        <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
-                        <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
-                        <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
-                        <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
+                     <div class="chart-time-controls" id="time-controls-${chartId}">
+                        <div>
+                            <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
+                            <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
+                            <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
+                            <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
+                        </div>
                     </div>
-                    <!-- 請求 2.2: X 軸切換 (Moved) & 2.3: 新增 Auto 和 interval input -->
-                    <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;">
-                        <span style="margin-right: 10px; font-weight: 500; color: var(--text-secondary);">X-Axis Unit:</span>
-                        <button data-unit="auto" class="${currentUnit === 'auto' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'auto', this)">Auto</button>
-                        <button data-unit="week" class="${currentUnit === 'week' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'week', this)">Week</button>
-                        <button data-unit="month" class="${currentUnit === 'month' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'month', this)">Month</button>
-                        <button data-unit="quarter" class="${currentUnit === 'quarter' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'quarter', this)">Quarter</button>
-                        <input type="number" id="axis-interval-${chartId}" min="1" value="1" 
-                               style="width: 60px; display: ${currentUnit === 'auto' ? 'none' : 'block'}; margin-left: 10px; padding: 8px;" 
-                               class="controls-input"
-                               onchange="updateComparisonChartFromUI('${chartId}')">
+                    <div id="volume-chart-container-${chartId}" class="chart-grid-2x2">
+                        <!-- 2x2 grid charts will be rendered here -->
                     </div>
-                </div>
-
-                <div class="modal-chart-container" style="height: 500px;"><canvas id="canvas-chart-${chartId}"></canvas></div>
-                <!-- 請求 8: 效能表格 (轉置) -->
-                <div class="table-container" id="perf-table-container-${chartId}">
-                    <table id="perf-table-${chartId}"><!-- 內容由 JS 生成 --></table>
-                </div>`;
+                    <div class="table-container" id="perf-table-container-${chartId}">
+                        <table id="perf-table-${chartId}"><!-- Stats table will be rendered here --></table>
+                    </div>
+                `;
+            } else {
+                 container.innerHTML = `
+                    <div class="chart-controls">
+                        <label for="ticker-input-${chartId}">Tickers:</label>
+                        <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
+                        <div class="custom-date-inputs" id="custom-date-${chartId}">
+                            <input type="date" id="chart-start-${chartId}" class="controls-input">
+                            <input type="date" id="chart-end-${chartId}" class="controls-input">
+                        </div>
+                        <button class="update-btn" onclick="updateComparisonChartFromUI('${chartId}')">Update Chart</button>
+                    </div>
+                    <div class="chart-time-controls" id="time-controls-${chartId}">
+                        <div>
+                            <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
+                            <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
+                            <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
+                            <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
+                            <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
+                        </div>
+                        <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;">
+                            <span style="margin-right: 10px; font-weight: 500; color: var(--text-secondary);">X-Axis Unit:</span>
+                            <button data-unit="auto" class="${currentUnit === 'auto' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'auto', this)">Auto</button>
+                            <button data-unit="week" class="${currentUnit === 'week' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'week', this)">Week</button>
+                            <button data-unit="month" class="${currentUnit === 'month' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'month', this)">Month</button>
+                            <button data-unit="quarter" class="${currentUnit === 'quarter' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'quarter', this)">Quarter</button>
+                            <input type="number" id="axis-interval-${chartId}" min="1" value="1" 
+                                   style="width: 60px; display: ${currentUnit === 'auto' ? 'none' : 'block'}; margin-left: 10px; padding: 8px;" 
+                                   class="controls-input"
+                                   onchange="updateComparisonChartFromUI('${chartId}')">
+                        </div>
+                    </div>
+                    <div class="modal-chart-container" style="height: 500px;"><canvas id="canvas-chart-${chartId}"></canvas></div>
+                    <div class="table-container" id="perf-table-container-${chartId}">
+                        <table id="perf-table-${chartId}"></table>
+                    </div>`;
+            }
             
-            // 初始載入圖表和表格
             updateComparisonChartFromUI(chartId);
         }
 
-        // 請求 2.3: 設定 X 軸單位的函數
         function setChartAxisUnit(chartId, unit, element) {
             chartAxisUnits[chartId] = unit;
             document.querySelectorAll(`#axis-controls-${chartId} button`).forEach(b => b.classList.remove('active'));
             element.classList.add('active');
             
-            // 請求 2.3: 顯示/隱藏 interval input
             const intervalInput = document.getElementById(`axis-interval-${chartId}`);
             intervalInput.style.display = (unit === 'auto') ? 'none' : 'block';
             
-            // 重新繪製圖表
             updateComparisonChartFromUI(chartId);
         }
 
 
-        // --- Cross Market Tab (邏輯被併入 Summary 和 Chart) ---
-        // `renderCrossMarketTab` -> `renderCrossMarketChart` (在 Summary Tab 中)
-        // `updateCrossMarketChart` (修改)
-        // 請求 2 (follow-up): 由於 Cross Market Chart 已移除, 這些函數 (update/create/show) 不再被 Summary Tab 呼叫
-        // 但它們可能被 Chart Tab 使用，暫時保留。
-        // -> 確認: Chart Tab 也不再使用，但 Ticker 切換 (confirmation/selection) 邏輯可能被重用。
-        // -> 決定: 暫時保留，但不再從 Summary 呼叫。
+        // --- Cross Market Tab logic (preserved but unused by UI) ---
         function updateCrossMarketChart(periodConfig, element, canvasId) {
-            // 更新按鈕狀態
             if(element){
                 const controlsId = (canvasId === 'summaryCrossMarketChart') ? 'summary-cross-market-controls' : 'cross-market-controls';
-                if (document.getElementById(controlsId)) { // 檢查元素是否存在
+                if (document.getElementById(controlsId)) {
                     document.querySelectorAll(`#${controlsId} button`).forEach(b => b.classList.remove('active'));
                     element.classList.add('active');
                 }
@@ -1191,10 +1239,8 @@
                     ctx.textAlign = 'center';
 
                     const assetGroups = [
-                        { label: 'Equity Index', start: 0, end: 1 },
-                        { label: 'Stocks', start: 2, end: 3 },
-                        { label: 'US Rates', start: 4, end: 5 },
-                        { label: 'FX', start: 6, end: 7 },
+                        { label: 'Equity Index', start: 0, end: 1 }, { label: 'Stocks', start: 2, end: 3 },
+                        { label: 'US Rates', start: 4, end: 5 }, { label: 'FX', start: 6, end: 7 },
                         { label: 'Commodity', start: 8, end: 8 }
                     ];
 
@@ -1209,145 +1255,97 @@
             };
             
             activeCharts[canvasId] = new Chart(ctx, {
-                type: 'bar', // 請求 5: 垂直 bar chart
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Performance',
-                        data: data,
+                type: 'bar', data: { labels: labels, datasets: [{
+                        label: 'Performance', data: data,
                         backgroundColor: data.map(v => v >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)'),
                         borderColor: data.map(v => v >= 0 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'),
                         borderWidth: 1
-                    }]
-                },
+                    }] },
                 plugins: [categoryLabelPlugin],
                 options: {
-                    responsive: true, maintainAspectRatio: false, 
-                    indexAxis: 'x', // 請求 5: 垂直 bar chart
-                    layout: { padding: { bottom: 55 } },
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'x', layout: { padding: { bottom: 55 } },
                     scales: {
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { color: textColor, font: { weight: '500' } }
-                        },
-                        y: { 
-                            grid: { color: gridColor }, 
-                            ticks: { color: textColor },
-                            title: { display: true, text: 'Performance (% or bps)'}
-                        }
+                        x: { grid: { display: false }, ticks: { color: textColor, font: { weight: '500' } } },
+                        y: { grid: { color: gridColor }, ticks: { color: textColor }, title: { display: true, text: 'Performance (% or bps)'} }
                     },
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
                             const index = elements[0].index;
                             if (index !== undefined && crossMarketAssets.labels[index]) {
-                                showTickerChangeConfirmation(index, canvasId); // 傳遞 canvasId
+                                showTickerChangeConfirmation(index, canvasId);
                             }
                         }
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
+                    plugins: { legend: { display: false }, tooltip: { callbacks: {
                                 label: function(context) {
-                                    const label = context.dataset.label || '';
                                     const value = context.raw.toFixed(2);
                                     const type = types[context.dataIndex];
-                                    return `${label}: ${value} ${type === 'bps' ? 'bps' : '%'}`;
+                                    return `${context.dataset.label || ''}: ${value} ${type === 'bps' ? 'bps' : '%'}`;
                                 }
-                            }
-                        },
-                        annotation: {
-                            annotations: {
+                            }},
+                        annotation: { annotations: {
                                 line1: { type: 'line', xMin: 1.5, xMax: 1.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] },
                                 line2: { type: 'line', xMin: 3.5, xMax: 3.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] },
                                 line3: { type: 'line', xMin: 5.5, xMax: 5.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] },
                                 line4: { type: 'line', xMin: 7.5, xMax: 7.5, borderColor: 'rgba(128, 128, 128, 0.4)', borderWidth: 1.5, borderDash: [6, 6] }
-                            }
-                        }
+                            }}
                     }
                 }
             });
         }
 
-        // 修改: 傳遞 canvasId 以便知道更新哪個圖表
         function showTickerChangeConfirmation(index, canvasId) {
             const group = crossMarketAssets.groups[index];
             const label = crossMarketAssets.labels[index];
-            
-            const messageEl = document.getElementById('confirmationMessage');
-            messageEl.innerHTML = `Would you like to select a different ticker for the <b style="color:var(--primary-color)">'${group}'</b> category?<br>(Currently: ${label})`;
-
+            document.getElementById('confirmationMessage').innerHTML = `Would you like to select a different ticker for the <b style="color:var(--primary-color)">'${group}'</b> category?<br>(Currently: ${label})`;
             const confirmBtnYes = document.getElementById('confirmBtnYes');
-            
             const newConfirmBtnYes = confirmBtnYes.cloneNode(true);
             confirmBtnYes.parentNode.replaceChild(newConfirmBtnYes, confirmBtnYes);
-            
-            newConfirmBtnYes.onclick = () => {
-                closeModal('confirmationModal');
-                showTickerSelectionModal(index, canvasId); // 傳遞 canvasId
-            };
-            
+            newConfirmBtnYes.onclick = () => { closeModal('confirmationModal'); showTickerSelectionModal(index, canvasId); };
             openModal('confirmationModal');
         }
 
-        // 修改: 傳遞 canvasId
         function showTickerSelectionModal(index, canvasId) {
             const group = crossMarketAssets.groups[index];
             if (!group) return;
-
             document.getElementById('tickerSelectionTitle').textContent = `Select a Ticker for ${group}`;
             const list = document.getElementById('ticker-selection-list');
             list.innerHTML = '';
             
-            let tickersToShow = [];
-            if (group === 'Stocks') {
-                tickersToShow = [...allPerformanceData.values()].filter(d => d.market === 'US Stocks' || d.market === 'TW Stocks');
-            } else {
-                tickersToShow = [...allPerformanceData.values()].filter(d => d.market === group);
-            }
+            let tickersToShow = (group === 'Stocks') ?
+                [...allPerformanceData.values()].filter(d => d.market === 'US Stocks' || d.market === 'TW Stocks') :
+                [...allPerformanceData.values()].filter(d => d.market === group);
 
             tickersToShow.sort((a, b) => a.name.localeCompare(b.name));
-
             tickersToShow.forEach(perfData => {
                 if (!perfData) return;
-                
                 const li = document.createElement('li');
                 li.textContent = `${perfData.name} (${perfData.ticker})`;
-                li.onclick = () => selectNewTicker(index, perfData.ticker, canvasId); // 傳遞 canvasId
+                li.onclick = () => selectNewTicker(index, perfData.ticker, canvasId);
                 list.appendChild(li);
             });
             openModal('tickerSelectionModal');
         }
 
-        // 修改: 傳遞 canvasId, 並更新指定的圖表
         function selectNewTicker(index, newTicker, canvasId) {
             const perfData = allPerformanceData.get(newTicker);
             if (!perfData) return;
-
             crossMarketAssets.tickers[index] = newTicker;
-            
             let displayName = perfData.name;
             if (newTicker === 'TSM.N') displayName = 'TSM (ADR)';
             if (newTicker === '2330.TW') displayName = 'TSMC (TW)';
             crossMarketAssets.labels[index] = displayName;
-            
             crossMarketAssets.types[index] = (perfData.market === 'US Rates') ? 'bps' : 'perf';
-            
             closeModal('tickerSelectionModal');
             
-            // 找到正確的 controls 和 element, 並更新圖表
             const controlsId = (canvasId === 'summaryCrossMarketChart') ? 'summary-cross-market-controls' : 'cross-market-controls';
-            
-            // 檢查 controlsId 是否存在
             const controlsElement = document.getElementById(controlsId);
-            if (!controlsElement) return; // 如果元素不存在 (因為被移除了)，就不用更新
+            if (!controlsElement) return;
             
             const activeElement = controlsElement.querySelector('button.active');
             const period = activeElement.dataset.period;
             
             if (period === 'custom') {
-                 // 需要從 date picker modal 或其他地方獲取自定義日期
-                 // 簡易處理: 重新觸發 YTD
                  updateCrossMarketChart({ period: 'ytd' }, controlsElement.querySelector('button[data-period="ytd"]'), canvasId);
             } else {
                 updateCrossMarketChart({ period }, activeElement, canvasId);
@@ -1355,31 +1353,31 @@
         }
 
 
-        // --- News Tab (已移除) ---
-
-
-        // --- Charting Functions (Comparison & Individual) ---
+        // --- Charting Functions ---
         
         function setComparisonChartPeriod(chartId, period, element) {
             document.querySelectorAll(`#time-controls-${chartId} div:first-child button`).forEach(b => b.classList.remove('active'));
             element.classList.add('active');
-            document.getElementById(`custom-date-${chartId}`).classList.toggle('active', period === 'custom');
+            const customDateEl = document.getElementById(`custom-date-${chartId}`);
+            if(customDateEl) customDateEl.classList.toggle('active', period === 'custom');
+            
             if (period !== 'custom') {
                 updateComparisonChartFromUI(chartId);
             }
         }
         
         function updateComparisonChartFromUI(chartId) {
-            const tickers = document.getElementById(`ticker-input-${chartId}`).value.split(',').map(t => t.trim()).filter(Boolean);
+            const tickerInput = document.getElementById(`ticker-input-${chartId}`);
+            // Chart 5 has no ticker input, it uses defaults
+            const tickers = (tickerInput ? tickerInput.value : DEFAULT_CHART_TICKERS[chartId])
+                            .split(',').map(t => t.trim()).filter(Boolean);
+
             const activePeriodBtn = document.querySelector(`#time-controls-${chartId} div:first-child button.active`);
-            if (!activePeriodBtn) {
-                console.error("No active period button found for", chartId);
-                return;
-            }
+            if (!activePeriodBtn) { console.error("No active period button for", chartId); return; }
             const period = activePeriodBtn.dataset.period;
 
             let timeConfig = { period };
-            let endDate; // 
+            let endDate = latestDataDate;
             
             if (period === 'custom') {
                 const start = document.getElementById(`chart-start-${chartId}`).value;
@@ -1387,15 +1385,18 @@
                 if (!start || !end) { return; }
                 timeConfig = { start, end };
                 endDate = new Date(end);
-            } else {
-                endDate = latestDataDate; // 
             }
-            createComparisonChart(chartId, tickers, timeConfig);
-            // 請求 3f: 傳遞 endDate
-            renderChartPerformanceTable(chartId, tickers, endDate);
+            
+            // 請求 3: Route to correct chart/table function
+            if (chartId === 'Chart-5') {
+                createVolumeCharts(chartId, tickers, timeConfig);
+                renderVolumeStatsTable(chartId, tickers, timeConfig);
+            } else {
+                createComparisonChart(chartId, tickers, timeConfig);
+                renderChartPerformanceTable(chartId, tickers, endDate);
+            }
         }
 
-        // 請求 3: 引入 Year Axis Plugin
         const yearAxisPlugin = {
             id: 'yearAxis',
             afterDraw: (chart) => {
@@ -1414,7 +1415,7 @@
                     const xPos = x.getPixelForValue(midPoint);
                     
                     if (xPos >= left && xPos <= right) {
-                         ctx.fillText(year, xPos, bottom + 35); // 
+                         ctx.fillText(year, xPos, bottom + 35);
                     }
                 }
                 ctx.restore();
@@ -1433,7 +1434,7 @@
                     case 'ytd': startDate = new Date(latestDataDate.getFullYear(), 0, 1); break;
                     case '3m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 3)); break;
                     case '1m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 1)); break;
-                    default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1); break; // last_calendar
+                    default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1); break;
                 }
             } else {
                 startDate = new Date(timeConfig.start);
@@ -1442,7 +1443,6 @@
             
             const filteredData = allData.filter(d => d.date >= startDate && d.date <= endDate);
             
-            // 請求 3d: 收集年份數據
             const yearsInData = {};
             
             const datasets = tickers.map((ticker, index) => {
@@ -1455,7 +1455,6 @@
 
                 if (isRate) {
                     const rateData = tickerData.map(d => ({x: d.date.getTime(), y: d.price}));
-                    // 收集年份
                     rateData.forEach(d => {
                         const year = new Date(d.x).getFullYear();
                         if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
@@ -1467,14 +1466,12 @@
                     return { label: tickerData[0].name, data: rateData, borderColor: color, backgroundColor: color + '33', borderWidth: 2, pointRadius: 0, yAxisID: 'yRates' };
                 }
 
-                // 請求 8: 累積報酬
                 const firstPricePoint = tickerData[0];
                 if(!firstPricePoint || firstPricePoint.price === 0) return null;
                 const firstPrice = firstPricePoint.price;
                 
                 const normalizedData = tickerData.map(d => ({ x: d.date.getTime(), y: ((d.price / firstPrice) - 1) * 100 }));
                 
-                // 收集年份
                 normalizedData.forEach(d => {
                     const year = new Date(d.x).getFullYear();
                     if (!yearsInData[year]) yearsInData[year] = { min: d.x, max: d.x };
@@ -1495,7 +1492,6 @@
             const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
             const textColor = isDarkMode ? '#a0a0a0' : '#555';
             
-            // 請求 2.3: X 軸單位
             const timeUnit = chartAxisUnits[chartId] || 'auto';
             const intervalInput = document.getElementById(`axis-interval-${chartId}`);
             const interval = (intervalInput && timeUnit !== 'auto') ? parseInt(intervalInput.value) || 1 : undefined;
@@ -1504,72 +1500,41 @@
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line', 
                 data: { datasets },
-                plugins: [yearAxisPlugin], // 請求 3d:
+                plugins: [yearAxisPlugin],
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { bottom: 40 } }, // 
+                    layout: { padding: { bottom: 40 } },
                     scales: { 
                         x: { 
                             type: 'time', 
                             time: { 
-                                // 請求 2.3:
                                 unit: timeUnit === 'auto' ? undefined : timeUnit,
                                 unitStepSize: interval,
-                                displayFormats: { // 請求 2.1:
-                                    week: 'MM/dd',
-                                    month: 'MMM',
-                                    quarter: '[Q]Q'
-                                }
+                                // 請求 3: Fix date format display
+                                displayFormats: { month: 'MMM' }
                             }, 
                             ticks: { 
                                 color: textColor, 
-                                // 請求 2.1:
                                 source: timeUnit === 'auto' ? 'auto' : 'data',
-                                maxRotation: 0, 
-                                autoSkip: true,
-                                // 請求 2.3:
-                                callback: function(value, index, ticks) {
-                                    const chart = this.chart;
-                                    const currentUnit = timeUnit === 'auto' ? chart.options.scales.x.time.unit : timeUnit;
-
-                                    if (currentUnit === 'month' || currentUnit === 'quarter') {
-                                        const d = new Date(value);
-                                        if (currentUnit === 'month' && d.getMonth() === 0) {
-                                            return `Jan`; 
-                                        }
-                                        if (currentUnit === 'quarter' && d.getMonth() === 0) {
-                                             return `Q1`;
-                                        }
-                                        // 
-                                        return this.getLabelForValue(value);
-                                    }
-                                    return this.getLabelForValue(value);
-                                }
+                                maxRotation: 0, autoSkip: true
                             },
                             grid: { color: gridColor }
                         }, 
-                        // 請求 8: Y 軸標題
                         yPerf: { 
-                            display: hasPerf,
-                            position: 'left',
+                            display: hasPerf, position: 'left',
                             title: { display: true, text: 'Cumulative Return (%)' }, 
-                            ticks: { 
-                                color: textColor,
-                                // 請求 3e:
-                                callback: (value) => `${value}%`
-                            },
+                            ticks: { color: textColor, callback: (value) => `${value}%` },
                             grid: { color: gridColor }
                         },
                         yRates: {
-                            display: hasRates,
-                            position: 'right',
+                            display: hasRates, position: 'right',
                             title: { display: true, text: 'Rate' },
                             ticks: { color: textColor },
-                            grid: { display: false } // 
+                            grid: { display: false }
                         }
                     },
                     plugins: { 
-                        yearAxis: { years: yearsInData }, // 
+                        yearAxis: { years: yearsInData },
                         legend: { labels: { color: isDarkMode ? '#f0f0f0' : '#333' } },
                         tooltip: { mode: 'index', intersect: false }
                     }
@@ -1577,50 +1542,39 @@
             });
         }
         
-        // 請求 8: 新增函數，渲染轉置的效能表格
-        // 請求 3f: 新增 endDate 參數
         function renderChartPerformanceTable(chartId, tickers, endDate) {
             const container = document.getElementById(`perf-table-container-${chartId}`);
             if (!container) return;
 
             const data = tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
-            if (data.length === 0) {
-                container.innerHTML = 'No data to display.';
-                return;
-            }
+            if (data.length === 0) { container.innerHTML = 'No data to display.'; return; }
             
-            // 請求 3f: 
             const asOfDateStr = `As of: ${formatDateMMDD(endDate)}`;
             const endYear = endDate.getFullYear();
             const ytdStartDate = new Date(endYear, 0, 1);
             
-            // 請求 3b:
             const sinceStartDate = new Date(endYear - 1, 0, 1);
             const sinceHeader = `Since ${endYear - 1}`;
 
-            let tableHTML = `<table><thead><tr><th>${asOfDateStr}</th>`; // 
-            data.forEach(item => {
-                tableHTML += `<th title="${item.ticker}">${item.name}</th>`;
-            });
+            let tableHTML = `<table><thead><tr><th>${asOfDateStr}</th>`;
+            data.forEach(item => { tableHTML += `<th title="${item.ticker}">${item.name}</th>`; });
             tableHTML += '</tr></thead><tbody>';
 
-            // 1. Last Price
+            // Last Price
             tableHTML += '<tr><td>Last Price</td>';
             data.forEach(item => {
-                // 
                 const priceOnEndDate = item.findPriceOnOrBefore(endDate);
                 const priceFormatted = (priceOnEndDate === null) ? 'N/A' : formatNumberWithCommas(priceOnEndDate.toFixed(item.market === 'FX' ? 4 : 2));
                 tableHTML += `<td>${priceFormatted}</td>`;
             });
             tableHTML += '</tr>';
 
-            // 2. YTD
+            // YTD
             tableHTML += '<tr><td>YTD</td>';
             data.forEach(item => {
                 const isRate = item.market === 'US Rates';
                 const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
                 
-                // 
                 const priceOnEndDate = item.findPriceOnOrBefore(endDate);
                 const priceOnYTDStart = item.findPriceOnOrBefore(ytdStartDate);
                 const rawPerf = item.calcPerf(priceOnYTDStart, priceOnEndDate, isRate, inverted);
@@ -1631,13 +1585,12 @@
             });
             tableHTML += '</tr>';
 
-            // 3. Since X
+            // Since X
             tableHTML += `<tr><td>${sinceHeader}</td>`;
             data.forEach(item => {
                 const isRate = item.market === 'US Rates';
                 const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
                 
-                // 
                 const priceOnEndDate = item.findPriceOnOrBefore(endDate);
                 const priceOnSinceStart = item.findPriceOnOrBefore(sinceStartDate);
                 const rawPerf = item.calcPerf(priceOnSinceStart, priceOnEndDate, isRate, inverted);
@@ -1652,10 +1605,185 @@
             container.innerHTML = tableHTML;
         }
 
+        // --- Chart 5: Volume Chart Functions (請求 3) ---
 
-        // 請求 1.4: 修改 Individual Ticker Chart
+        function calculateMovingAverage(data, windowSize) {
+            let result = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < windowSize - 1) {
+                    result.push({ x: data[i].x, y: null }); // Not enough data for MA
+                } else {
+                    let sum = 0;
+                    for (let j = 0; j < windowSize; j++) {
+                        sum += data[i - j].y;
+                    }
+                    result.push({ x: data[i].x, y: sum / windowSize });
+                }
+            }
+            return result;
+        }
+
+        function createVolumeCharts(chartId, tickers, timeConfig) {
+            const container = document.getElementById(`volume-chart-container-${chartId}`);
+            if (!container) return;
+            container.innerHTML = ''; // Clear previous charts
+
+            let startDate, endDate = latestDataDate;
+            if (timeConfig.period) {
+                 switch(timeConfig.period) {
+                    case 'ytd': startDate = new Date(latestDataDate.getFullYear(), 0, 1); break;
+                    case '3m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 3)); break;
+                    case '1m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 1)); break;
+                    default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1); break;
+                }
+            } else {
+                startDate = new Date(timeConfig.start);
+                endDate = new Date(timeConfig.end);
+            }
+            
+            const filteredData = allData.filter(d => d.date >= startDate && d.date <= endDate);
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const textColor = isDarkMode ? '#a0a0a0' : '#555';
+
+            tickers.forEach((ticker, index) => {
+                const perfData = allPerformanceData.get(ticker);
+                if (!perfData) return;
+
+                // Create container and canvas for each chart
+                const chartItem = document.createElement('div');
+                chartItem.className = 'chart-grid-item';
+                const canvas = document.createElement('canvas');
+                const canvasId = `volume-chart-${ticker.replace('.', '-')}`;
+                canvas.id = canvasId;
+                chartItem.appendChild(canvas);
+                container.appendChild(chartItem);
+                
+                const tickerData = filteredData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
+                if (tickerData.length === 0) return;
+
+                const volumeData = tickerData.map(d => ({ x: d.date.getTime(), y: d.volume }));
+                
+                // Assuming ~21 trading days in a month, 3 months is ~63 days
+                const maData = calculateMovingAverage(volumeData, 63);
+
+                if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
+                
+                activeCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        datasets: [
+                        {
+                            label: '3M MA',
+                            data: maData,
+                            type: 'line',
+                            borderColor: '#dc3545',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Volume',
+                            data: volumeData,
+                            backgroundColor: 'rgba(128, 128, 128, 0.5)',
+                            borderColor: 'transparent',
+                            yAxisID: 'y'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: `${perfData.name} (${ticker})`, color: textColor }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: { unit: 'month', displayFormats: { month: 'MMM' }},
+                                ticks: { color: textColor, maxRotation: 0, autoSkip: true },
+                                grid: { display: false }
+                            },
+                            y: {
+                                ticks: {
+                                    color: textColor,
+                                    callback: (value) => {
+                                        if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B';
+                                        if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+                                        if (value >= 1e3) return (value / 1e3).toFixed(1) + 'K';
+                                        return value;
+                                    }
+                                },
+                                grid: { color: gridColor }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        
+        function renderVolumeStatsTable(chartId, tickers, timeConfig) {
+             const container = document.getElementById(`perf-table-container-${chartId}`);
+            if (!container) return;
+
+            let startDate, endDate = latestDataDate;
+            if (timeConfig.period) {
+                 switch(timeConfig.period) {
+                    case 'ytd': startDate = new Date(latestDataDate.getFullYear(), 0, 1); break;
+                    case '3m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 3)); break;
+                    case '1m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 1)); break;
+                    default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1); break;
+                }
+            } else {
+                startDate = new Date(timeConfig.start);
+                endDate = new Date(timeConfig.end);
+            }
+
+            const ytdStartDate = new Date(endDate.getFullYear(), 0, 1);
+            const threeMonthStartDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 3));
+
+            let tableHTML = `<table><thead><tr><th>Metric</th>`;
+            tickers.forEach(ticker => {
+                const perfData = allPerformanceData.get(ticker);
+                tableHTML += `<th>${perfData ? perfData.name : ticker}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+
+            // Row 1: 3-Month AVDT
+            tableHTML += '<tr><td>3-Month AVDT</td>';
+            tickers.forEach(ticker => {
+                const dataSlice = allData.filter(d => d.ticker === ticker && d.date >= threeMonthStartDate && d.date <= endDate);
+                if (dataSlice.length > 0) {
+                    const totalVolume = dataSlice.reduce((sum, d) => sum + (d.volume || 0), 0);
+                    const avgVolume = totalVolume / dataSlice.length;
+                    tableHTML += `<td>${formatNumberWithCommas(avgVolume.toFixed(0))}</td>`;
+                } else {
+                    tableHTML += `<td>N/A</td>`;
+                }
+            });
+            tableHTML += '</tr>';
+            
+            // Row 2: YTD Volume
+            tableHTML += '<tr><td>YTD Volume</td>';
+            tickers.forEach(ticker => {
+                const dataSlice = allData.filter(d => d.ticker === ticker && d.date >= ytdStartDate && d.date <= endDate);
+                if (dataSlice.length > 0) {
+                    const totalVolume = dataSlice.reduce((sum, d) => sum + (d.volume || 0), 0);
+                    tableHTML += `<td>${formatNumberWithCommas(totalVolume.toFixed(0))}</td>`;
+                } else {
+                     tableHTML += `<td>N/A</td>`;
+                }
+            });
+            tableHTML += '</tr>';
+
+
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+
+        // --- Individual Ticker Chart Modal ---
         const modalYearAxisPlugin = {
-            id: 'modalYearAxis', // 
+            id: 'modalYearAxis',
             afterDraw: (chart) => {
                 const years = chart.options.plugins.yearAxis.years;
                 if (!years || Object.keys(years).length === 0) return;
@@ -1672,14 +1800,13 @@
                     const xPos = x.getPixelForValue(midPoint);
                     
                     if (xPos >= left && xPos <= right) {
-                         ctx.fillText(year, xPos, bottom + 35); //
+                         ctx.fillText(year, xPos, bottom + 35);
                     }
                 }
                 ctx.restore();
             }
         };
 
-        // 請求 1.4: 增加 referenceDate 參數
         function showIndividualTickerChart(ticker, period = 'last_calendar', referenceDate = latestDataDate) {
             const modal = document.getElementById('tickerModal');
             const tickerData = allData.filter(d => d.ticker === ticker);
@@ -1691,11 +1818,9 @@
             const timeControls = document.getElementById('modal-time-controls');
             timeControls.querySelectorAll('button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.period === period);
-                // 請求 1.4: 更新 onclick 以傳遞 referenceDate
                 btn.onclick = () => showIndividualTickerChart(ticker, btn.dataset.period, referenceDate);
             });
 
-            // 請求 1.4: 使用 referenceDate (即 summaryReferenceDate)
             const tempDate = new Date(referenceDate);
             let startDate;
             switch(period) {
@@ -1703,10 +1828,9 @@
                 case '6m': startDate = new Date(new Date(tempDate).setMonth(tempDate.getMonth() - 6)); break;
                 case 'ytd': startDate = new Date(tempDate.getFullYear(), 0, 1); break;
                 case '5y': startDate = new Date(new Date(tempDate).setFullYear(tempDate.getFullYear() - 5)); break;
-                default: startDate = new Date(tempDate.getFullYear() - 1, 0, 1); break; // 
+                default: startDate = new Date(tempDate.getFullYear() - 1, 0, 1); break;
             }
 
-            // 請求 1.4: 篩選數據到 referenceDate
             const chartData = tickerData
                 .filter(d => d.date >= startDate && d.date <= tempDate)
                 .map(d => ({ x: d.date.getTime(), y: d.price }));
@@ -1717,9 +1841,7 @@
 
             if (chartData.length < 2) {
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                ctx.font = "16px sans-serif";
-                ctx.fillStyle = "#888";
-                ctx.textAlign = "center";
+                ctx.font = "16px sans-serif"; ctx.fillStyle = "#888"; ctx.textAlign = "center";
                 ctx.fillText("Not enough data to display chart for this period.", ctx.canvas.width / 2, ctx.canvas.height / 2);
             } else {
                 let minPoint = chartData[0], maxPoint = chartData[0];
@@ -1737,11 +1859,8 @@
                         padding: 4, borderRadius: 4,
                     };
                     const pointIndex = chartData.findIndex(p => p.x === point.x);
-                    if (pointIndex < chartData.length / 2) {
-                        label.xAdjust = 5; label.textAlign = 'left';
-                    } else {
-                        label.xAdjust = -5; label.textAlign = 'right';
-                    }
+                    if (pointIndex < chartData.length / 2) { label.xAdjust = 5; label.textAlign = 'left'; } 
+                    else { label.xAdjust = -5; label.textAlign = 'right'; }
                     return label;
                 };
                 
@@ -1777,34 +1896,24 @@
                         backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 2, 
                         fill: true, pointRadius: 0, tension: 0.1 
                     }] },
-                    plugins: [modalYearAxisPlugin], //
+                    plugins: [modalYearAxisPlugin, ChartAnnotation],
                     options: {
                         responsive: true, maintainAspectRatio: false,
                         layout: { padding: { bottom: 40 } },
                         scales: {
                             x: {
                                 type: 'time', 
-                                time: { 
-                                    unit: 'month', 
-                                    displayFormats: { month: 'MMM' } 
-                                },
-                                ticks: { 
-                                    source: 'auto', 
-                                    maxRotation: 0, 
-                                    autoSkip: true, 
-                                    color: textColor,
-                                    callback: () => '' // 
-                                },
+                                time: { unit: 'month', displayFormats: { month: 'MMM' } },
+                                ticks: { source: 'auto', maxRotation: 0, autoSkip: true, color: textColor, callback: () => '' },
                                 grid: { color: gridColor }
                             },
                             y: { 
                                 position: 'right', title: { display: true, text: 'Price' },
-                                ticks: { color: textColor },
-                                grid: { color: gridColor }
+                                ticks: { color: textColor }, grid: { color: gridColor }
                             }
                         },
                         plugins: {
-                            yearAxis: { years: yearsInData }, // 
+                            yearAxis: { years: yearsInData },
                             legend: { display: false },
                             tooltip: { mode: 'index', intersect: false, callbacks: {
                                 title: (tooltipItems) => formatDateMMDD(new Date(tooltipItems[0].parsed.x))
@@ -1825,31 +1934,20 @@
             openModal('tickerModal');
         }
 
-        // --- Intraday / Tooltip 函數 (已移除) ---
-
-        // --- Event Listeners & Interactions ---
-        // `sortTable` (已移除, Chart tab 不再有可排序的表格)
-        // `addTableEventListeners` (已移除)
-        // `addSummaryTooltipEvents` (已移除)
 
         function openCustomDateModal(context) {
             activeCustomDateContext = context;
             const applyBtn = document.getElementById('applyCustomDate');
             
-            // 
             if (context.startsWith('chart-')) {
-                // e.g., 'chart-Chart-1' (來自 table header) -> 'Chart-1'
                 const chartId = context.split('-')[1];
-                applyBtn.onclick = () => { /* 這裡的 apply 應該由 Chart tab 自己的 controls 處理 */ };
+                applyBtn.onclick = () => { /* Chart tab controls handle this */ };
             } else {
                  applyBtn.onclick = () => { /* TBD */ };
             }
             openModal('datePickerModal');
         }
         
-        // 請求 2 (follow-up): 移除 'applyCustomDateToSummarySince'
-        
-        // 請求 2 (follow-up): 移除 'applyCustomDateToCrossMarket'
         function applyCustomDateToCrossMarket(canvasId) {
             const start = document.getElementById('customStartDate').value;
             const end = document.getElementById('customEndDate').value;
@@ -1859,16 +1957,15 @@
             const controlsId = (canvasId === 'summaryCrossMarketChart') ? 'summary-cross-market-controls' : 'cross-market-controls';
             
             const controlsElement = document.getElementById(controlsId);
-            if (!controlsElement) return; // 檢查是否存在
+            if (!controlsElement) return;
             
             const customButton = controlsElement.querySelector('button[data-period="custom"]');
             updateCrossMarketChart(customPeriod, customButton, canvasId);
             closeModal('datePickerModal');
         }
         
-        // `applyCustomDateToTable` (已移除)
-
-        // --- Data Tab Functions (請求 3.1 / 3.2) ---
+        
+        // --- Data Tab Functions (請求 4: Rework) ---
         
         function pivotDataForDownload() {
             try {
@@ -1877,17 +1974,13 @@
                 
                 pivotedDataHeaders = ['Date', ...uniqueTickers];
 
-                const dataMap = new Map(); // Date -> { Ticker -> Price }
+                const dataMap = new Map();
                 allData.forEach(d => {
                     const dateStr = d.originalDateStr.split(' ')[0];
-                    if (!dataMap.has(dateStr)) {
-                        dataMap.set(dateStr, new Map());
-                    }
-                    // 確保我們只取當天的最後一筆資料 (如果有多筆的話)
+                    if (!dataMap.has(dateStr)) dataMap.set(dateStr, new Map());
                     dataMap.get(dateStr).set(d.ticker, d.price);
                 });
 
-                // 轉換為 pivotedData (Date -> Array[Price])
                 uniqueDates.forEach(date => {
                     const dateMap = dataMap.get(date);
                     const priceArray = uniqueTickers.map(ticker => dateMap.get(ticker) || null);
@@ -1896,133 +1989,180 @@
                 
                 isDataPivoted = true;
                 if (document.getElementById('data').classList.contains('active')) {
-                    renderDataTab(); // 如果 Data tab 已經打開，重新渲染
+                    renderDataTab();
                 }
 
             } catch (error) {
                 console.error("Failed to pivot data:", error);
-                const preview = document.getElementById('data-preview');
-                if (preview) {
-                    preview.textContent = `Failed to process data: ${error.message}`;
+                const container = document.getElementById('data-table-container');
+                if (container) {
+                    container.innerHTML = `<p>Failed to process data: ${error.message}</p>`;
                 }
             }
         }
 
-        // 請求 3.1 / 3.2: 重寫 Data Tab 渲染
         function renderDataTab() {
             const startDateInput = document.getElementById('data-start-date');
             const endDateInput = document.getElementById('data-end-date');
-            const container = document.getElementById('jspreadsheet-container');
+            const container = document.getElementById('data-table-container');
             
             if (pivotedData.size > 0) {
                 const dates = [...pivotedData.keys()];
                 const firstDate = dates[0];
                 const lastDate = dates[dates.length - 1];
-                
                 if (!startDateInput.value) startDateInput.value = firstDate;
                 if (!endDateInput.value) endDateInput.value = lastDate;
-                
-                startDateInput.min = firstDate;
-                startDateInput.max = lastDate;
-                endDateInput.min = firstDate;
-                endDateInput.max = lastDate;
+                startDateInput.min = firstDate; startDateInput.max = lastDate;
+                endDateInput.min = firstDate; endDateInput.max = lastDate;
             }
 
             if (!isDataPivoted) {
-                container.innerHTML = '<pre>Data is still processing...</pre>';
-                return;
+                container.innerHTML = '<p>Data is still processing...</p>'; return;
             }
 
-            // 獲取日期過濾器
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
-            
             const filteredDates = [...pivotedData.keys()].filter(date => {
                 if (startDate && date < startDate) return false;
                 if (endDate && date > endDate) return false;
                 return true;
             });
 
-            // 請求 3.2: 只保留 Summary Tab 出現的 Tickers
             const summaryTickers = [
-                '.SPX','.IXIC', '.SOX', '.TWII', // Equity Index
-                '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO', // TW Stocks
-                'NVDA.O', 'AVGO.O', 'INTC.O', 'AMD.O' // US Stocks
+                '.SPX','.IXIC', '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO',
+                'NVDA.O', 'AVGO.O', 'INTC.O', 'AMD.O'
             ];
             
-            const allHeaders = pivotedDataHeaders; // ['Date', 'TICKER1', 'TICKER2', ...]
+            const allHeaders = pivotedDataHeaders;
             const tickerIndicesToKeep = [];
             const finalHeaders = ['Date'];
             
             allHeaders.forEach((header, index) => {
-                if (index === 0) return; // 跳過 'Date'
+                if (index === 0) return;
                 if (summaryTickers.includes(header)) {
-                    tickerIndicesToKeep.push(index - 1); // 價格陣列中的索引 (0-based)
+                    tickerIndicesToKeep.push(index - 1);
                     finalHeaders.push(header);
                 }
             });
 
-            // 準備 jspreadsheet 數據
-            const jssData = filteredDates.map(date => {
+            let tableHTML = '<table id="data-table"><thead><tr>';
+            finalHeaders.forEach(h => tableHTML += `<th>${h}</th>`);
+            tableHTML += '</tr></thead><tbody>';
+
+            filteredDates.forEach(date => {
+                tableHTML += '<tr>';
+                tableHTML += `<td>${date}</td>`;
                 const allPrices = pivotedData.get(date);
-                const filteredPrices = tickerIndicesToKeep.map(i => allPrices[i]);
-                return [date, ...filteredPrices];
+                tickerIndicesToKeep.forEach(i => {
+                    const price = allPrices[i];
+                    tableHTML += `<td>${price !== null ? price.toFixed(4) : ''}</td>`;
+                });
+                tableHTML += '</tr>';
             });
-
-            // 準備 jspreadsheet 欄位
-            const jssColumns = finalHeaders.map((header, index) => {
-                const col = { title: header, name: header };
-                if (index === 0) {
-                    col.width = 100;
-                    col.readOnly = true;
-                    col.type = 'text'; // 確保日期不被格式化
-                } else {
-                    col.width = 120;
-                    col.type = 'numeric'; // 
-                    col.mask = '#,##.0000'; // 允許小數
-                }
-                return col;
-            });
-
             
-            container.innerHTML = ''; // 清除 "Loading..."
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
 
-            // 銷毀舊實例
-            if (jss) {
-                jss.destroy();
-                jss = null;
-            }
+        function getTableDataAsString(tableId, delimiter = '\t') {
+            const table = document.getElementById(tableId);
+            if (!table) return '';
+            let data = [];
+            const rows = table.querySelectorAll('tr');
+            rows.forEach(row => {
+                const rowData = [];
+                const cols = row.querySelectorAll('th, td');
+                cols.forEach(col => rowData.push(col.innerText));
+                data.push(rowData.join(delimiter));
+            });
+            return data.join('\n');
+        }
 
-            // 創建新實例
-            jss = jspreadsheet(container, {
-                data: jssData,
-                columns: jssColumns,
-                allowInsertRow: false,
-                allowInsertColumn: false,
-                allowDeleteRow: false,
-                allowDeleteColumn: false,
-                allowRenameColumn: true,
-                allowColumnResize: true,
-                allowColumnDrag: true,
-                copyCompatibility: true,
-                columnSorting: true,
-                defaultColWidth: 120,
-                // license: 'YOUR_LICENSE_KEY_HERE', // CE 版不需要
-                contextMenu: (obj, x, y, e, items) => {
-                     // 允許預設的複製/貼上等
-                    return items;
-                }
+        function copyDataToClipboard() {
+            const dataString = getTableDataAsString('data-table', '\t');
+            navigator.clipboard.writeText(dataString).then(() => {
+                alert('Data copied to clipboard!');
+            }, (err) => {
+                alert('Failed to copy data.');
+                console.error('Copy error:', err);
+            });
+        }
+        
+        function downloadDataAsCSV() {
+            const dataString = getTableDataAsString('data-table', ',');
+            const blob = new Blob([dataString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `market_data_${formatDateYYYYMMDD(new Date())}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- News Tab Functions (請求 5) ---
+        function setupNewsTab() {
+            const controlsContainer = document.getElementById('news-controls');
+            if (!controlsContainer) return;
+            controlsContainer.innerHTML = '';
+            
+            const newsTickers = {'3443.TW': 'Unichip', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'Xintec'};
+
+            Object.entries(newsTickers).forEach(([ticker, name]) => {
+                const stockId = ticker.split('.')[0];
+                const btn = document.createElement('button');
+                btn.className = 'news-btn';
+                btn.textContent = name;
+                btn.dataset.stockId = stockId;
+                btn.onclick = (e) => {
+                    document.querySelectorAll('#news-controls .news-btn').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    fetchAndDisplayNews(stockId);
+                };
+                controlsContainer.appendChild(btn);
             });
         }
 
-        // 請求 3.1: 移除舊的 data tab 函數
-        // function getFullPivotedDataAsString() {}
-        // function copyDataToClipboard() {}
-        // function downloadDataAsCSV() {}
+        async function fetchAndDisplayNews(stockId) {
+            const contentContainer = document.getElementById('news-content');
+            const statusEl = document.getElementById('news-status');
+            if (!contentContainer || !statusEl) return;
 
+            statusEl.textContent = `Loading news for stock ID ${stockId}...`;
+            contentContainer.innerHTML = '';
+
+            const url = `https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${stockId}.json`;
+            
+            try {
+                const newsData = await fetchJsonWithRetry(url);
+                if (!newsData || !newsData.reports || newsData.reports.length === 0) {
+                    statusEl.textContent = `No news found for stock ID ${stockId}.`;
+                    return;
+                }
+                
+                statusEl.textContent = `Displaying ${newsData.reports.length} reports. Last updated: ${new Date(newsData.last_updated).toLocaleString()}`;
+                let newsHTML = '';
+                newsData.reports.forEach(report => {
+                    newsHTML += `
+                        <div class="news-item">
+                            <h4><a href="${report.URL}" target="_blank" rel="noopener noreferrer">${report.Title}</a></h4>
+                            <div class="news-meta">
+                                <strong>Source:</strong> ${report.Source} | <strong>Date:</strong> ${report.Date} ${report.Time}
+                            </div>
+                            <p class="news-content-text">${report.Content}</p>
+                        </div>
+                    `;
+                });
+                contentContainer.innerHTML = newsHTML;
+
+            } catch (error) {
+                statusEl.textContent = `Failed to load news for stock ID ${stockId}. Please try again later.`;
+                console.error(`Error fetching news for ${stockId}:`, error);
+            }
+        }
 
         // --- UI Utility Functions ---
-        // `togglePerformanceDisplayMode` (已移除, Summary 不再使用)
         
         function formatDateMMDD(date) { return date instanceof Date && !isNaN(date) ? `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}` : ''; }
         
@@ -2052,18 +2192,17 @@
             evt.currentTarget.classList.add("active");
             
             if (tabName === 'chart-main') {
-                // 
                 const firstSubTab = document.querySelector('#chart-sub-tabs-container .chart-sub-tab-link');
                 if (firstSubTab) {
                     const chartId = firstSubTab.textContent.replace(' ', '-');
-                    // 
                     if (!document.getElementById(`chart-content-${chartId}`).hasChildNodes()) {
                         openChartSubTab(chartId);
                     }
                 }
-            } else if (tabName === 'data') {
-                // 渲染 Data tab 內容
+            } else if (tabName === 'data' && isDataPivoted) {
                 renderDataTab();
+            } else if (tabName === 'news') {
+                 // News tab is ready on load, no special action needed here.
             }
         }
         function initTheme() {
@@ -2083,16 +2222,17 @@
                     const textColor = isDarkMode ? '#a0a0a0' : '#555';
                     const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
                     
-                    if (chart.options.scales.x) chart.options.scales.x.ticks.color = textColor;
-                    if (chart.options.scales.x) chart.options.scales.x.grid.color = gridColor;
-
-                    // 更新多 Y 軸
-                    if (chart.options.scales.y) chart.options.scales.y.ticks.color = textColor;
-                    if (chart.options.scales.y) chart.options.scales.y.grid.color = gridColor;
-                    if (chart.options.scales.yPerf) chart.options.scales.yPerf.ticks.color = textColor;
-                    if (chart.options.scales.yPerf) chart.options.scales.yPerf.grid.color = gridColor;
-                    if (chart.options.scales.yRates) chart.options.scales.yRates.ticks.color = textColor;
-                    if (chart.options.scales.yRates) chart.options.scales.yRates.grid.color = gridColor;
+                    if(chart.options.plugins.title) chart.options.plugins.title.color = textColor;
+                    if (chart.options.scales.x) {
+                         chart.options.scales.x.ticks.color = textColor;
+                         chart.options.scales.x.grid.color = gridColor;
+                    }
+                    Object.keys(chart.options.scales).forEach(key => {
+                        if (key.startsWith('y')) {
+                            chart.options.scales[key].ticks.color = textColor;
+                            chart.options.scales[key].grid.color = gridColor;
+                        }
+                    });
                     
                     if(chart.options.plugins.legend) {
                        chart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#333';
@@ -2105,7 +2245,6 @@
                             }
                         });
                     }
-                    // 移除 tooltip-canvas 相關邏輯
                     chart.update();
                 }
             });
