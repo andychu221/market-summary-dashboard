@@ -566,9 +566,9 @@
 
         const DEFAULT_CHART_TICKERS = {
             'Chart-1': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
-            'Chart-2': "3443.TW,6789.TW,.TWII,.SOX",
-            'Chart-3': "NVDA.O,AVGO.O,INTC.O,AMD.O,.SOX,.TWII",
-            'Chart-4': "3374.TWO,5347.TWO,.TWII",
+            'Chart-2': "5347.TWO,2303.TW,0981.HK,GFS,.TWII",
+            'Chart-3': "5347.TWO,3443.TW,QCOM.O,6723.T,.TWII",
+            'Chart-4': "6789.TW,.TWII",
             'Chart-5': "3443.TW,6789.TW,5347.TWO,3374.TWO"
         };
         let chartAxisUnits = { 'Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto', 'Chart-5': 'auto' };
@@ -934,7 +934,7 @@
             const summaryConfig = {
                 'equity-index': {
                     title: 'Equity Index',
-                    tickers: ['.SPX','.IXIC', '.SOX', '.TWII'],
+                    tickers: ['.IXIC', '.SOX', '.TWII'],
                     container: 'summary-equity-index'
                 },
                 'tw-stocks': {
@@ -944,7 +944,7 @@
                 },
                 'us-stocks': {
                     title: 'US Stocks',
-                    tickers: ['NVDA.O', 'AVGO.O', 'INTC.O', 'AMD.O'],
+                    tickers: ['2303.TW', '3034.TW', ' 0981.HK', '6723.T','QCOM.O','GFS'],
                     container: 'summary-us-stocks'
                 }
             };
@@ -1740,8 +1740,8 @@
             });
 
             const summaryTickers = [
-                '.SPX','.IXIC', '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO',
-                'NVDA.O', 'AVGO.O', 'INTC.O', 'AMD.O'
+                '.IXIC', '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO','3034.TW','2303.TW','0981.HK','6723.T',
+                'QCOM.O', 'GFS'
             ];
 
             const allHeaders = pivotedDataHeaders;
