@@ -566,12 +566,16 @@
 
         const DEFAULT_CHART_TICKERS = {
             'Chart-1': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
-            'Chart-2': "5347.TWO,2303.TW,0981.HK,GFS,.TWII",
+            'Chart-2': "5347.TWO,2303.TW,0981.HK,688981.SS,GFS,.TWII",
             'Chart-3': "5347.TWO,3443.TW,QCOM.O,6723.T,.TWII",
-            'Chart-4': "6789.TW,.TWII",
-            'Chart-5': "3443.TW,6789.TW,5347.TWO,3374.TWO"
+            'Chart-4': "3443.TWO,3661.TW,3035.TW,.TWII",
+            'Chart-5': "3374.TWO,603005.SS,.TWII",
+            
+            'Chart-6': "6789.TW,.TWII",
+            'Chart-7': "3443.TW,6789.TW,5347.TWO,3374.TWO"
+            ''
         };
-        let chartAxisUnits = { 'Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto', 'Chart-5': 'auto' };
+        let chartAxisUnits = { 'Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto', 'Chart-5': 'auto', 'Chart-6': 'auto', 'Chart-7': 'auto'};
 
         const CHART_COLORS = [
             '#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F',
@@ -934,7 +938,7 @@
             const summaryConfig = {
                 'equity-index': {
                     title: 'Equity Index',
-                    tickers: ['.IXIC', '.SOX', '.TWII'],
+                    tickers: ['.TWII', '.SOX'],
                     container: 'summary-equity-index'
                 },
                 'tw-stocks': {
@@ -944,7 +948,7 @@
                 },
                 'us-stocks': {
                     title: 'US Stocks',
-                    tickers: ['2303.TW', '3034.TW', ' 0981.HK', '6723.T','QCOM.O','GFS'],
+                    tickers: ['2303.TW', '3034.TW','3035.TW','3661.TW', ' 0981.HK','688981.SS','603005.SS', '6723.T','QCOM.O','GFS'],
                     container: 'summary-us-stocks'
                 }
             };
@@ -1048,7 +1052,7 @@
             const contentContainer = document.getElementById('chart-sub-content-container');
             tabsContainer.innerHTML = ''; contentContainer.innerHTML = '';
 
-            const charts = ['Chart 1', 'Chart 2', 'Chart 3', 'Chart 4', 'Chart 5'];
+            const charts = ['Chart 1', 'Chart 2', 'Chart 3', 'Chart 4', 'Chart 5', 'Chart 6', 'Chart 7'];
 
             charts.forEach((chartName, index) => {
                 const isActive = index === 0;
@@ -1740,8 +1744,7 @@
             });
 
             const summaryTickers = [
-                '.IXIC', '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO','3034.TW','2303.TW','0981.HK','6723.T',
-                'QCOM.O', 'GFS'
+                '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO','3034.TW','2303.TW','3035.TW','3661.TW','0981.HK','6723.T','688981.SS','603005.SS','QCOM.O', 'GFS'
             ];
 
             const allHeaders = pivotedDataHeaders;
