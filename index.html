@@ -682,7 +682,7 @@
                 loadingText.textContent = 'Processing market data...';
                 allData = [];
                 const newTwStockNames = {
-                    '5347.TWO': 'Vanguard', '3443.TW': 'Unichip',
+                    '5347.TWO': 'Vanguard', '3443.TW': 'GUC',
                     '3374.TWO': 'Xintec', '6789.TW': 'VisEra'
                 };
 
@@ -1820,7 +1820,7 @@
             if (!controlsContainer) return;
             controlsContainer.innerHTML = '';
 
-            const newsTickers = {'3443.TW': 'GUC', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'Xintec'};
+            const newsTickers = {'3443.TW': 'GUC', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'GUC'};
 
             Object.entries(newsTickers).forEach(([ticker, name]) => {
                 const stockId = ticker.split('.')[0];
