@@ -1082,7 +1082,7 @@
             const currentUnit = chartAxisUnits[chartId] || 'auto';
             
             // Request 4: Chart 5 is now flexible like the others
-            const chartTitle = (chartId === 'Chart-5') ? 'Volume Comparison' : 'Performance Comparison';
+            const chartTitle = (chartId === 'Chart-7') ? 'Volume Comparison' : 'Performance Comparison';
 
             container.innerHTML = `
                 <h3 style="margin-bottom: 15px; text-align: center; font-weight: 600;">${chartTitle}</h3>
@@ -1165,7 +1165,7 @@
                 endDate = new Date(end);
             }
 
-            if (chartId === 'Chart-5') {
+            if (chartId === 'Chart-7') {
                 createCombinedVolumeChart(chartId, tickers, timeConfig);
                 renderVolumeStatsTable(chartId, tickers, timeConfig);
             } else {
