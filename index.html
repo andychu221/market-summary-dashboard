@@ -1187,6 +1187,7 @@
             }
 
             const filteredData = allData.filter(d => d.date >= startDate && d.date <= endDate);
+            const yearsInData = {};
             
             const datasets = tickers.map((ticker, index) => {
                 const tickerData = filteredData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
@@ -1210,7 +1211,15 @@
                 const firstPrice = firstDataPointForPeriod.price;
 
                 const normalizedData = tickerData.map(d => ({ x: d.date.getTime(), y: ((d.price / firstPrice) - 1) * 100 }));
-
+                normalizedData.forEach(d => {
+                    const year = new Date(d.x).getFullYear();
+                    if (!yearsInData[year]) {
+                         yearsInData[year] = { min: d.x, max: d.x };
+                    } else {
+                        yearsInData[year].min = Math.min(yearsInData[year].min, d.x);
+                        yearsInData[year].max = Math.max(yearsInData[year].max, d.x);
+                    }
+                });
                 return { 
                     label: tickerData[0].name, 
                     data: normalizedData, 
@@ -1237,6 +1246,7 @@
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line',
                 data: { datasets },
+                plugins: [yearAxisPlugin], 
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
@@ -1263,6 +1273,7 @@
                         }
                     },
                     plugins: {
+                        yearAxis: { years: yearsInData },
                         legend: {
                             labels: { color: isDarkMode ? '#f0f0f0' : '#333' },
                             onClick: (e, legendItem, legend) => {
@@ -1281,7 +1292,17 @@
                                 colorPicker.click();
                             }
                         },
-                        tooltip: { mode: 'index', intersect: false }
+                        tooltip: { mode: 'index', intersect: false ,
+                                 callbacks: {
+                                     title: function(tooltipItems) {
+                                         const date = new Date(tooltipItems[0].parsed.x);
+                                         const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                                         const day = date.getDate().toString().padStart(2, '0');
+                                         const year = date.getFullYear();
+                                         return `${month}/${day}/${year}`;
+                                     }
+                                 }    
+                                 }
                     }
                 }
             });
