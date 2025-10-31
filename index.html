@@ -1165,6 +1165,36 @@
                 renderChartPerformanceTable(chartId, tickers, endDate);
             }
         }
+        const yearAxisPlugin = {
+            id: 'yearAxis',
+            afterDraw: (chart) => {
+                if (!chart.options.plugins.yearAxis || !chart.options.plugins.yearAxis.years) {
+                    return;
+                }
+                const years = chart.options.plugins.yearAxis.years;
+                if (Object.keys(years).length === 0) return;
+                const { ctx, chartArea: { bottom, left, right }, scales: { x } } = chart;
+                ctx.save();
+                ctx.font = '14px sans-serif';
+                ctx.fillStyle = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                for (const year in years) {
+                    const yearData = years[year];
+                    const midPoint = (yearData.min + yearData.max) / 2;
+                    const xPos = x.getPixelForValue(midPoint);
+                    if (xPos >= left && xPos <= right) {
+                        ctx.fillText(year, xPos, bottom + 15);
+                    }
+                }
+                ctx.restore();
+             },
+            afterFit: (chart) => {
+                if (chart.options.plugins.yearAxis && chart.options.plugins.yearAxis.years) {
+                    chart.chartArea.bottom -= 20;
+                }
+            }
+        };
 
         function createComparisonChart(chartId, tickers, timeConfig) {
             const canvasId = `canvas-chart-${chartId}`;
@@ -1249,6 +1279,11 @@
                 plugins: [yearAxisPlugin], 
                 options: {
                     responsive: true, maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            bottom: 30 
+                        }
+                    },
                     scales: {
                         x: {
                             type: 'time',
