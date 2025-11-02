@@ -1,13 +1,24 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 標題更新 -->
-    <title>Market Dashboard (Auto-updating) V10</title>
+    <title>Market Dashboard (Auto-updating) V14</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
+
+    <!-- jspreadsheet and Material Icons libraries -->
+    
+    <script src="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.js"></script>
+	<script src="https://jsuites.net/v5/jsuites.js"></script>
+	<link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.css" type="text/css" />
+	<link rel="stylesheet" href="https://jsuites.net/v5/jsuites.css" type="text/css" />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons" />
+
+
 
     <style>
         :root {
@@ -223,6 +234,61 @@
             position: relative;
             transform: translateY(-50px); transition: transform 0.3s ease-out;
         }
+        /* --- Styles for new Report Modal content --- */
+        #report-modal-content-area {
+            max-height: 70vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            background: var(--hover-bg);
+        }
+        #report-modal-content-area h1 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+         #report-modal-content-area h2, #report-modal-content-area h3 {
+            color: var(--text-primary);
+            margin-top: 20px;
+        }
+        #report-modal-content-area p {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+         #report-modal-content-area table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            background: var(--bg-color);
+            max-width: 700px;
+            margin: 10px auto;
+         }
+         #report-modal-content-area th, #report-modal-content-area td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: right;
+            white-space: nowrap;
+         }
+         #report-modal-content-area th {
+            background-color: var(--header-bg);
+         }
+         #report-modal-content-area th:first-child, #report-modal-content-area td:first-child {
+            text-align: left;
+         }
+         /* --- MODIFICATION (Issue 2) --- */
+         #report-modal-content-area img {
+            width: 100%;
+            max-width: 1000px; /* Increased from 700px */
+            height: auto;
+            border: 1px solid var(--border-color);
+            background: white; /* Ensure chart background is white */
+            display: block;
+            margin: 10px auto;
+         }
+
+
         .modal.show .modal-content { transform: translateY(0); }
         .close {
             color: #aaa; position: absolute; top: 10px; right: 20px;
@@ -238,6 +304,37 @@
             margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
         }
         .summary-header label { font-size: 1.2rem; font-weight: 600; color: var(--text-primary); }
+        
+        /* --- Style for new email button --- */
+        .summary-header {
+            justify-content: space-between; /* Change flex-start to space-between */
+        }
+        .summary-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .email-report-btn {
+            background-color: #0078d4; /* Blue background */
+            color: white; /* White text */
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .email-report-btn:hover {
+            background-color: #005a9e;
+        }
+        #email-report-status {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        /* --- End Modification --- */
+
 
         #summary-content-container {
             display: flex;
@@ -304,44 +401,29 @@
         .custom-context-menu li { padding: 5px 10px; display: flex; align-items: center; cursor: pointer; }
         .custom-context-menu li:hover { background-color: var(--hover-bg); }
         .custom-context-menu li input { margin-right: 10px; cursor: pointer; }
+        
+        /* --- Styles for jSuites color picker --- */
+        #color-picker-palette {
+            position: absolute;
+            z-index: 1020;
+            background-color: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-strong);
+            border-radius: 8px;
+            padding: 10px;
+            display: none; /* Hide by default */
+        }
+        /* --- End Modification --- */
+
 
         /* --- Data Tab --- */
-        #data-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .data-btn {
-            background-color: var(--primary-color); color: white; border: none; padding: 10px 20px;
-            border-radius: 8px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s, filter 0.3s;
-        }
-        .data-btn:hover { filter: brightness(110%); }
         #data-table-container {
-            max-height: 70vh;
-            overflow: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
-        #data-table-container th:first-child,
-        #data-table-container td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 11;
-            background-color: var(--bg-color);
-        }
-        #data-table-container th:first-child {
-            z-index: 12;
-            background-color: var(--header-bg);
+            min-height: 70vh;
         }
 
         /* --- News Tab --- */
         #news-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+            display: none;
         }
         .news-btn {
             padding: 8px 15px; cursor: pointer; font-size: 0.95rem; font-weight: 500;
@@ -353,19 +435,60 @@
         }
         body.dark-mode .news-btn.active { color: #fff; }
         
-        #news-container { display: flex; gap: 20px; }
-        #news-list-wrapper {
-            flex: 0 0 45%; max-height: 70vh; overflow-y: auto; padding-right: 10px;
+        #news-container { display: flex; height: 70vh; gap: 0; }
+        
+        #news-left-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
         }
-        #news-detail-view {
-            flex: 1; max-height: 70vh; overflow-y: auto;
+        
+        #news-filters {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background-color: var(--header-bg);
+        }
+        
+        #news-status {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin: 0;
+        }
+        
+        #news-content {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding: 0;
+        }
+        
+        #news-splitter {
+            flex-basis: 5px;
+            cursor: col-resize;
+            background-color: var(--border-color);
+            transition: background-color 0.3s;
+        }
+        #news-splitter:hover {
+            background-color: var(--primary-color);
+        }
+
+        #news-right-pane {
+            flex: 1;
+            max-height: 70vh;
+            overflow-y: auto;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 20px;
             background-color: var(--hover-bg);
             display: none;
         }
-        #news-detail-content h3 { margin: 0 0 5px 0; color: var(--text-primary); font-size: 1.3rem; }
+        
+        #news-detail-content h3 { margin: 0 0 10px 0; color: var(--text-primary); font-size: 1.5rem; font-weight: 600; }
         #news-detail-content .meta { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px; }
         .news-link-container { margin-bottom: 15px; }
         .news-link-container a { font-weight: 600; color: var(--primary-color); text-decoration: none; }
@@ -380,15 +503,50 @@
         #news-detail-content .summary-block h4 { font-size: 1.1rem; margin-bottom: 8px;}
 
         .news-item {
-            border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px;
-            box-shadow: var(--shadow-light); cursor: pointer;
+            padding: 12px 15px;
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 0;
+            box-shadow: none;
+            margin-bottom: 0;
+            cursor: pointer;
         }
-        .news-item:hover { border-color: var(--primary-color); }
+        .news-item:last-child {
+            border-bottom: none;
+        }
+        .news-item:hover { border-color: var(--primary-color); background-color: var(--hover-bg); }
         .news-item.active {
-            border-color: var(--primary-color); background-color: var(--hover-bg);
-            border-width: 2px;
+            border-color: transparent;
+            background-color: var(--button-active-bg);
+            border-width: 0;
         }
-        .news-item h4 { margin: 0 0 10px 0; font-size: 1.1rem; color: var(--text-primary); }
+        body.dark-mode .news-item.active {
+            background-color: var(--button-active-bg);
+        }
+
+        .news-meta-top {
+            display: flex;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            flex-wrap: wrap;
+        }
+        .news-meta-top .ticker-name {
+            font-weight: 600;
+            background-color: transparent;
+            color: var(--text-primary);
+            padding: 0;
+            border-radius: 0;
+        }
+        
+        .news-item h4, .news-title {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.4;
+        }
         .news-meta { font-size: 0.85rem; color: var(--text-secondary); }
         
         /* Chart Grid for Chart 7 */
@@ -431,13 +589,21 @@
             </div>
 
             <div id="summary" class="tab-content active">
+                <!-- --- Update button text and function call --- -->
                 <div class="summary-header">
-                    <label for="summary-as-of-date">As of:</label>
-                    <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)">
+                    <div class="summary-header-left">
+                        <label for="summary-as-of-date">As of:</label>
+                        <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)">
+                    </div>
+                    <div class="summary-header-right">
+                        <span id="email-report-status"></span>
+                        <button class="email-report-btn" onclick="generateReport()">Generate Report</button>
+                    </div>
                 </div>
+                <!-- --- End Modification --- -->
                 <div id="summary-content-container">
                     <div id="summary-equity-index" class="summary-card">
-                        <div class="summary-card-label">Equity Index</div>
+                        <div class="summary-card-label">Benchmark</div>
                         <div class="summary-card-header"><h3>Benchmark</h3></div>
                         <div class="table-content-wrapper"><table></table></div>
                     </div>
@@ -462,27 +628,30 @@
             <div id="news" class="tab-content">
                 <div id="news-controls"></div>
                 <div id="news-container">
-                    <div id="news-list-wrapper">
+                    <div id="news-left-pane">
+                        <div id="news-filters">
+                            <select id="news-filter-company" class="controls-input" onchange="handleCompanyFilterChange(this.value)">
+                                <!-- Populated by JS -->
+                            </select>
+                            <select id="news-filter-source" class="controls-input" onchange="filterAndDisplayNews()">
+                                <option value="all">Source (All)</option>
+                            </select>
+                            <!-- --- MODIFICATION (Issue 3) --- -->
+                            <select id="news-filter-language" class="controls-input" onchange="filterAndDisplayNews()">
+                                <option value="all">Language (All)</option>
+                            </select>
+                            
+                            <button id="news-filter-reset" class="data-btn" style="padding: 8px 12px; font-size: 0.9rem;" onclick="resetNewsFilters()">Reset</button>
+                        </div>
                         <p id="news-status">Please select a stock to view news.</p>
-                        <div id="news-content"></div>
+                        <div id="news-content"></div> <!-- List items go here -->
                     </div>
-                    <div id="news-detail-view"></div>
+                    <div id="news-splitter"></div>
+                    <div id="news-right-pane"></div> <!-- Detail view -->
                 </div>
             </div>
 
             <div id="data" class="tab-content">
-                <div id="data-controls">
-                    <div class="view-toggle-tabs">
-                        <button id="data-view-price" class="view-toggle-tab active" onclick="setDataView('price', this)">Price</button>
-                        <button id="data-view-volume" class="view-toggle-tab" onclick="setDataView('volume', this)">Volume</button>
-                    </div>
-                    <label for="data-start-date" class="chart-controls label" style="margin-left: 10px;">Start Date:</label>
-                    <input type="date" id="data-start-date" class="controls-input" onchange="renderDataTab()">
-                    <label for="data-end-date" class="chart-controls label">End Date:</label>
-                    <input type="date" id="data-end-date" class="controls-input" onchange="renderDataTab()">
-                    <button id="copy-data-btn" class="data-btn" onclick="copyDataToClipboard()">Copy to Clipboard</button>
-                    <button id="download-data-btn" class="data-btn" onclick="downloadDataAsCSV()">Download CSV</button>
-                </div>
                 <div id="data-table-container"><p>Loading data...</p></div>
             </div>
         </div>
@@ -503,12 +672,27 @@
             <div class="modal-chart-container"><canvas id="individualTickerChart"></canvas></div>
         </div>
     </div>
+    
+    <!-- --- Add new Report Modal --- -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('reportModal')">&times;</span>
+            <h2 id="modalReportName" class="modal-header">Market Watchlist Report</h2>
+            <div id="report-modal-content-area">
+                <!-- Report HTML will be injected here -->
+            </div>
+        </div>
+    </div>
 
     <div id="summary-context-menu" class="custom-context-menu" style="display: none;"></div>
 
-    <input type="color" id="color-picker" style="position: absolute; visibility: hidden; width: 1px; height: 1px;">
+    <!-- --- Add div for jSuites color picker --- -->
+    <div id="color-picker-palette"></div>
 
     <script>
+        // jspreadsheet License Key
+
+
         // --- Global Variables ---
         let allData = [], dataByMarket = {};
         let activeCharts = {}, allPerformanceData = new Map();
@@ -519,13 +703,16 @@
         let pivotedVolumeData = new Map();
         let pivotedDataHeaders = [];
         let isDataPivoted = false;
-        let currentDataView = 'price';
+        let jspreadsheetInstance = null;
         
-        // BUGFIX: Declared hiddenSummaryColumns globally.
         let hiddenSummaryColumns = {};
         let summaryReferenceDate = null;
         let currentNewsData = null; 
-
+        const newsTickers = {'3443.TW': 'GUC', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'Xintec'};
+        
+        // --- global var for color picker instance
+        let jsuitesColorPicker = null;
+        
         const DEFAULT_CHART_TICKERS = {
             'Chart-1': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
             'Chart-2': "5347.TWO,2303.TW,0981.HK,688981.SS,GFS,.TWII",
@@ -551,6 +738,17 @@
              return parts.join('.');
         }
 
+        function parseFloatString(floatStr) {
+            if (!floatStr || typeof floatStr !== 'string') return null;
+            const num = parseFloat(floatStr.replace(/,/g, ''));
+            if (isNaN(num)) return null;
+            const char = floatStr.charAt(floatStr.length - 1).toUpperCase();
+            if (char === 'B') return num * 1_000_000_000;
+            if (char === 'M') return num * 1_000_000;
+            if (char === 'T') return num * 1_000_000_000_000;
+            return num;
+        }
+
         function getStartDate(period, referenceDate) {
             const d = new Date(referenceDate);
             d.setHours(0,0,0,0);
@@ -570,12 +768,9 @@
 
         function formatValue(val, type, market = 'Unknown') {
             if (val === null || isNaN(val)) return 'N/A';
-            if (type === 'bps') return `${val.toFixed(0)} bps`;
             if (type === 'percent') return `${val.toFixed(2)}%`;
-
             if (type === 'points') {
-                const decimals = (market === 'FX') ? 4 : 2;
-                return formatNumberWithCommas(val.toFixed(decimals));
+                return formatNumberWithCommas(val.toFixed(2));
             }
             return val;
         }
@@ -592,11 +787,47 @@
         // --- Initialization & Data Loading ---
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
+            initNewsSplitter();
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-            document.addEventListener('click', () => {
-                const menu = document.getElementById('summary-context-menu');
-                if (menu) menu.style.display = 'none';
-            }, true);
+            document.addEventListener('click', (e) => {
+                // Close context menu
+                const contextMenu = document.getElementById('summary-context-menu');
+                if (contextMenu) contextMenu.style.display = 'none';
+                
+                // Hide color picker on outside click
+                const picker = document.getElementById('color-picker-palette');
+                if (!picker) return;
+
+                // Check if the click is on the picker itself
+                if (picker.contains(e.target)) return;
+
+                // Check if the click is on a legend item
+                let target = e.target;
+                let isLegendClick = false;
+                while (target) {
+                    if (target.classList && target.classList.contains('chartjs-legend')) {
+                        isLegendClick = true;
+                        break;
+                    }
+                    if (target.tagName === 'LI' && target.parentElement?.classList.contains('chartjs-legend')) {
+                        isLegendClick = true;
+                        break;
+                    }
+                    if (target.tagName === 'SPAN' && target.parentElement?.tagName === 'LI' && target.parentElement?.parentElement?.classList.contains('chartjs-legend')) {
+                         isLegendClick = true;
+                         break;
+                    }
+                    target = target.parentElement;
+                }
+
+                if (picker.style.display === 'block' && !isLegendClick) {
+                    if (jsuitesColorPicker) {
+                        jsuitesColorPicker.close();
+                        jsuitesColorPicker = null;
+                    }
+                    picker.style.display = 'none';
+                }
+            });
             loadAllDataFromGitHub();
         });
 
@@ -619,11 +850,8 @@
 
             const marketDataUrls = {
                 'Equity Index': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/Equity_Index.json',
-                'Commodity': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/Commodity.json',
-                'FX': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/FX.json',
                 'TW Stocks': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/TW_Stocks.json',
                 'US Stocks': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/US_Stocks.json',
-                'US Rates': 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/US_Rates.json'
             };
 
             const tickersToExclude = [];
@@ -631,7 +859,6 @@
             try {
                 loadingText.textContent = 'Loading market data...';
                 const marketPromises = Object.entries(marketDataUrls).map(([marketName, url]) => fetchJsonWithRetry(url).then(data => ({ marketName, data })).catch(() => ({ marketName, data: null })));
-
                 const marketResults = await Promise.all(marketPromises);
 
                 loadingText.textContent = 'Processing market data...';
@@ -646,26 +873,25 @@
                     if (!result || !result.data) return;
                     Object.entries(result.data).forEach(([ticker, details]) => {
                         if (tickersToExclude.includes(ticker)) return;
-
                         if (newTwStockNames[ticker]) {
                             details.name = newTwStockNames[ticker];
                         }
-
                         tickerMetadata.set(ticker, {
-                            float: details.float || null,
+                            float: parseFloatString(details.float) || null,
                         });
-
-                        if (details && details.data) {
-                            const volumeData = details.volume || {};
-                            Object.entries(details.data).forEach(([dateStr, price]) => {
-                                if (price !== null) {
+                        if (details && details.date && details.close && Array.isArray(details.date) && Array.isArray(details.close)) {
+                            const hasVolume = (result.marketName === 'TW Stocks' || result.marketName === 'US Stocks') && details.volume && Array.isArray(details.volume);
+                            details.date.forEach((dateStr, index) => {
+                                const price = details.close[index];
+                                if (price !== null && price !== undefined) {
+                                    const volume = (hasVolume && details.volume[index] !== null && details.volume[index] !== undefined) ? parseFloat(details.volume[index]) : 0;
                                     allData.push({
                                         ticker,
                                         name: details.name,
                                         market: result.marketName,
                                         date: new Date(dateStr),
                                         price: parseFloat(price),
-                                        volume: volumeData[dateStr] ? parseFloat(volumeData[dateStr]) : 0,
+                                        volume: volume,
                                         originalDateStr: dateStr
                                     });
                                 }
@@ -675,9 +901,10 @@
                 });
 
                 allData.sort((a, b) => a.date - b.date);
+                
                 if (allData.length > 0) {
                     latestDataDate = new Date(Math.max(...allData.map(d => d.date)));
-                    summaryReferenceDate = latestDataDate;
+                    summaryReferenceDate = latestDataDate; 
                 } else {
                     loadingText.textContent = 'No market data found.'; return;
                 }
@@ -710,6 +937,8 @@
                 allPerformanceData.set(ticker, calculatePerformanceForTicker(ticker, market));
             });
 
+            // --- MODIFICATION (Issue 1) ---
+            // This now initializes all charts on page load, so the report can be generated immediately.
             setupChartTabs();
             renderSummaryTab();
             setupNewsTab();
@@ -748,24 +977,23 @@
                 return point ? point.price : null;
             };
 
-            const isRate = market === 'US Rates';
+            const isRate = false;
 
             const calcPerf = (startPrice, endPrice, isRate, isInverted) => {
                 if (startPrice === null || endPrice === null || startPrice === 0) return null;
-                if (isRate) return (endPrice - startPrice) * 100;
                 let result = ((endPrice / startPrice) - 1) * 100;
                 return isInverted ? result * -1 : result;
             }
 
             const lastPrice = lastDataPoint.price;
-            const invertedFx = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => ticker.includes(inv));
+            const invertedFx = false;
 
             const perf = {
                 ticker,
                 name: tickerData[0].name,
                 market,
                 lastPrice: lastPrice,
-                lastPriceFormatted: formatNumberWithCommas(lastPrice.toFixed(market === 'FX' ? 4 : 2)),
+                lastPriceFormatted: formatNumberWithCommas(lastPrice.toFixed(2)),
                 lastDate: formatDateMMDD(refDate),
                 lastTime: lastTime,
                 firstDate: firstDataPoint.date
@@ -773,7 +1001,7 @@
 
             const prevPrice1d = tickerData.length > 1 ? tickerData[tickerData.length - 2].price : null;
             const perf1d = calcPerf(prevPrice1d, lastPrice, isRate, invertedFx);
-            perf['1d'] = formatValue(perf1d, isRate ? 'bps' : 'percent');
+            perf['1d'] = formatValue(perf1d, 'percent');
             perf['1d_raw'] = perf1d;
             perf['1d_pts'] = formatValue(prevPrice1d !== null ? (lastPrice - prevPrice1d) : null, 'points', market);
             perf['1d_pts_raw'] = prevPrice1d !== null ? (lastPrice - prevPrice1d) : null;
@@ -783,7 +1011,7 @@
                 const startPrice = findPriceOnOrBefore(startDate);
                 const pPerf = calcPerf(startPrice, lastPrice, isRate, invertedFx);
                 const pPts = startPrice !== null ? (lastPrice - startPrice) : null;
-                perf[p] = formatValue(pPerf, isRate ? 'bps' : 'percent');
+                perf[p] = formatValue(pPerf, 'percent');
                 perf[p + '_raw'] = pPerf;
                 perf[p + '_pts'] = formatValue(pPts, 'points', market);
                 perf[p + '_pts_raw'] = pPts;
@@ -794,7 +1022,7 @@
             const endPriceLY = findPriceOnOrBefore(lastYearDates.end);
             const perfLY = calcPerf(startPriceLY, endPriceLY, isRate, invertedFx);
             const pPtsLY = (startPriceLY !== null && endPriceLY !== null) ? endPriceLY - startPriceLY : null;
-            perf.lastYear = formatValue(perfLY, isRate ? 'bps' : 'percent');
+            perf.lastYear = formatValue(perfLY, 'percent');
             perf.lastYear_raw = perfLY;
             perf.lastYear_pts = formatValue(pPtsLY, 'points', market);
             perf.lastYear_pts_raw = pPtsLY;
@@ -896,7 +1124,7 @@
 
             const summaryConfig = {
                 'equity-index': {
-                    title: 'Equity Index',
+                    title: 'Benchmark',
                     tickers: ['.TWII', '.SOX'],
                     container: 'summary-equity-index'
                 },
@@ -922,6 +1150,8 @@
             weekAgoDate.setDate(weekAgoDate.getDate() - 7);
             const monthAgoDate = new Date(refDate.getTime());
             monthAgoDate.setMonth(monthAgoDate.getMonth() - 1);
+            const dayAgoDate = new Date(refDate.getTime());
+            dayAgoDate.setDate(dayAgoDate.getDate() - 1);
 
             Object.values(summaryConfig).forEach(config => {
                 const container = document.getElementById(config.container);
@@ -939,15 +1169,16 @@
                     <th>Date</th>
                     <th>Time</th>
                     <th>Price</th>
-                    <th>1-Week (%)</th>
-                    <th>1-Month (%)</th>
-                    <th>YTD (%)</th>
-                    <th class="custom-date-header">${sinceHeader} (%)</th>
+                    <th>1-Day</th>
+                    <th>1-Week</th>
+                    <th>1-Month</th>
+                    <th>YTD</th>
+                    <th class="custom-date-header">${sinceHeader}</th>
                 </tr></thead><tbody>`;
 
                 data.forEach(item => {
-                    const isRate = item.market === 'US Rates';
-                    const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
+                    const isRate = false;
+                    const inverted = false;
 
                     const dataPointOnRefDate = item.findDataPointOnOrBefore(refDate);
 
@@ -956,7 +1187,7 @@
                             <td title="${item.name}">${item.name}</td>
                             <td>${item.ticker}</td>
                             <td>N/A</td><td>N/A</td><td>N/A</td>
-                            <td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td>
+                            <td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td>
                         </tr>`;
                         return;
                     }
@@ -964,12 +1195,17 @@
                     const priceOnRefDate = dataPointOnRefDate.price;
                     const dateOnRefDate = formatDateMMDD(dataPointOnRefDate.date);
                     const timeOnRefDate = dataPointOnRefDate.originalDateStr.includes(' ') ? dataPointOnRefDate.originalDateStr.split(' ')[1] : 'c';
+                    
+                    const actualDayAgo = new Date(dataPointOnRefDate.date.getTime());
+                    actualDayAgo.setDate(actualDayAgo.getDate() - 1);
+                    const price1D = item.findPriceOnOrBefore(actualDayAgo);
 
                     const price1W = item.findPriceOnOrBefore(weekAgoDate);
                     const price1M = item.findPriceOnOrBefore(monthAgoDate);
                     const priceYTD = item.findPriceOnOrBefore(ytdStartDate);
                     const priceSince = item.findPriceOnOrBefore(sinceStartDate);
 
+                    const perf1D = item.calcPerf(price1D, priceOnRefDate, isRate, inverted);
                     const perf1W = item.calcPerf(price1W, priceOnRefDate, isRate, inverted);
                     const perf1M = item.calcPerf(price1M, priceOnRefDate, isRate, inverted);
                     const perfYTD = item.calcPerf(priceYTD, priceOnRefDate, isRate, inverted);
@@ -982,7 +1218,8 @@
                         <td>${item.ticker}</td>
                         <td>${dateOnRefDate}</td>
                         <td>${timeOnRefDate}</td>
-                        <td>${formatNumberWithCommas(priceOnRefDate.toFixed(item.market === 'FX' ? 4 : 2))}</td>
+                        <td>${formatNumberWithCommas(priceOnRefDate.toFixed(2))}</td>
+                        <td class="${colorClass(perf1D)}">${formatValue(perf1D, 'percent')}</td>
                         <td class="${colorClass(perf1W)}">${formatValue(perf1W, 'percent')}</td>
                         <td class="${colorClass(perf1M)}">${formatValue(perf1M, 'percent')}</td>
                         <td class="${colorClass(perfYTD)}">${formatValue(perfYTD, 'percent')}</td>
@@ -1013,36 +1250,48 @@
         }
 
         // --- 'Chart' Tab ---
+
+        // --- MODIFICATION (Issue 1): This function now ensures all charts are initialized on page load ---
         function setupChartTabs() {
             const tabsContainer = document.getElementById('chart-sub-tabs-container');
             const contentContainer = document.getElementById('chart-sub-content-container');
-            tabsContainer.innerHTML = ''; contentContainer.innerHTML = '';
+            tabsContainer.innerHTML = '';
+            contentContainer.innerHTML = '';
 
             const charts = ['Chart 1', 'Chart 2', 'Chart 3', 'Chart 4', 'Chart 5', 'Chart 6', 'Chart 7'];
 
+            // First, create all tab links and content containers
             charts.forEach((chartName, index) => {
                 const isActive = index === 0;
                 const chartId = chartName.replace(/\s/g, '-');
+                
                 tabsContainer.innerHTML += `<div class="chart-sub-tab-link ${isActive ? 'active' : ''}" onclick="openChartSubTab('${chartId}')">${chartName}</div>`;
+                
                 contentContainer.innerHTML += `<div id="chart-content-${chartId}" class="chart-sub-tab-content ${isActive ? 'active' : ''}"></div>`;
-                if (isActive) openChartSubTab(chartId);
             });
-        }
 
-        function openChartSubTab(chartId) {
-            document.querySelectorAll('#chart-sub-tabs-container .chart-sub-tab-link').forEach(link => link.classList.toggle('active', link.textContent === chartId.replace('-', ' ')));
-            document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
-                const isActive = content.id === `chart-content-${chartId}`;
-                content.classList.toggle('active', isActive);
-                if (isActive && !content.hasChildNodes()) {
-                    setTimeout(() => renderChartTab(chartId), 0);
-                }
+            // Second, render the HTML for each chart tab
+            charts.forEach(chartName => {
+                const chartId = chartName.replace(/\s/g, '-');
+                renderChartTabHTML(chartId);
             });
-        }
 
-        function renderChartTab(chartId) {
+            // Third, after all HTML is in the DOM, create the chart instances
+            // This populates `activeCharts` so "Generate Report" can work immediately.
+            charts.forEach(chartName => {
+                const chartId = chartName.replace(/\s/g, '-');
+                updateComparisonChartFromUI(chartId);
+            });
+            
+            openChartSubTab('Chart-1');
+        }
+        
+        function renderChartTabHTML(chartId) {
             const container = document.getElementById(`chart-content-${chartId}`);
-            if (!container) return;
+            if (!container) {
+                console.error(`Container not found for ${chartId}`);
+                return;
+            }
 
             const defaultTickers = DEFAULT_CHART_TICKERS[chartId] || '';
             const currentUnit = chartAxisUnits[chartId] || 'auto';
@@ -1069,7 +1318,13 @@
                             <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
                             <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
                         </div>
-                        <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;"></div>
+                        <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;">
+                            <span style="margin-right: 10px; font-weight: 500; color: var(--text-secondary);">X-Axis Unit:</span>
+                            <button data-unit="auto" class="${currentUnit === 'auto' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'auto', this)">Auto</button>
+                            <button data-unit="week" class="${currentUnit === 'week' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'week', this)">Week</button>
+                            <button data-unit="month" class="${currentUnit === 'month' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'month', this)">Month</button>
+                            <button data-unit="quarter" class="${currentUnit === 'quarter' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'quarter', this)">Quarter</button>
+                        </div>
                     </div>
                     <div class="chart-grid-container">
                         <div class="modal-chart-container"><canvas id="canvas-chart-${chartId}-0"></canvas></div>
@@ -1115,7 +1370,18 @@
                         <table id="perf-table-${chartId}"></table>
                     </div>`;
             }
-
+        }
+        
+        function openChartSubTab(chartId) {
+            document.querySelectorAll('#chart-sub-tabs-container .chart-sub-tab-link').forEach(link => link.classList.toggle('active', link.textContent === chartId.replace('-', ' ')));
+            document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
+                const isActive = content.id === `chart-content-${chartId}`;
+                content.classList.toggle('active', isActive);
+            });
+        }
+        
+        function renderChartTab(chartId) {
+            renderChartTabHTML(chartId);
             updateComparisonChartFromUI(chartId);
         }
 
@@ -1140,11 +1406,20 @@
 
         function updateComparisonChartFromUI(chartId) {
             const tickerInput = document.getElementById(`ticker-input-${chartId}`);
+            if (!tickerInput) {
+                console.warn(`ticker-input-${chartId} not found, skipping chart update.`);
+                return;
+            }
             const tickers = (tickerInput.value).split(',').map(t => t.trim()).filter(Boolean);
 
             const activePeriodBtn = document.querySelector(`#time-controls-${chartId} div:first-child button.active`);
-            if (!activePeriodBtn) { console.error("No active period button for", chartId); return; }
-            const period = activePeriodBtn.dataset.period;
+            if (!activePeriodBtn) { 
+                console.warn(`No active period button for ${chartId}, skipping chart update.`); 
+                const defaultButton = document.querySelector(`#time-controls-${chartId} div:first-child button[data-period="last_calendar"]`);
+                if(defaultButton) defaultButton.classList.add('active');
+                else return;
+            }
+            const period = activePeriodBtn ? activePeriodBtn.dataset.period : 'last_calendar';
 
             let timeConfig = { period };
             let endDate = latestDataDate;
@@ -1165,6 +1440,7 @@
                 renderChartPerformanceTable(chartId, tickers, endDate);
             }
         }
+        
         const yearAxisPlugin = {
             id: 'yearAxis',
             afterDraw: (chart) => {
@@ -1190,16 +1466,101 @@
                 ctx.restore();
              },
             afterFit: (chart) => {
-                if (chart.options.plugins.yearAxis && chart.options.plugins.yearAxis.years) {
-                    chart.chartArea.bottom -= 20;
+                if (chart.options.plugins.yearAxis && Object.keys(chart.options.plugins.yearAxis.years || {}).length > 0) {
+                     chart.options.layout.padding.bottom = 50;
                 }
             }
+        };
+
+        function getYearEndLineAnnotations(startDate, endDate) {
+            const annotations = {};
+            if (!startDate || !endDate) return annotations;
+
+            const startYear = startDate.getFullYear();
+            const endYear = endDate.getFullYear();
+
+            for (let year = startYear + 1; year <= endYear; year++) {
+                const yearStart = new Date(year, 0, 1).getTime();
+                
+                if (yearStart > startDate.getTime() && yearStart <= endDate.getTime()) {
+                    annotations[`yearLine${year}`] = {
+                        type: 'line',
+                        scaleID: 'x',
+                        value: yearStart,
+                        borderColor: 'rgba(100, 100, 100, 0.7)',
+                        borderWidth: 1.5,
+                        borderDash: [5, 5],
+                        label: {
+                            enabled: false
+                        }
+                    };
+                }
+            }
+            return annotations;
+        }
+
+        const legendColorClickHandler = (e, legendItem, legend) => {
+            if (e.native) {
+                e.native.stopPropagation();
+                e.native.preventDefault();
+            }
+            
+            const chart = legend.chart;
+            const dataset = chart.data.datasets[legendItem.datasetIndex];
+            
+            if (dataset.type === 'bar') return;
+
+            const pickerDiv = document.getElementById('color-picker-palette');
+            
+            if (jsuitesColorPicker) {
+                jsuitesColorPicker.close();
+                jsuitesColorPicker = null;
+            }
+            
+            const clickTarget = (e.native ? e.native.target : e.target).closest('li');
+            if (!clickTarget) {
+                console.error("Could not find legend item (li) to attach picker to.");
+                return;
+            }
+            const targetRect = clickTarget.getBoundingClientRect();
+            
+            pickerDiv.style.display = 'block';
+            pickerDiv.style.left = `${window.scrollX + targetRect.left}px`;
+            pickerDiv.style.top = `${window.scrollY + targetRect.bottom + 5}px`;
+            
+            if ( (window.scrollX + targetRect.left + pickerDiv.offsetWidth) > window.innerWidth) {
+                pickerDiv.style.left = `${window.scrollX + targetRect.right - pickerDiv.offsetWidth}px`;
+            }
+            if ( (window.scrollY + targetRect.bottom + 5 + pickerDiv.offsetHeight) > window.innerHeight) {
+                pickerDiv.style.top = `${window.scrollY + targetRect.top - pickerDiv.offsetHeight - 5}px`;
+            }
+
+            jsuitesColorPicker = jSuites.color(pickerDiv, {
+                value: dataset.borderColor,
+                close: true,
+                onchange: function(instance, newValue) {
+                    dataset.borderColor = newValue;
+                    dataset.backgroundColor = newValue + '33';
+                    if (dataset.pointHoverBorderColor) {
+                        dataset.pointHoverBorderColor = newValue; 
+                    }
+                    chart.update();
+                    
+                    instance.close();
+                    pickerDiv.style.display = 'none';
+                    jsuitesColorPicker = null;
+                }
+            });
+            jsuitesColorPicker.open();
         };
 
         function createComparisonChart(chartId, tickers, timeConfig) {
             const canvasId = `canvas-chart-${chartId}`;
             const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
+            if (!ctx) {
+                console.error(`Canvas not found: ${canvasId}. Chart will not be created.`);
+                return;
+            }
 
             let startDate, endDate = latestDataDate;
             if (timeConfig.period) {
@@ -1219,20 +1580,12 @@
             const filteredData = allData.filter(d => d.date >= startDate && d.date <= endDate);
             const yearsInData = {};
             
+            const annotations = {};
             const datasets = tickers.map((ticker, index) => {
                 const tickerData = filteredData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
                 if (tickerData.length === 0) return null;
                 const color = CHART_COLORS[index % CHART_COLORS.length];
-
-                const perfData = allPerformanceData.get(ticker);
-                const isRate = perfData && perfData.market === 'US Rates';
-
-                if (isRate) {
-                    const rateData = tickerData.map(d => ({x: d.date.getTime(), y: d.price}));
-                    return { label: tickerData[0].name, data: rateData, borderColor: color, backgroundColor: color + '33', borderWidth: 2, pointRadius: 0, yAxisID: 'yRates' };
-                }
                 
-                // For performance charts, find the first available price ON or AFTER the startDate for normalization
                 const firstDataPointForPeriod = allData
                     .filter(d => d.ticker === ticker && d.date >= startDate)
                     .sort((a, b) => a.date - b.date)[0];
@@ -1241,6 +1594,7 @@
                 const firstPrice = firstDataPointForPeriod.price;
 
                 const normalizedData = tickerData.map(d => ({ x: d.date.getTime(), y: ((d.price / firstPrice) - 1) * 100 }));
+                
                 normalizedData.forEach(d => {
                     const year = new Date(d.x).getFullYear();
                     if (!yearsInData[year]) {
@@ -1257,13 +1611,15 @@
                     backgroundColor: color + '33', 
                     borderWidth: 2, 
                     pointRadius: 0, 
+                    pointHoverRadius: 6, pointHoverBorderWidth: 3,
+                    pointHoverBackgroundColor: 'transparent', pointHoverBorderColor: color,
                     yAxisID: 'yPerf',
                     spanGaps: true
                 };
             }).filter(Boolean);
 
             const hasPerf = datasets.some(ds => ds.yAxisID === 'yPerf');
-            const hasRates = datasets.some(ds => ds.yAxisID === 'yRates');
+            const yearEndLines = getYearEndLineAnnotations(startDate, endDate);
 
             if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
             const isDarkMode = document.body.classList.contains('dark-mode');
@@ -1275,13 +1631,13 @@
 
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line',
-                data: { datasets },
-                plugins: [yearAxisPlugin], 
+                plugins: [yearAxisPlugin],
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     layout: {
                         padding: {
-                            bottom: 30 
+                            right: 50,
+                            bottom: 30
                         }
                     },
                     scales: {
@@ -1299,33 +1655,20 @@
                             title: { display: true, text: 'Cumulative Return (%)' },
                             ticks: { color: textColor, callback: (value) => `${value}%` },
                             grid: { color: gridColor }
-                        },
-                        yRates: {
-                            display: hasRates, position: 'right',
-                            title: { display: true, text: 'Rate' },
-                            ticks: { color: textColor },
-                            grid: { display: false }
                         }
                     },
                     plugins: {
                         yearAxis: { years: yearsInData },
+                        annotation: {
+                           clip: false,
+                           annotations: { ...annotations, ...yearEndLines }
+                        },
                         legend: {
-                            labels: { color: isDarkMode ? '#f0f0f0' : '#333' },
-                            onClick: (e, legendItem, legend) => {
-                                e.stopPropagation();
-                                const chart = legend.chart;
-                                const dataset = chart.data.datasets[legendItem.datasetIndex];
-                                const colorPicker = document.getElementById('color-picker');
-                                colorPicker.value = dataset.borderColor;
-                                colorPicker.onchange = () => {
-                                    const newColor = colorPicker.value;
-                                    dataset.borderColor = newColor;
-                                    dataset.backgroundColor = newColor + '33';
-                                    chart.update();
-                                    colorPicker.onchange = null;
-                                };
-                                colorPicker.click();
-                            }
+                            labels: { 
+                                color: isDarkMode ? '#f0f0f0' : '#333',
+                                usePointStyle: false
+                            },
+                            onClick: legendColorClickHandler
                         },
                         tooltip: { mode: 'index', intersect: false ,
                                  callbacks: {
@@ -1339,7 +1682,8 @@
                                  }    
                                  }
                     }
-                }
+                },
+                data: { datasets }
             });
         }
 
@@ -1357,26 +1701,26 @@
             const sinceStartDate = new Date(endYear - 1, 0, 1);
             const sinceHeader = `Since ${endYear - 1}`;
 
-            let tableHTML = `<table><thead><tr><th>${asOfDateStr}</th>`;
+            let tableHTML = `<table id="perf-table-${chartId}"><thead><tr><th>${asOfDateStr}</th>`;
             data.forEach(item => { tableHTML += `<th title="${item.ticker}">${item.name}</th>`; });
             tableHTML += '</tr></thead><tbody>';
 
             tableHTML += '<tr><td>Last Price</td>';
             data.forEach(item => {
                 const priceOnEndDate = item.findPriceOnOrBefore(endDate);
-                const priceFormatted = (priceOnEndDate === null) ? 'N/A' : formatNumberWithCommas(priceOnEndDate.toFixed(item.market === 'FX' ? 4 : 2));
+                const priceFormatted = (priceOnEndDate === null) ? 'N/A' : formatNumberWithCommas(priceOnEndDate.toFixed(2));
                 tableHTML += `<td>${priceFormatted}</td>`;
             });
             tableHTML += '</tr>';
 
             tableHTML += '<tr><td>YTD</td>';
             data.forEach(item => {
-                const isRate = item.market === 'US Rates';
-                const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
+                const isRate = false;
+                const inverted = false;
                 const priceOnEndDate = item.findPriceOnOrBefore(endDate);
                 const priceOnYTDStart = item.findPriceOnOrBefore(ytdStartDate);
                 const rawPerf = item.calcPerf(priceOnYTDStart, priceOnEndDate, isRate, inverted);
-                const displayValue = formatValue(rawPerf, isRate ? 'bps' : 'percent');
+                const displayValue = formatValue(rawPerf, 'percent');
                 const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
                 tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
             });
@@ -1384,12 +1728,12 @@
 
             tableHTML += `<tr><td>${sinceHeader}</td>`;
             data.forEach(item => {
-                const isRate = item.market === 'US Rates';
-                const inverted = ['JPY=', 'TWD=', 'KRW=', 'CNY='].some(inv => item.ticker.includes(inv));
+                const isRate = false;
+                const inverted = false;
                 const priceOnEndDate = item.findPriceOnOrBefore(endDate);
                 const priceOnSinceStart = item.findPriceOnOrBefore(sinceStartDate);
                 const rawPerf = item.calcPerf(priceOnSinceStart, priceOnEndDate, isRate, inverted);
-                const displayValue = formatValue(rawPerf, isRate ? 'bps' : 'percent');
+                const displayValue = formatValue(rawPerf, 'percent');
                 const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
                 tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
             });
@@ -1418,12 +1762,18 @@
             const isDarkMode = document.body.classList.contains('dark-mode');
             const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
             const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            
+            const timeUnit = chartAxisUnits[chartId] || 'auto';
+            let finalTimeUnit = (timeUnit === 'auto') ? undefined : timeUnit;
 
             for (let i = 0; i < 4; i++) {
                 const canvasId = `canvas-chart-${chartId}-${i}`;
                 const ctx = document.getElementById(canvasId);
                 if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
-                if (!ctx) continue;
+                if (!ctx) {
+                    console.error(`Canvas not found: ${canvasId}. Chart 7 grid will not be created.`);
+                    continue;
+                }
 
                 const ticker = tickers[i];
                 if (!ticker) {
@@ -1446,6 +1796,20 @@
                 const priceData = tickerData.map(d => ({ x: d.date.getTime(), y: d.price }));
                 const volumeData = tickerData.map(d => ({ x: d.date.getTime(), y: d.volume }));
                 
+                const yearsInData = {};
+                priceData.forEach(d => {
+                    const year = new Date(d.x).getFullYear();
+                    if (!yearsInData[year]) {
+                         yearsInData[year] = { min: d.x, max: d.x };
+                    } else {
+                        yearsInData[year].min = Math.min(yearsInData[year].min, d.x);
+                        yearsInData[year].max = Math.max(yearsInData[year].max, d.x);
+                    }
+                });
+                
+                const annotations = {};
+                const yearEndLines = getYearEndLineAnnotations(startDate, endDate);
+
                 let yMin = Infinity, yMax = -Infinity;
                 priceData.forEach(p => {
                     if(p.y < yMin) yMin = p.y;
@@ -1457,12 +1821,19 @@
 
                 activeCharts[canvasId] = new Chart(ctx, {
                     type: 'bar',
+                    plugins: [yearAxisPlugin],
                     data: {
                         datasets: [
                             {
                                 type: 'line', label: 'Price', data: priceData,
                                 borderColor: '#8B0000', backgroundColor: 'transparent',
-                                borderWidth: 2, pointRadius: 0, yAxisID: 'yPrice', tension: 0.1,
+                                borderWidth: 2, 
+                                pointRadius: 0,
+                                pointHoverRadius: 6,
+                                pointHoverBorderWidth: 3,
+                                pointHoverBackgroundColor: 'transparent',
+                                pointHoverBorderColor: '#8B0000',
+                                yAxisID: 'yPrice', tension: 0.1,
                                 spanGaps: true
                             },
                             {
@@ -1473,25 +1844,58 @@
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                right: 40,
+                                bottom: 30
+                            }
+                        },
                         plugins: {
-                            legend: { display: true, labels: { color: textColor } },
-                            tooltip: { mode: 'index', intersect: false },
+                            yearAxis: { years: yearsInData },
+                            annotation: { 
+                                clip: false,
+                                annotations: { ...annotations, ...yearEndLines } 
+                            },
+                            legend: {
+                                display: true,
+                                labels: { 
+                                    color: textColor,
+                                    usePointStyle: false
+                                },
+                                onClick: legendColorClickHandler
+                            },
+                            tooltip: {
+                                mode: 'index', 
+                                intersect: false,
+                                callbacks: {
+                                     title: function(tooltipItems) {
+                                         const date = new Date(tooltipItems[0].parsed.x);
+                                         const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                                         const day = date.getDate().toString().padStart(2, '0');
+                                         const year = date.getFullYear();
+                                         return `${month}/${day}/${year}`;
+                                     }
+                                 }
+                            },
                             title: { display: true, text: `${perfData.name} (${ticker})`, color: textColor }
                         },
                         scales: {
                             x: { 
                                 type: 'time', 
-                                time: { unit: 'month' },
+                                time: {
+                                    unit: finalTimeUnit,
+                                    displayFormats: { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }
+                                },
                                 ticks: { color: textColor, source: 'data', maxRotation: 0, autoSkip: true }, 
                                 grid: { display: false } 
                             },
                             yPrice: {
-                                type: 'linear', position: 'left', title: { display: true, text: 'Price', color: textColor },
+                                type: 'linear', position: 'right', title: { display: true, text: 'Price', color: textColor },
                                 ticks: { color: textColor }, grid: { color: gridColor },
                                 min: suggestedMin, max: suggestedMax
                             },
                             yVolume: {
-                                type: 'linear', position: 'right', title: { display: true, text: 'Volume', color: textColor },
+                                type: 'linear', position: 'left', title: { display: true, text: 'Volume', color: textColor },
                                 ticks: {
                                     color: textColor,
                                     callback: (value) => {
@@ -1523,7 +1927,7 @@
             const threeMonthStartDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 3));
 
             const asOfDateStr = `As of: ${formatDateMMDD(endDate)}`;
-            let tableHTML = `<table><thead><tr><th>${asOfDateStr}</th>`;
+            let tableHTML = `<table id="perf-table-${chartId}"><thead><tr><th>${asOfDateStr}</th>`;
             tickers.forEach(ticker => {
                 const perfData = allPerformanceData.get(ticker);
                 tableHTML += `<th>${perfData ? perfData.name : ticker}</th>`;
@@ -1535,7 +1939,7 @@
                 const perfData = allPerformanceData.get(ticker);
                 if (perfData) {
                     const priceOnEndDate = perfData.findPriceOnOrBefore(endDate);
-                    const priceFormatted = (priceOnEndDate === null) ? 'N/A' : formatNumberWithCommas(priceOnEndDate.toFixed(perfData.market === 'FX' ? 4 : 2));
+                    const priceFormatted = (priceOnEndDate === null) ? 'N/A' : formatNumberWithCommas(priceOnEndDate.toFixed(2));
                     tableHTML += `<td>${priceFormatted}</td>`;
                 } else {
                     tableHTML += `<td>N/A</td>`;
@@ -1635,7 +2039,14 @@
                 data: { datasets: [{
                     label: 'Price', data: chartData, borderColor: 'rgba(74, 144, 226, 1)',
                     backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 2,
-                    fill: true, pointRadius: 0, tension: 0.1, spanGaps: true
+                    fill: true, 
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBorderWidth: 3,
+                    pointHoverBackgroundColor: 'transparent',
+                    pointHoverBorderColor: 'rgba(74, 144, 226, 1)',
+                    tension: 0.1, 
+                    spanGaps: true
                 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -1662,13 +2073,6 @@
         }
 
         // --- Data Tab Functions ---
-        function setDataView(view, element) {
-            currentDataView = view;
-            document.querySelectorAll('#data-controls .view-toggle-tab').forEach(b => b.classList.remove('active'));
-            element.classList.add('active');
-            renderDataTab();
-        }
-
         function pivotDataForDownload() {
             try {
                 const uniqueDates = [...new Set(allData.map(d => d.originalDateStr.split(' ')[0]))].sort();
@@ -1704,193 +2108,337 @@
                 if (container) container.innerHTML = `<p>Failed to process data: ${error.message}</p>`;
             }
         }
-
+        
         function renderDataTab() {
-            const startDateInput = document.getElementById('data-start-date');
-            const endDateInput = document.getElementById('data-end-date');
-            const container = document.getElementById('data-table-container');
-
-            const dataToRender = (currentDataView === 'price') ? pivotedPriceData : pivotedVolumeData;
-
-            if (dataToRender.size > 0) {
-                const dates = [...dataToRender.keys()];
-                const firstDate = dates[0];
-                const lastDate = dates[dates.length - 1];
-                if (!startDateInput.value) startDateInput.value = firstDate;
-                if (!endDateInput.value) endDateInput.value = lastDate;
-                startDateInput.min = firstDate; startDateInput.max = lastDate;
-                endDateInput.min = firstDate; endDateInput.max = lastDate;
-            }
-
             if (!isDataPivoted) {
-                container.innerHTML = '<p>Data is still processing...</p>'; return;
+                document.getElementById('data-table-container').innerHTML = '<p>Data is still processing...</p>';
+                return;
             }
 
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const filteredDates = [...dataToRender.keys()].filter(date => {
-                if (startDate && date < startDate) return false;
-                if (endDate && date > endDate) return false;
-                return true;
-            });
+            const container = document.getElementById('data-table-container');
+            if (jspreadsheetInstance) {
+                jspreadsheetInstance.destroy();
+                jspreadsheetInstance = null;
+            }
+            container.innerHTML = ''; 
 
             const summaryTickers = [
                 '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO','3034.TW','2303.TW','3035.TW','3661.TW','0981.HK','6723.T','688981.SS','603005.SS','QCOM.O', 'GFS'
             ];
 
-            const allHeaders = pivotedDataHeaders;
-            const tickerIndicesToKeep = [];
-            const finalHeaders = ['Date'];
+            const finalHeaders = ['Date', ...summaryTickers];
+            const tickerIndicesToKeep = summaryTickers.map(ticker => pivotedDataHeaders.indexOf(ticker) -1);
 
-            allHeaders.forEach((header, index) => {
-                if (index === 0) return;
-                if (summaryTickers.includes(header)) {
-                    tickerIndicesToKeep.push(index - 1);
-                    finalHeaders.push(header);
+            const priceColumns = finalHeaders.map((header, index) => ({
+                title: header,
+                width: index === 0 ? 120 : 100,
+                readOnly: true,
+                type: index === 0 ? 'text' : 'numeric',
+                mask: index > 0 ? '#,##.00' : null,
+            }));
+            
+            const volumeColumns = finalHeaders.map((header, index) => ({
+                title: header,
+                width: index === 0 ? 120 : 100,
+                readOnly: true,
+                type: index === 0 ? 'text' : 'numeric',
+                mask: index > 0 ? '#,##' : null,
+            }));
+
+            const priceSheetData = [];
+            [...pivotedPriceData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
+                const allValues = pivotedPriceData.get(date);
+                const filteredValues = tickerIndicesToKeep.map(i => allValues[i]);
+                if(filteredValues.some(v => v !== null)) {
+                    priceSheetData.push([date, ...filteredValues]);
                 }
             });
 
-            let tableHTML = '<table id="data-table"><thead><tr>';
-            finalHeaders.forEach(h => tableHTML += `<th>${h}</th>`);
-            tableHTML += '</tr></thead><tbody>';
-
-            filteredDates.reverse().forEach(date => {
-                const allValues = dataToRender.get(date);
-                let rowHasData = false;
-                let rowHTML = `<td>${date}</td>`;
-
-                tickerIndicesToKeep.forEach(i => {
-                    const value = allValues[i];
-                    if (value !== null) rowHasData = true;
-                    const decimals = (currentDataView === 'price') ? 4 : 0;
-                    rowHTML += `<td>${value !== null ? formatNumberWithCommas(value, decimals) : ''}</td>`;
-                });
-                if (rowHasData) tableHTML += '<tr>' + rowHTML + '</tr>';
+            const volumeSheetData = [];
+            [...pivotedVolumeData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
+                const allValues = pivotedVolumeData.get(date);
+                const filteredValues = tickerIndicesToKeep.map(i => allValues[i]);
+                 if(filteredValues.some(v => v !== null)) {
+                    volumeSheetData.push([date, ...filteredValues]);
+                }
             });
 
-            tableHTML += '</tbody></table>';
-            container.innerHTML = tableHTML;
-        }
-
-        function getTableDataAsString(tableId, delimiter = '\t') {
-            const table = document.getElementById(tableId);
-            if (!table) return '';
-            let data = [];
-            const rows = table.querySelectorAll('tr');
-            rows.forEach(row => {
-                const rowData = [];
-                const cols = row.querySelectorAll('th, td');
-                cols.forEach(col => rowData.push(col.innerText.replace(/,/g, '')));
-                data.push(rowData.join(delimiter));
+            jspreadsheetInstance = jspreadsheet(container, {
+                worksheets: [
+                    {
+                        data: priceSheetData,
+                        columns: priceColumns,
+                        worksheetName: 'Price',
+                        freezeColumns: 1,
+                        freezeRows: 1,
+                        pagination: 25,
+                        paginationOptions: [10, 25, 50, 100],
+                        tableOverflow: true,
+                        tableWidth: "100%",
+                    },
+                    {
+                        data: volumeSheetData,
+                        columns: volumeColumns,
+                        worksheetName: 'Volume',
+                        freezeColumns: 1,
+                        freezeRows: 1,
+                        tableOverflow: true,
+                        tableWidth: "100%",
+                        pagination: 25,
+                        paginationOptions: [10, 25, 50, 100]
+                    }
+                ],
+                toolbar: true
             });
-            return data.join('\n');
         }
 
-        function copyDataToClipboard() {
-            try {
-                const dataString = getTableDataAsString('data-table', '\t');
-                const textArea = document.createElement('textarea');
-                textArea.value = dataString;
-                textArea.style.position = 'fixed'; textArea.style.opacity = '0';
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                alert('Data copied to clipboard!');
-            } catch (err) {
-                 alert('Failed to copy data.');
-                console.error('Copy error:', err);
-            }
-        }
-
-        function downloadDataAsCSV() {
-            const dataString = getTableDataAsString('data-table', ',');
-            const blob = new Blob([dataString], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `market_data_${currentDataView}_${formatDateYYYYMMDD(new Date())}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
 
         // --- News Tab Functions ---
         function setupNewsTab() {
-            const controlsContainer = document.getElementById('news-controls');
-            if (!controlsContainer) return;
-            controlsContainer.innerHTML = '';
-
-            const newsTickers = {'3443.TW': 'GUC', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'Xintec'};
+            const companyFilter = document.getElementById('news-filter-company');
+            if (!companyFilter) return;
+            companyFilter.innerHTML = '<option value="all">Company (All)</option>';
 
             Object.entries(newsTickers).forEach(([ticker, name]) => {
-                const btn = document.createElement('button');
-                btn.className = 'news-btn';
-                btn.textContent = name;
-                btn.dataset.ticker = ticker;
-                btn.onclick = (e) => {
-                    document.querySelectorAll('#news-controls .news-btn').forEach(b => b.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
-                    fetchAndDisplayNews(e.currentTarget.dataset.ticker);
-                };
-                controlsContainer.appendChild(btn);
+                const option = document.createElement('option');
+                option.value = ticker;
+                option.textContent = name;
+                companyFilter.appendChild(option);
             });
+            
+            companyFilter.value = 'all'; 
+            handleCompanyFilterChange('all');
+        }
+
+        function handleCompanyFilterChange(ticker) {
+            fetchAndDisplayNews(ticker);
         }
 
         async function fetchAndDisplayNews(ticker) {
-            const contentContainer = document.getElementById('news-content');
-            const detailView = document.getElementById('news-detail-view');
             const statusEl = document.getElementById('news-status');
-            if (!contentContainer || !statusEl || !detailView) return;
-
-            statusEl.textContent = `Loading news for ${ticker}...`;
-            contentContainer.innerHTML = '';
-            detailView.style.display = 'none';
-            detailView.innerHTML = '';
+            if (!statusEl) return;
+            
+            // --- MODIFICATION (Issue 3) ---
+            // Reset pane sizes when fetching new data
+            document.getElementById('news-left-pane').style.flexBasis = '';
+            document.getElementById('news-right-pane').style.flexBasis = '';
+            
+            statusEl.style.display = 'block';
+            document.getElementById('news-content').innerHTML = '';
+            document.getElementById('news-right-pane').style.display = 'none';
             currentNewsData = null;
-            const url = `https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${ticker}.json`;
 
-            try {
-                const newsData = await fetchJsonWithRetry(url);
-                currentNewsData = newsData;
-
-                if (!newsData || !newsData.news || newsData.news.length === 0) {
-                    statusEl.textContent = `No news found for ${ticker}.`;
-                    return;
-                }
-
-                statusEl.textContent = `Displaying ${newsData.news.length} reports. Last updated: ${new Date(newsData.last_updated).toLocaleString()}`;
-                let newsHTML = '';
-
-                if (newsData.summary) {
-                     newsHTML += `
-                        <div class="news-item" id="news-item-summary" onclick="showNewsSummary()">
-                            <h4>Overall Summary</h4>
-                            <div class="news-meta"><strong>Source:</strong> AI Generated</div>
-                        </div>`;
-                }
-                
-                newsData.news.forEach((report, index) => {
-                    newsHTML += `
-                        <div class="news-item" id="news-item-${index}" onclick="showNewsDetail(${index})">
-                            <h4>${report.Title}</h4>
-                            <div class="news-meta">
-                                <strong>Source:</strong> ${report.Source} | <strong>Date:</strong> ${report.Date} ${report.Time}
-                            </div>
-                        </div>`;
+            if (ticker === 'all') {
+                statusEl.textContent = 'Loading news for All Companies...';
+                let allNewsItems = [];
+                const promises = Object.keys(newsTickers).map(t => {
+                    const url = `https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${t}.json`;
+                    return fetchJsonWithRetry(url)
+                        .then(data => {
+                            if (data && data.news) {
+                                data.news.forEach(item => {
+                                    item.ticker = t; 
+                                    item.tickerName = newsTickers[t];
+                                });
+                                allNewsItems.push(...data.news);
+                            }
+                        })
+                        .catch(err => console.error(`Failed to load news for ${t}:`, err));
                 });
-                contentContainer.innerHTML = newsHTML;
-                
-                if(newsData.summary) showNewsSummary();
-                else showNewsDetail(0);
 
-            } catch (error) {
-                statusEl.textContent = `Failed to load news for ${ticker}. Please try again later.`;
-                console.error(`Error fetching news for ${ticker}:`, error);
+                try {
+                    await Promise.all(promises);
+                    
+                    allNewsItems.sort((a, b) => {
+                        const dateA = new Date(`${a.Date} ${a.Time || '00:00:00'}`);
+                        const dateB = new Date(`${b.Date} ${b.Time || '00:00:00'}`);
+                        return dateB - dateA;
+                    });
+
+                    currentNewsData = { news: allNewsItems, summary: null };
+
+                    if (currentNewsData.news.length === 0) {
+                        statusEl.textContent = 'No news found for any company.';
+                        populateNewsFilters([]);
+                        filterAndDisplayNews();
+                        return;
+                    }
+
+                    statusEl.style.display = 'none';
+                    populateNewsFilters(currentNewsData.news);
+                    filterAndDisplayNews();
+                    
+                    if (currentNewsData.news.length > 0) {
+                        showNewsDetail(0);
+                    }
+
+                } catch (error) {
+                    statusEl.textContent = `Failed to load news for All Companies.`;
+                    console.error('Error fetching all news:', error);
+                    currentNewsData = null;
+                    populateNewsFilters([]);
+                    filterAndDisplayNews();
+                }
+                
+            } else {
+                statusEl.textContent = `Loading news for ${ticker}...`;
+                const url = `https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${ticker}.json`;
+
+                try {
+                    const newsData = await fetchJsonWithRetry(url);
+                    if (newsData && newsData.news) {
+                        const tickerName = newsTickers[ticker];
+                        newsData.news.forEach(item => {
+                            item.ticker = ticker;
+                            item.tickerName = tickerName;
+                        });
+                    }
+                    currentNewsData = newsData;
+
+                    if (!newsData || !newsData.news || newsData.news.length === 0) {
+                        statusEl.textContent = `No news found for ${ticker}.`;
+                        populateNewsFilters([]);
+                        filterAndDisplayNews();
+                        return;
+                    }
+
+                    statusEl.style.display = 'none';
+                    populateNewsFilters(newsData.news);
+                    filterAndDisplayNews();
+                    
+                    if (currentNewsData.summary) {
+                        showNewsSummary();
+                    } else if (currentNewsData.news.length > 0) {
+                        showNewsDetail(0);
+                    }
+
+                } catch (error) {
+                    statusEl.textContent = `Failed to load news for ${ticker}. Please try again later.`;
+                    console.error(`Error fetching news for ${ticker}:`, error);
+                    currentNewsData = null;
+                    populateNewsFilters([]);
+                    filterAndDisplayNews();
+                }
             }
         }
+        
+        function populateNewsFilters(newsItems) {
+            const sourceFilter = document.getElementById('news-filter-source');
+            sourceFilter.innerHTML = '<option value="all">Source (All)</option>';
+
+            // --- MODIFICATION (Issue 3) ---
+            const languageFilter = document.getElementById('news-filter-language');
+            languageFilter.innerHTML = '<option value="all">Language (All)</option>';
+
+            if (!newsItems || newsItems.length === 0) return;
+
+            const sources = [...new Set(newsItems.map(item => item.Source).filter(Boolean))].sort();
+            sources.forEach(source => {
+                const option = document.createElement('option');
+                option.value = source;
+                option.textContent = source;
+                sourceFilter.appendChild(option);
+            });
+            
+            // --- MODIFICATION (Issue 3) ---
+            // Assumes a 'Language' property exists in the news item object (e.g., "EN", "ZH")
+            const languages = [...new Set(newsItems.map(item => item.Language).filter(Boolean))].sort();
+            languages.forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang;
+                option.textContent = lang;
+                languageFilter.appendChild(option);
+            });
+        }
+        
+        function resetNewsFilters() {
+            document.getElementById('news-filter-source').value = 'all';
+            // --- MODIFICATION (Issue 3) ---
+            document.getElementById('news-filter-language').value = 'all';
+            filterAndDisplayNews();
+        }
+
+        function filterAndDisplayNews() {
+            const contentContainer = document.getElementById('news-content');
+            const statusEl = document.getElementById('news-status');
+            const detailView = document.getElementById('news-right-pane');
+            
+            if (!currentNewsData || !currentNewsData.news) {
+                contentContainer.innerHTML = '';
+                statusEl.style.display = 'block';
+                 if (!currentNewsData) statusEl.textContent = 'Please select a company.';
+                return;
+            }
+
+            const selectedSource = document.getElementById('news-filter-source').value;
+            // --- MODIFICATION (Issue 3) ---
+            const selectedLanguage = document.getElementById('news-filter-language').value;
+            const selectedTicker = document.getElementById('news-filter-company').value;
+            const tickerName = newsTickers[selectedTicker] || selectedTicker;
+
+            const filteredNews = currentNewsData.news.filter(item => {
+                const sourceMatch = (selectedSource === 'all' || item.Source === selectedSource);
+                // --- MODIFICATION (Issue 3) ---
+                // Add language to filter condition. Assumes `item.Language` exists.
+                const languageMatch = (selectedLanguage === 'all' || item.Language === selectedLanguage);
+                return sourceMatch && languageMatch;
+            });
+
+            let newsHTML = '';
+            
+            // --- MODIFICATION (Issue 3) ---
+            // Only show AI summary if language filter is 'all' or 'EN'/'ZH' depending on what is displayed
+            if (selectedTicker !== 'all' && currentNewsData.summary && selectedSource === 'all' && selectedLanguage === 'all') {
+                 newsHTML += `
+                    <div class="news-item" id="news-item-summary" onclick="showNewsSummary()">
+                        <div class="news-meta-top">
+                            <span>AI SUMMARY</span>
+                        </div>
+                        <h4 class="news-title">Overall Summary for ${tickerName}</h4>
+                    </div>`;
+            }
+            
+            filteredNews.forEach(item => {
+                const originalIndex = currentNewsData.news.indexOf(item);
+                if (originalIndex === -1) return;
+                
+                const itemTickerName = item.tickerName || tickerName;
+                
+                newsHTML += `
+                    <div class="news-item" id="news-item-${originalIndex}" onclick="showNewsDetail(${originalIndex})">
+                         <div class="news-meta-top">
+                            <span>${item.Date} ${item.Time}</span>
+                            <span class="ticker-name">${itemTickerName}</span>
+                            <span>${item.Source}</span>
+                        </div>
+                        <h4 class="news-title">${item.Title}</h4>
+                    </div>`;
+            });
+            
+            contentContainer.innerHTML = newsHTML;
+            
+            if (newsHTML === '') {
+                statusEl.textContent = 'No news items match your filter.';
+                statusEl.style.display = 'block';
+                detailView.style.display = 'none';
+            } else {
+                statusEl.style.display = 'none';
+                const firstItem = contentContainer.querySelector('.news-item');
+                if (firstItem) {
+                    if (firstItem.id === 'news-item-summary') {
+                        showNewsSummary();
+                    } else {
+                        const firstIndex = parseInt(firstItem.id.split('-').pop(), 10);
+                        if (!isNaN(firstIndex)) {
+                            showNewsDetail(firstIndex);
+                        }
+                    }
+                } else {
+                     detailView.style.display = 'none';
+                }
+            }
+        }
+
 
         function setActiveNewsItem(selectedId) {
              document.querySelectorAll('#news-content .news-item').forEach(item => {
@@ -1902,7 +2450,7 @@
             if (!currentNewsData || !currentNewsData.news[index]) return;
 
             const item = currentNewsData.news[index];
-            const detailView = document.getElementById('news-detail-view');
+            const detailView = document.getElementById('news-right-pane');
             const linkHTML = item.URL ? `<div class="news-link-container"><a href="${item.URL}" target="_blank" rel="noopener noreferrer">Read Original Article</a></div>` : '';
             
             detailView.innerHTML = `
@@ -1913,18 +2461,22 @@
                     <pre class="content">${item.Content || 'No content available.'}</pre>
                 </div>`;
             detailView.style.display = 'block';
+            detailView.scrollTop = 0;
             setActiveNewsItem(`news-item-${index}`);
         }
 
         function showNewsSummary() {
             if (!currentNewsData || !currentNewsData.summary) return;
 
+            const selectedTicker = document.getElementById('news-filter-company').value;
+            const tickerName = newsTickers[selectedTicker] || selectedTicker;
+
             const summary = currentNewsData.summary;
-            const detailView = document.getElementById('news-detail-view');
+            const detailView = document.getElementById('news-right-pane');
 
             detailView.innerHTML = `
                  <div id="news-detail-content">
-                    <h3>AI Generated Summary</h3>
+                    <h3>AI Generated Summary for ${tickerName}</h3>
                     <div class="meta">Last updated: ${new Date(currentNewsData.last_updated).toLocaleString()}</div>
                     <div class="summary-block">
                         <h4>${summary.title_zh}</h4>
@@ -1936,7 +2488,207 @@
                     </div>
                 </div>`;
             detailView.style.display = 'block';
+            detailView.scrollTop = 0;
             setActiveNewsItem('news-item-summary');
+        }
+
+        function initNewsSplitter() {
+            const splitter = document.getElementById('news-splitter');
+            const leftPane = document.getElementById('news-left-pane');
+            const rightPane = document.getElementById('news-right-pane');
+            const container = document.getElementById('news-container');
+            if (!splitter || !leftPane || !rightPane || !container) return;
+
+            let isDragging = false;
+
+            splitter.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const containerRect = container.getBoundingClientRect();
+                let leftWidth = e.clientX - containerRect.left;
+                
+                const minWidth = 200;
+                const maxWidth = containerRect.width - minWidth - splitter.offsetWidth;
+                
+                if (leftWidth < minWidth) leftWidth = minWidth;
+                if (leftWidth > maxWidth) leftWidth = maxWidth;
+
+                leftPane.style.flexBasis = `${leftWidth}px`;
+                rightPane.style.flexGrow = '1';
+                rightPane.style.flexBasis = '0';
+            });
+        }
+        
+        
+        // --- MODIFICATION (Issue 2): Function to fetch a single AI summary ---
+        /**
+         * Fetches the AI summary for a specific ticker.
+         */
+        async function fetchNewsSummary(ticker) {
+            if (!ticker) return null; // Guard against items without tickers
+            const url = `https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${ticker}.json`;
+            try {
+                const data = await fetchJsonWithRetry(url);
+                return data.summary || null;
+            } catch (error) {
+                console.error(`Failed to fetch summary for ${ticker}:`, error);
+                return null;
+            }
+        }
+
+        /**
+         * Generates the report and shows it in a modal.
+         */
+        async function generateReport() {
+            const statusEl = document.getElementById('email-report-status');
+            statusEl.textContent = 'generating...';
+            statusEl.style.color = 'var(--text-secondary)';
+
+            try {
+                // 1. Define tickers and chart IDs for ALL charts
+                const allReportItems = [
+                    { chartId: 'Chart-1', name: 'GUC', ticker: '3443.TW', hasSummary: true },
+                    { chartId: 'Chart-2', name: 'Vanguard', ticker: '5347.TWO', hasSummary: true },
+                    { chartId: 'Chart-3', name: 'Performance Comparison (Chart 3)', ticker: null, hasSummary: false },
+                    { chartId: 'Chart-4', name: 'Xintec', ticker: '3374.TWO', hasSummary: true },
+                    { chartId: 'Chart-5', name: 'Performance Comparison (Chart 5)', ticker: null, hasSummary: false },
+                    { chartId: 'Chart-6', name: 'VisEra', ticker: '6789.TW', hasSummary: true },
+                    { chartId: 'Chart-7', name: 'Volume Comparison', ticker: null, hasSummary: false }
+                ];
+
+                // --- MODIFICATION (Issue 2): Fetch all summaries in parallel ---
+                const summaryPromises = allReportItems
+                    .filter(item => item.hasSummary)
+                    .map(item => fetchNewsSummary(item.ticker));
+                
+                const summaries = await Promise.all(summaryPromises);
+                
+                // Map summaries back to their items
+                let summaryIndex = 0;
+                allReportItems.forEach(item => {
+                    if (item.hasSummary) {
+                        item.summary = summaries[summaryIndex];
+                        summaryIndex++;
+                    }
+                });
+
+                let reportHTML = `
+                    <h1>Market Watchlist Report</h1>
+                    <p>As of: ${formatDateYYYYMMDD(summaryReferenceDate)}</p>
+                `;
+
+                // 3. Build HTML for each chart item
+                for (const item of allReportItems) {
+                    reportHTML += `<hr><h2>${item.chartId}: ${item.name}</h2>`;
+
+                    if (item.chartId === 'Chart-7') {
+                        const chart7Table = document.getElementById('perf-table-Chart-7');
+                        
+                        reportHTML += `<h3>${item.chartId} Graphs</h3>`;
+                        let chart7ImagesHTML = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 1000px; margin: 10px auto;">';
+                        let foundChart7Image = false;
+                        
+                        for (let i = 0; i < 4; i++) {
+                            // --- MODIFICATION (Issue 1): Get chart instance directly from `activeCharts` ---
+                            const chartInstance = activeCharts[`canvas-chart-${item.chartId}-${i}`];
+                            if (chartInstance) {
+                                try {
+                                     // Force white background for image export
+                                    const originalBg = chartInstance.canvas.style.backgroundColor;
+                                    chartInstance.canvas.style.backgroundColor = 'white';
+                                    chartInstance.update('none'); // Update without animation
+                                    const imgBase64 = chartInstance.toBase64Image();
+                                    chartInstance.canvas.style.backgroundColor = originalBg; // Revert
+                                    chartInstance.update('none');
+
+                                    chart7ImagesHTML += `<div><img src="${imgBase64}" alt="${item.chartId}-${i}" style="width: 100%; max-width: none;"></div>`;
+                                    foundChart7Image = true;
+                                } catch (e) {
+                                     console.error(`Failed to get image for ${item.chartId}-${i}:`, e);
+                                     chart7ImagesHTML += `<div><i>[Chart image ${i} could not be generated]</i></div>`;
+                                }
+                            } else {
+                                chart7ImagesHTML += `<div><i>[Chart ${item.chartId}-${i} is not rendered]</i></div>`;
+                            }
+                        }
+                        chart7ImagesHTML += '</div>';
+                        
+                        if (foundChart7Image) {
+                            reportHTML += chart7ImagesHTML;
+                        } else {
+                             reportHTML += `<p><i>[Chart ${item.chartId} is not rendered. Please view this chart on the 'Chart' tab first.]</i></p>`;
+                        }
+
+                        if (chart7Table) {
+                             reportHTML += `<h3>${item.chartId} Table</h3>${chart7Table.outerHTML}`;
+                        } else {
+                             reportHTML += `<p><i>[Table ${item.chartId} is not rendered.]</i></p>`;
+                        }
+
+                    } else {
+                        // --- MODIFICATION (Issue 1): Get chart instance directly from `activeCharts` ---
+                        const chartInstance = activeCharts[`canvas-chart-${item.chartId}`];
+                        const tableElement = document.getElementById(`perf-table-${item.chartId}`);
+                        
+                        // --- MODIFICATION (Issue 2): Add AI Summary to report ---
+                        if (item.hasSummary) {
+                            if (item.summary && item.summary.summary_en) {
+                                reportHTML += `<h3>${item.name} (${item.ticker}) AI Summary (EN)</h3><p>${item.summary.summary_en}</p>`;
+                            } else {
+                                reportHTML += `<h3>${item.name} (${item.ticker}) AI Summary (EN)</h3><p>No summary available.</p>`;
+                            }
+                        }
+
+                        if (chartInstance) {
+                            try {
+                                const originalBg = chartInstance.canvas.style.backgroundColor;
+                                chartInstance.canvas.style.backgroundColor = 'white';
+                                chartInstance.update('none');
+                                const imgBase64 = chartInstance.toBase64Image();
+                                chartInstance.canvas.style.backgroundColor = originalBg;
+                                chartInstance.update('none');
+                                reportHTML += `<h3>${item.chartId} Graph</h3><img src="${imgBase64}" alt="${item.chartId}">`;
+                            } catch (e) {
+                                console.error(`Failed to get image for ${item.chartId}:`, e);
+                                reportHTML += `<p><i>[Chart image for ${item.chartId} could not be generated]</i></p>`;
+                            }
+                        } else {
+                             reportHTML += `<p><i>[Chart ${item.chartId} is not rendered. Please view this chart on the 'Chart' tab first.]</i></p>`;
+                        }
+
+                        if (tableElement) {
+                            reportHTML += `<h3>${item.chartId} Table</h3>${tableElement.outerHTML}`;
+                        } else {
+                            reportHTML += `<p><i>[Table ${item.chartId} is not rendered.]</i></p>`;
+                        }
+                    }
+                }
+                
+                document.getElementById('report-modal-content-area').innerHTML = reportHTML;
+                openModal('reportModal');
+
+                statusEl.textContent = '報表已產生！';
+                statusEl.style.color = 'var(--positive-color)';
+
+            } catch (err) {
+                console.error('Failed to generate report:', err);
+                statusEl.textContent = '產生失敗';
+                statusEl.style.color = 'var(--negative-color)';
+            }
+
+            setTimeout(() => { statusEl.textContent = ''; }, 3000);
         }
 
         // --- UI Utility Functions ---
@@ -1959,21 +2711,16 @@
                     delete activeCharts[canvasId];
                 }
             }
+            else if (modalId === 'reportModal') {
+                document.getElementById('report-modal-content-area').innerHTML = '<p>Generating report...</p>';
+            }
         }
         function openTab(evt, tabName) {
             document.querySelectorAll(".tab-content, .tab-link").forEach(el => el.classList.remove("active"));
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
 
-            if (tabName === 'chart-main') {
-                const firstSubTab = document.querySelector('#chart-sub-tabs-container .chart-sub-tab-link');
-                if (firstSubTab) {
-                    const chartId = firstSubTab.textContent.replace(' ', '-');
-                    if (!document.getElementById(`chart-content-${chartId}`).hasChildNodes()) {
-                        openChartSubTab(chartId);
-                    }
-                }
-            } else if (tabName === 'data' && isDataPivoted) {
+            if (tabName === 'data' && isDataPivoted && !jspreadsheetInstance) {
                 renderDataTab();
             }
         }
