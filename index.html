@@ -437,14 +437,7 @@
         
         #news-container { display: flex; height: 70vh; gap: 0; }
         
-        #news-left-pane {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow: hidden;
-        }
+
         
         #news-filters {
             padding: 10px;
@@ -467,15 +460,35 @@
             padding: 0;
         }
         
-        #news-splitter {
-            flex-basis: 5px;
-            cursor: col-resize;
-            background-color: var(--border-color);
-            transition: background-color 0.3s;
-        }
-        #news-splitter:hover {
-            background-color: var(--primary-color);
-        }
+       #news-left-pane {
+    flex: 0 0 50%; /* <-- CHANGE THIS. Starts at 50% width, doesn't grow or shrink on its own. */
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#news-splitter {
+    flex-basis: 5px;
+    cursor: col-resize;
+    background-color: var(--border-color);
+    transition: background-color 0.3s;
+}
+#news-splitter:hover {
+    background-color: var(--primary-color);
+}
+
+#news-right-pane {
+    flex: 1 1 auto; /* <-- CHANGE THIS. Allows it to grow and shrink to fill remaining space. */
+    max-height: 70vh;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    background-color: var(--hover-bg);
+    display: none;
+}
 
         #news-right-pane {
             flex: 1;
@@ -2519,18 +2532,19 @@
                 const containerRect = container.getBoundingClientRect();
                 let leftWidth = e.clientX - containerRect.left;
                 
+                // 設定最小與最大寬度，避免區塊被拖曳到消失
                 const minWidth = 200;
                 const maxWidth = containerRect.width - minWidth - splitter.offsetWidth;
                 
                 if (leftWidth < minWidth) leftWidth = minWidth;
                 if (leftWidth > maxWidth) leftWidth = maxWidth;
 
+                // 只需要設定左邊區塊的 flex-basis
                 leftPane.style.flexBasis = `${leftWidth}px`;
-                rightPane.style.flexGrow = '1';
-                rightPane.style.flexBasis = '0';
+                
+                // 右邊區塊會因為 Flexbox 的特性自動調整寬度，不需再設定
             });
         }
-        
         
         // --- MODIFICATION (Issue 2): Function to fetch a single AI summary ---
         /**
