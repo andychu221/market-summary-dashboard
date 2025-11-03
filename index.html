@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -172,8 +171,26 @@
         .cross-market-controls { border-bottom: none; justify-content: flex-start; }
 
 
-        .chart-sub-tab-content { display: none; animation: fadeIn 0.4s; }
-        .chart-sub-tab-content.active { display: block; }
+        /* --- 請求 1 修復: 確保圖表在背景也能繪製 --- */
+        #chart-sub-content-container {
+            position: relative; /* 讓子層的 absolute 定位有依據 */
+        }
+        .chart-sub-tab-content {
+            animation: fadeIn 0.4s;
+            position: absolute;  /* 改為絕對定位 */
+            left: -9999px;       /* 移出畫面外 */
+            top: 0;
+            opacity: 0;          /* 視覺上隱藏 */
+            width: 100%;         /* 改為 100% 確保寬度 */
+        }
+        .chart-sub-tab-content.active {
+            position: relative;  /* 恢復正常定位 */
+            left: 0;
+            opacity: 1;
+            width: auto;         /* 恢復自動寬度 */
+        }
+        /* --- 請求 1 修復結束 --- */
+
         .view-content { display: none; }
         .view-content.active { display: block; }
 
@@ -271,9 +288,12 @@
             text-align: right;
             white-space: nowrap;
          }
+         /* --- 請求 3 修復: 報表表格標題黑底白字 --- */
          #report-modal-content-area th {
-            background-color: var(--header-bg);
+            background-color: #000;
+            color: #fff;
          }
+         /* --- 請求 3 修復結束 --- */
          #report-modal-content-area th:first-child, #report-modal-content-area td:first-child {
             text-align: left;
          }
@@ -286,6 +306,24 @@
             background: white; /* Ensure chart background is white */
             display: block;
             margin: 10px auto;
+         }
+         /* --- MODIFICATION (Req 3) --- */
+         #report-modal-content-area .summary-block {
+             margin-bottom: 15px;
+             border-bottom: 1px solid var(--border-color);
+             padding-bottom: 10px;
+             background-color: var(--bg-color);
+             padding: 10px;
+             border-radius: 5px;
+         }
+         #report-modal-content-area .summary-block h4 {
+             margin-bottom: 5px;
+         }
+         #report-modal-content-area .summary-block pre {
+             white-space: pre-wrap;
+             word-wrap: break-word;
+             font-size: 0.9rem;
+             line-height: 1.6;
          }
 
 
@@ -325,6 +363,8 @@
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            /* --- MODIFICATION (Req 3) --- */
+            font-family: inherit;
         }
         .email-report-btn:hover {
             background-color: #005a9e;
@@ -402,18 +442,8 @@
         .custom-context-menu li:hover { background-color: var(--hover-bg); }
         .custom-context-menu li input { margin-right: 10px; cursor: pointer; }
         
-        /* --- Styles for jSuites color picker --- */
-        #color-picker-palette {
-            position: absolute;
-            z-index: 1020;
-            background-color: var(--modal-bg);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-strong);
-            border-radius: 8px;
-            padding: 10px;
-            display: none; /* Hide by default */
-        }
-        /* --- End Modification --- */
+        /* --- Styles for jSuites color picker (REMOVED) --- */
+        /* --- MODIFICATION (Req 5) --- */
 
 
         /* --- Data Tab --- */
@@ -686,21 +716,32 @@
         </div>
     </div>
     
-    <!-- --- Add new Report Modal --- -->
+    <!-- --- 請求 2a 修復: 更新報表 Modal 的標題和關閉按鈕 --- -->
     <div id="reportModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('reportModal')">&times;</span>
-            <h2 id="modalReportName" class="modal-header">Market Watchlist Report</h2>
+            <!-- NEW MODAL HEADER (Issue 2) -->
+            <!-- 變更: justify-content: center, position: relative -->
+            <div style="display: flex; justify-content: center; align-items: center; position: relative; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px;">
+                <!-- 變更: text-align: center -->
+                <h2 style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin: 0; text-align: center;">
+                    Email Draft Generator
+                </h2>
+                <!-- 變更: position: absolute, right: 0, top: 50%, transform: translateY(-50%) -->
+                <span class="close" onclick="closeModal('reportModal')" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 32px; font-weight: bold; cursor: pointer; color: var(--text-secondary); line-height: 1;">&times;</span>
+            </div>
+            <!-- END NEW MODAL HEADER -->
+            
             <div id="report-modal-content-area">
                 <!-- Report HTML will be injected here -->
             </div>
         </div>
     </div>
+    <!-- --- 請求 2a 修復結束 --- -->
 
     <div id="summary-context-menu" class="custom-context-menu" style="display: none;"></div>
 
-    <!-- --- Add div for jSuites color picker --- -->
-    <div id="color-picker-palette"></div>
+    <!-- --- Add div for jSuites color picker (REMOVED) --- -->
+    <!-- --- MODIFICATION (Req 5) --- -->
 
     <script>
         // jspreadsheet License Key
@@ -723,10 +764,11 @@
         let currentNewsData = null; 
         const newsTickers = {'3443.TW': 'GUC', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'Xintec'};
         
-        // --- global var for color picker instance
-        let jsuitesColorPicker = null;
+        // --- global var for color picker instance (REMOVED) ---
+        // --- MODIFICATION (Req 5) ---
         
         const DEFAULT_CHART_TICKERS = {
+        	'Chart-0': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
             'Chart-1': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
             'Chart-2': "5347.TWO,2303.TW,0981.HK,688981.SS,GFS,.TWII",
             'Chart-3': "5347.TWO,3034.TW,QCOM.O,6723.T,.TWII",
@@ -735,12 +777,28 @@
             'Chart-6': "6789.TW,.TWII",
             'Chart-7': "3443.TW,6789.TW,5347.TWO,3374.TWO"
         };
-        let chartAxisUnits = { 'Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto', 'Chart-5': 'auto', 'Chart-6': 'auto', 'Chart-7': 'auto'};
+        let chartAxisUnits = { 'Chart-0': 'auto','Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto', 'Chart-5': 'auto', 'Chart-6': 'auto', 'Chart-7': 'auto'};
 
-        const CHART_COLORS = [
-            '#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F',
-            '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC'
-        ];
+        // --- MODIFICATION (Req 5): Define fixed colors ---
+        const TICKER_COLORS = {
+            '3443.TW': '#1f77b4', // Muted Blue
+            '6789.TW': '#ff7f0e', // Safety Orange
+            '5347.TWO': '#2ca02c', // Cooked Asparagus Green
+            '3374.TWO': '#d62728', // Brick Red
+            '.TWII': '#9467bd', // Muted Purple
+            '2303.TW': '#8c564b', // Chestnut Brown
+            '0981.HK': '#e377c2', // Raspberry Sorbet Pink
+            '688981.SS': '#7f7f7f', // Middle Gray
+            'GFS': '#bcbd22', // Curry Yello
+            '3034.TW': '#17becf', // Blue-Teal
+            'QCOM.O': '#aec7e8', // Light Blue
+            '6723.T': '#ffbb78', // Light Orange
+            '3661.TW': '#98df8a', // Light Green
+            '3035.TW': '#ff9896', // Light Red
+            '603005.SS': '#c5b0d5', // Light Purple
+            '.SOX': '#17becf', // Blue-Teal (duplicate, but ok)
+            'default': '#bab0ac' // Default gray
+        };
 
         // --- Utility Functions ---
         function formatNumberWithCommas(num, decimals = -1) {
@@ -807,39 +865,7 @@
                 const contextMenu = document.getElementById('summary-context-menu');
                 if (contextMenu) contextMenu.style.display = 'none';
                 
-                // Hide color picker on outside click
-                const picker = document.getElementById('color-picker-palette');
-                if (!picker) return;
-
-                // Check if the click is on the picker itself
-                if (picker.contains(e.target)) return;
-
-                // Check if the click is on a legend item
-                let target = e.target;
-                let isLegendClick = false;
-                while (target) {
-                    if (target.classList && target.classList.contains('chartjs-legend')) {
-                        isLegendClick = true;
-                        break;
-                    }
-                    if (target.tagName === 'LI' && target.parentElement?.classList.contains('chartjs-legend')) {
-                        isLegendClick = true;
-                        break;
-                    }
-                    if (target.tagName === 'SPAN' && target.parentElement?.tagName === 'LI' && target.parentElement?.parentElement?.classList.contains('chartjs-legend')) {
-                         isLegendClick = true;
-                         break;
-                    }
-                    target = target.parentElement;
-                }
-
-                if (picker.style.display === 'block' && !isLegendClick) {
-                    if (jsuitesColorPicker) {
-                        jsuitesColorPicker.close();
-                        jsuitesColorPicker = null;
-                    }
-                    picker.style.display = 'none';
-                }
+                // --- MODIFICATION (Req 5): Removed color picker logic ---
             });
             loadAllDataFromGitHub();
         });
@@ -915,12 +941,20 @@
 
                 allData.sort((a, b) => a.date - b.date);
                 
-                if (allData.length > 0) {
+                // --- MODIFICATION (Req 6): Set latestDataDate based on watchlist tickers ---
+                const watchlistTickers = ['3443.TW', '6789.TW', '5347.TWO', '3374.TWO'];
+                const watchlistData = allData.filter(d => watchlistTickers.includes(d.ticker));
+
+                if (watchlistData.length > 0) {
+                    latestDataDate = new Date(Math.max(...watchlistData.map(d => d.date)));
+                } else if (allData.length > 0) {
+                    // Fallback to all data if watchlist is empty
                     latestDataDate = new Date(Math.max(...allData.map(d => d.date)));
-                    summaryReferenceDate = latestDataDate; 
                 } else {
                     loadingText.textContent = 'No market data found.'; return;
                 }
+                summaryReferenceDate = latestDataDate; 
+                // --- End Modification (Req 6) ---
 
                 processPriceData();
 
@@ -1264,38 +1298,62 @@
 
         // --- 'Chart' Tab ---
 
-        // --- MODIFICATION (Issue 1): This function now ensures all charts are initialized on page load ---
-        function setupChartTabs() {
+function setupChartTabs() {
             const tabsContainer = document.getElementById('chart-sub-tabs-container');
             const contentContainer = document.getElementById('chart-sub-content-container');
+            const mainChartTab = document.getElementById('chart-main'); // 獲取主 Chart Tab 容器
+
             tabsContainer.innerHTML = '';
             contentContainer.innerHTML = '';
 
-            const charts = ['Chart 1', 'Chart 2', 'Chart 3', 'Chart 4', 'Chart 5', 'Chart 6', 'Chart 7'];
+            const charts = ['Chart 0','Chart 1', 'Chart 2', 'Chart 3', 'Chart 4', 'Chart 5', 'Chart 6', 'Chart 7'];
 
-            // First, create all tab links and content containers
+            // 步驟 1: 建立所有圖表的 HTML 結構 (這部分不變)
             charts.forEach((chartName, index) => {
                 const isActive = index === 0;
                 const chartId = chartName.replace(/\s/g, '-');
-                
                 tabsContainer.innerHTML += `<div class="chart-sub-tab-link ${isActive ? 'active' : ''}" onclick="openChartSubTab('${chartId}')">${chartName}</div>`;
-                
                 contentContainer.innerHTML += `<div id="chart-content-${chartId}" class="chart-sub-tab-content ${isActive ? 'active' : ''}"></div>`;
             });
 
-            // Second, render the HTML for each chart tab
             charts.forEach(chartName => {
                 const chartId = chartName.replace(/\s/g, '-');
                 renderChartTabHTML(chartId);
             });
 
-            // Third, after all HTML is in the DOM, create the chart instances
-            // This populates `activeCharts` so "Generate Report" can work immediately.
-            charts.forEach(chartName => {
-                const chartId = chartName.replace(/\s/g, '-');
-                updateComparisonChartFromUI(chartId);
-            });
+            // 【修改重點】: 強制初始化所有圖表的終極方法
+            // 儲存 #chart-main 的原始樣式
+            const originalStyles = {
+                display: mainChartTab.style.display,
+                position: mainChartTab.style.position,
+                visibility: mainChartTab.style.visibility
+            };
+
+            try {
+                // 步驟 2: 暫時讓主 Chart Tab 容器在背景中獲得尺寸
+                mainChartTab.style.display = 'block';
+                mainChartTab.style.position = 'absolute'; // 脫離文檔流，避免頁面跳動
+                mainChartTab.style.visibility = 'hidden'; // 使用者看不見
+
+                // 步驟 3: 在主容器有尺寸的前提下，迭代初始化每一個子圖表
+                charts.forEach(chartName => {
+                    const chartId = chartName.replace(/\s/g, '-');
+                    const contentEl = document.getElementById(`chart-content-${chartId}`);
+                    if (contentEl) {
+                        contentEl.classList.add('active');
+                        updateComparisonChartFromUI(chartId); // 現在這個函式可以成功建立圖表了
+                        contentEl.classList.remove('active');
+                    }
+                });
+
+            } catch (e) {
+                console.error("Failed during forced chart initialization:", e);
+            } finally {
+                // 步驟 4: 無論成功或失敗，都恢復主 Chart Tab 容器的原始樣式
+                Object.assign(mainChartTab.style, originalStyles);
+            }
             
+            // 步驟 5: 確保最終 UI 狀態正確 (只有第一個子 Tab 是 active)
             openChartSubTab('Chart-1');
         }
         
@@ -1309,6 +1367,15 @@
             const defaultTickers = DEFAULT_CHART_TICKERS[chartId] || '';
             const currentUnit = chartAxisUnits[chartId] || 'auto';
             
+            // 【修改重點】: 根據 chartId 決定預設按鈕和是否顯示表格
+            const isChart0 = chartId === 'Chart-0';
+            const defaultButton1W = isChart0 ? 'active' : '';
+            const defaultButtonSinceLastYear = !isChart0 ? 'active' : '';
+            const tableHTML = isChart0 ? '' : `
+                <div class="table-container" id="perf-table-container-${chartId}">
+                    <table id="perf-table-${chartId}"></table>
+                </div>`;
+
             if (chartId === 'Chart-7') {
                 container.innerHTML = `
                     <h3 style="margin-bottom: 15px; text-align: center; font-weight: 600;">Volume Comparison</h3>
@@ -1326,7 +1393,7 @@
                             <button data-period="1w" onclick="setComparisonChartPeriod('${chartId}', '1w', this)">1-Week</button>
                             <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
                             <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
-                            <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '6m', this)">6-Month</button>
+                            <button data-period="6m" onclick="setComparisonChartPeriod('${chartId}', '6m', this)">6-Month</button>
                             <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
                             <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
                             <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
@@ -1345,11 +1412,9 @@
                         <div class="modal-chart-container"><canvas id="canvas-chart-${chartId}-2"></canvas></div>
                         <div class="modal-chart-container"><canvas id="canvas-chart-${chartId}-3"></canvas></div>
                     </div>
-                    <div class="table-container" id="perf-table-container-${chartId}">
-                        <table id="perf-table-${chartId}"></table>
-                    </div>`;
+                    ${tableHTML}`; // Chart 7 也使用 tableHTML 變數
             } else {
-                const chartTitle = 'Performance Comparison';
+                const chartTitle = isChart0 ? 'Performance Comparison (1-Week)' : 'Performance Comparison';
                 container.innerHTML = `
                     <h3 style="margin-bottom: 15px; text-align: center; font-weight: 600;">${chartTitle}</h3>
                     <div class="chart-controls">
@@ -1363,11 +1428,11 @@
                     </div>
                     <div class="chart-time-controls" id="time-controls-${chartId}">
                         <div>
-                            <button data-period="1w" onclick="setComparisonChartPeriod('${chartId}', '1w', this)">1-Week</button>
+                            <button class="${defaultButton1W}" data-period="1w" onclick="setComparisonChartPeriod('${chartId}', '1w', this)">1-Week</button>
                             <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
                             <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
                             <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
-                            <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
+                            <button class="${defaultButtonSinceLastYear}" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
                             <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
                         </div>
                         <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;">
@@ -1379,9 +1444,7 @@
                         </div>
                     </div>
                     <div class="modal-chart-container" style="height: 500px;"><canvas id="canvas-chart-${chartId}"></canvas></div>
-                    <div class="table-container" id="perf-table-container-${chartId}">
-                        <table id="perf-table-${chartId}"></table>
-                    </div>`;
+                    ${tableHTML}`; // 使用 tableHTML 變數
             }
         }
         
@@ -1464,7 +1527,8 @@
                 if (Object.keys(years).length === 0) return;
                 const { ctx, chartArea: { bottom, left, right }, scales: { x } } = chart;
                 ctx.save();
-                ctx.font = '14px sans-serif';
+                // --- MODIFICATION (Req 2): Increase font size ---
+                ctx.font = '18px sans-serif';
                 ctx.fillStyle = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'top';
@@ -1512,60 +1576,7 @@
             return annotations;
         }
 
-        const legendColorClickHandler = (e, legendItem, legend) => {
-            if (e.native) {
-                e.native.stopPropagation();
-                e.native.preventDefault();
-            }
-            
-            const chart = legend.chart;
-            const dataset = chart.data.datasets[legendItem.datasetIndex];
-            
-            if (dataset.type === 'bar') return;
-
-            const pickerDiv = document.getElementById('color-picker-palette');
-            
-            if (jsuitesColorPicker) {
-                jsuitesColorPicker.close();
-                jsuitesColorPicker = null;
-            }
-            
-            const clickTarget = (e.native ? e.native.target : e.target).closest('li');
-            if (!clickTarget) {
-                console.error("Could not find legend item (li) to attach picker to.");
-                return;
-            }
-            const targetRect = clickTarget.getBoundingClientRect();
-            
-            pickerDiv.style.display = 'block';
-            pickerDiv.style.left = `${window.scrollX + targetRect.left}px`;
-            pickerDiv.style.top = `${window.scrollY + targetRect.bottom + 5}px`;
-            
-            if ( (window.scrollX + targetRect.left + pickerDiv.offsetWidth) > window.innerWidth) {
-                pickerDiv.style.left = `${window.scrollX + targetRect.right - pickerDiv.offsetWidth}px`;
-            }
-            if ( (window.scrollY + targetRect.bottom + 5 + pickerDiv.offsetHeight) > window.innerHeight) {
-                pickerDiv.style.top = `${window.scrollY + targetRect.top - pickerDiv.offsetHeight - 5}px`;
-            }
-
-            jsuitesColorPicker = jSuites.color(pickerDiv, {
-                value: dataset.borderColor,
-                close: true,
-                onchange: function(instance, newValue) {
-                    dataset.borderColor = newValue;
-                    dataset.backgroundColor = newValue + '33';
-                    if (dataset.pointHoverBorderColor) {
-                        dataset.pointHoverBorderColor = newValue; 
-                    }
-                    chart.update();
-                    
-                    instance.close();
-                    pickerDiv.style.display = 'none';
-                    jsuitesColorPicker = null;
-                }
-            });
-            jsuitesColorPicker.open();
-        };
+        // --- MODIFICATION (Req 5): Removed legendColorClickHandler ---
 
         function createComparisonChart(chartId, tickers, timeConfig) {
             const canvasId = `canvas-chart-${chartId}`;
@@ -1597,7 +1608,8 @@
             const datasets = tickers.map((ticker, index) => {
                 const tickerData = filteredData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
                 if (tickerData.length === 0) return null;
-                const color = CHART_COLORS[index % CHART_COLORS.length];
+                
+                const color = TICKER_COLORS[ticker] || TICKER_COLORS['default'];
                 
                 const firstDataPointForPeriod = allData
                     .filter(d => d.ticker === ticker && d.date >= startDate)
@@ -1622,7 +1634,7 @@
                     data: normalizedData, 
                     borderColor: color, 
                     backgroundColor: color + '33', 
-                    borderWidth: 2, 
+                    borderWidth: 2.5,
                     pointRadius: 0, 
                     pointHoverRadius: 6, pointHoverBorderWidth: 3,
                     pointHoverBackgroundColor: 'transparent', pointHoverBorderColor: color,
@@ -1642,6 +1654,11 @@
             const timeUnit = chartAxisUnits[chartId] || 'auto';
             let finalTimeUnit = (timeUnit === 'auto') ? undefined : timeUnit;
 
+            // 【修改重點】: 如果是 1-Week，強制時間單位為 'day'
+            if (timeConfig.period === '1w') {
+                finalTimeUnit = 'day';
+            }
+
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line',
                 plugins: [yearAxisPlugin],
@@ -1660,13 +1677,27 @@
                                 unit: finalTimeUnit, 
                                 displayFormats: { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }
                             },
-                            ticks: { color: textColor, source: 'data', maxRotation: 0, autoSkip: true },
+                            ticks: { 
+                                color: textColor, 
+                                source: 'data', 
+                                maxRotation: 0, 
+                                autoSkip: true,
+                                font: { size: 16 }
+                            },
                             grid: { color: gridColor }
                         },
                         yPerf: {
                             display: hasPerf, position: 'left',
-                            title: { display: true, text: 'Cumulative Return (%)' },
-                            ticks: { color: textColor, callback: (value) => `${value}%` },
+                            title: { 
+                                display: true, 
+                                text: 'Cumulative Return (%)',
+                                font: { size: 18 }
+                            },
+                            ticks: { 
+                                color: textColor, 
+                                callback: (value) => `${value}%`,
+                                font: { size: 16 }
+                            },
                             grid: { color: gridColor }
                         }
                     },
@@ -1678,10 +1709,10 @@
                         },
                         legend: {
                             labels: { 
-                                color: isDarkMode ? '#f0f0f0' : '#333',
-                                usePointStyle: false
+                                color: isDarkMode ? '#f0f0' : '#333',
+                                usePointStyle: false,
+                                font: { size: 16 }
                             },
-                            onClick: legendColorClickHandler
                         },
                         tooltip: { mode: 'index', intersect: false ,
                                  callbacks: {
@@ -1809,7 +1840,7 @@
                 const priceData = tickerData.map(d => ({ x: d.date.getTime(), y: d.price }));
                 const volumeData = tickerData.map(d => ({ x: d.date.getTime(), y: d.volume }));
                 
-                const yearsInData = {};
+                yearsInData = {};
                 priceData.forEach(d => {
                     const year = new Date(d.x).getFullYear();
                     if (!yearsInData[year]) {
@@ -1873,9 +1904,11 @@
                                 display: true,
                                 labels: { 
                                     color: textColor,
-                                    usePointStyle: false
+                                    usePointStyle: false,
+                                    // --- MODIFICATION (Req 2): Increase font size ---
+                                    font: { size: 16 } // From 14
                                 },
-                                onClick: legendColorClickHandler
+                                // --- MODIFICATION (Req 5): Removed onClick handler ---
                             },
                             tooltip: {
                                 mode: 'index', 
@@ -1890,7 +1923,13 @@
                                      }
                                  }
                             },
-                            title: { display: true, text: `${perfData.name} (${ticker})`, color: textColor }
+                            // --- MODIFICATION (Req 2): Increase font size ---
+                            title: { 
+                                display: true, 
+                                text: `${perfData.name} (${ticker})`, 
+                                color: textColor,
+                                font: { size: 20 } // From 18
+                            }
                         },
                         scales: {
                             x: { 
@@ -1899,18 +1938,44 @@
                                     unit: finalTimeUnit,
                                     displayFormats: { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }
                                 },
-                                ticks: { color: textColor, source: 'data', maxRotation: 0, autoSkip: true }, 
+                                // --- MODIFICATION (Req 2): Increase font size ---
+                                ticks: { 
+                                    color: textColor, 
+                                    source: 'data', 
+                                    maxRotation: 0, 
+                                    autoSkip: true,
+                                    font: { size: 16 } // From 14
+                                }, 
                                 grid: { display: false } 
                             },
                             yPrice: {
-                                type: 'linear', position: 'right', title: { display: true, text: 'Price', color: textColor },
-                                ticks: { color: textColor }, grid: { color: gridColor },
+                                type: 'linear', position: 'right', 
+                                // --- MODIFICATION (Req 2): Increase font size ---
+                                title: { 
+                                    display: true, 
+                                    text: 'Price', 
+                                    color: textColor,
+                                    font: { size: 18 } // From 16
+                                },
+                                ticks: { 
+                                    color: textColor,
+                                    font: { size: 16 } // From 14
+                                }, 
+                                grid: { color: gridColor },
                                 min: suggestedMin, max: suggestedMax
                             },
                             yVolume: {
-                                type: 'linear', position: 'left', title: { display: true, text: 'Volume', color: textColor },
+                                type: 'linear', position: 'left', 
+                                // --- MODIFICATION (Req 2): Increase font size ---
+                                title: { 
+                                    display: true, 
+                                    text: 'Volume', 
+                                    color: textColor,
+                                    font: { size: 18 } // From 16
+                                },
                                 ticks: {
                                     color: textColor,
+                                    font: { size: 16 }, // From 14
                                     callback: (value) => {
                                         if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B';
                                         if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
@@ -2067,12 +2132,27 @@
                         x: { 
                             type: 'time', 
                             time: { unit: 'month' },
-                            ticks: { color: textColor, source: 'data', maxRotation: 0, autoSkip: true } 
+                            // --- MODIFICATION (Req 2): Increase font size ---
+                            ticks: { 
+                                color: textColor, 
+                                source: 'data', 
+                                maxRotation: 0, 
+                                autoSkip: true,
+                                font: { size: 16 } // From 14
+                            } 
                         },
                         y: { 
                             position: 'right', 
-                            title: { display: true, text: 'Price' }, 
-                            ticks: { color: textColor }, 
+                            // --- MODIFICATION (Req 2): Increase font size ---
+                            title: { 
+                                display: true, 
+                                text: 'Price',
+                                font: { size: 18 } // From 16
+                            }, 
+                            ticks: { 
+                                color: textColor,
+                                font: { size: 16 } // From 14
+                            }, 
                             grid: { color: gridColor } 
                         }
                     },
@@ -2561,7 +2641,32 @@
                 return null;
             }
         }
+        
+        // --- MODIFICATION (Req 3): New function to fetch all news data for report ---
+        async function fetchAllNewsDataForReport() {
+            let allNewsItems = [];
+            const tickers = ['3443.TW', '6789.TW', '5347.TWO', '3374.TWO'];
+            const promises = tickers.map(t => {
+                const url = `https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${t}.json`;
+                return fetchJsonWithRetry(url)
+                    .then(data => {
+                        if (data && data.news) {
+                            data.news.forEach(item => {
+                                item.ticker = t;
+                                item.tickerName = newsTickers[t] || t;
+                            });
+                            allNewsItems.push(...data.news);
+                        }
+                    })
+                    .catch(err => console.error(`Failed to load report news for ${t}:`, err));
+            });
+            await Promise.all(promises);
+            return allNewsItems;
+        }
 
+        /**
+         * Generates the report and shows it in a modal.
+         */
         /**
          * Generates the report and shows it in a modal.
          */
@@ -2570,129 +2675,130 @@
             statusEl.textContent = 'generating...';
             statusEl.style.color = 'var(--text-secondary)';
 
+            const tempContainer = document.createElement('div');
+            tempContainer.style.cssText = `
+                position: absolute;
+                left: -9999px;
+                top: 0;
+                width: 1200px;
+                height: 600px;
+            `;
+            document.body.appendChild(tempContainer);
+
             try {
-                // 1. Define tickers and chart IDs for ALL charts
                 const allReportItems = [
-                    { chartId: 'Chart-1', name: 'Indexed share price', ticker: '3443.TW', hasSummary: true },
-                    { chartId: 'Chart-2', name: 'Indexed share price of Vanguard vs. peers 1', ticker: null, hasSummary: false },
-                    { chartId: 'Chart-3', name: 'Indexed share price of Vanguard vs. peers 2', ticker: null, hasSummary: false },
-                    { chartId: 'Chart-4', name: 'Indexed share price of GUC vs. peers', ticker: null, hasSummary: false },
-                    { chartId: 'Chart-5', name: 'Indexed share price of Xintec vs. peers', ticker: null, hasSummary: false },
-                    { chartId: 'Chart-6', name: 'Indexed share price of VisEra vs. TWSE', ticker: null, hasSummary: false },
-                    { chartId: 'Chart-7', name: 'Trading Volume & ADVT', ticker: null, hasSummary: false }
+                    { chartId: 'Chart-0', name: 'Indexed share price (1-Week)' },
+                    { chartId: 'Chart-1', name: 'Indexed share price' },
+                    { chartId: 'Chart-2', name: 'Indexed share price of Vanguard vs. peers 1' },
+                    { chartId: 'Chart-3', name: 'Indexed share price of Vanguard vs. peers 2' },
+                    { chartId: 'Chart-4', name: 'Indexed share price of GUC vs. peers' },
+                    { chartId: 'Chart-5', name: 'Indexed share price of Xintec vs. peers' },
+                    { chartId: 'Chart-6', name: 'Indexed share price of VisEra vs. TWSE' },
+                    { chartId: 'Chart-7', name: 'Trading Volume & ADVT' }
                 ];
 
-                // --- MODIFICATION (Issue 2): Fetch all summaries in parallel ---
-                const summaryPromises = allReportItems
-                    .filter(item => item.hasSummary)
-                    .map(item => fetchNewsSummary(item.ticker));
-                
-                const summaries = await Promise.all(summaryPromises);
-                
-                // Map summaries back to their items
-                let summaryIndex = 0;
-                allReportItems.forEach(item => {
-                    if (item.hasSummary) {
-                        item.summary = summaries[summaryIndex];
-                        summaryIndex++;
-                    }
-                });
-
                 let reportHTML = `
-                    <h1>Watchlist Share Price Weekly Update</h1>
-                    <p>As of: ${formatDateYYYYMMDD(summaryReferenceDate)}</p>
+                    <h1 style="text-align: center;">Watchlist Share Price Weekly Update</h1>
+                    <p style="text-align: center; font-size: 1.1rem; margin-bottom: 20px;">As of: ${formatDateYYYYMMDD(summaryReferenceDate)}</p>
                 `;
+                
+                // 【修改重點】: 恢復 AI Summaries 的產生邏輯
+                reportHTML += `<hr><h2 style="text-align: center; margin-top: 20px; margin-bottom: 15px;">AI Summaries</h2>`;
+        
+                const summaryTickers = ['6789.TW', '3374.TWO', '3443.TW', '5347.TWO'];
+                const allNewsItems = await fetchAllNewsDataForReport();
 
-                // 3. Build HTML for each chart item
+                reportHTML += '<div class="summary-block" style="text-align: left; padding: 10px 20px;">';
+
+                for (const ticker of summaryTickers) {
+                    const companyName = newsTickers[ticker] || ticker;
+                    reportHTML += `<h4 style="margin-top: 15px; margin-bottom: 5px;">${companyName}</h4>`;
+                    
+                    const latestSummaryItem = allNewsItems
+                        .filter(item => item.ticker === ticker && item.Title.includes('AI Summary') && item.Language === 'en')
+                        .sort((a, b) => new Date(`${b.Date} ${b.Time || '00:00:00'}`) - new Date(`${a.Date} ${a.Time || '00:00:00'}`))
+                        [0];
+                    
+                    if (latestSummaryItem) {
+                        const content = latestSummaryItem.Content || 'No summary content.';
+                        const bulletPoints = content.split('\n')
+                                                    .map(line => line.trim())
+                                                    .filter(line => line.length > 0)
+                                                    .map(line => `- ${line}`)
+                                                    .join('\n');
+                        reportHTML += `<pre style="margin-left: 20px; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9rem; line-height: 1.6;">${bulletPoints}</pre>`;
+                    } else {
+                        reportHTML += `<pre style="margin-left: 20px; color: var(--text-secondary);">- No summary available.</pre>`;
+                    }
+                }
+                reportHTML += '</div>';
+                // --- AI Summaries 邏輯結束 ---
+
+
                 for (const item of allReportItems) {
-                    reportHTML += `<hr><h2>${item.chartId}: ${item.name}</h2>`;
+                    reportHTML += `<hr><h2 style="text-align: center; margin-top: 20px;">${item.name}</h2>`;
+
+                    const getImageFromChart = (chartInstance, width, height) => {
+                        if (!chartInstance || !chartInstance.canvas) return null;
+                        const canvas = chartInstance.canvas;
+                        const originalParent = canvas.parentNode;
+                        let imgBase64 = null;
+                        tempContainer.style.width = `${width}px`;
+                        tempContainer.style.height = `${height}px`;
+                        tempContainer.appendChild(canvas);
+                        try {
+                            chartInstance.resize();
+                            const originalBg = chartInstance.canvas.style.backgroundColor;
+                            chartInstance.canvas.style.backgroundColor = 'white';
+                            chartInstance.update('none');
+                            imgBase64 = chartInstance.toBase64Image();
+                            chartInstance.canvas.style.backgroundColor = originalBg;
+                            chartInstance.update('none');
+                        } catch (e) {
+                            console.error(`Failed to generate image for ${canvas.id}:`, e);
+                            return null;
+                        } finally {
+                            originalParent.appendChild(canvas);
+                            chartInstance.resize();
+                        }
+                        return imgBase64;
+                    };
 
                     if (item.chartId === 'Chart-7') {
-                        const chart7Table = document.getElementById('perf-table-Chart-7');
-                        
-                        //reportHTML += `<h3>${item.chartId} Graphs</h3>`;
                         let chart7ImagesHTML = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 1000px; margin: 10px auto;">';
-                        let foundChart7Image = false;
-                        
                         for (let i = 0; i < 4; i++) {
-                            // --- MODIFICATION (Issue 1): Get chart instance directly from `activeCharts` ---
                             const chartInstance = activeCharts[`canvas-chart-${item.chartId}-${i}`];
-                            if (chartInstance) {
-                                try {
-                                     // Force white background for image export
-                                    const originalBg = chartInstance.canvas.style.backgroundColor;
-                                    chartInstance.canvas.style.backgroundColor = 'white';
-                                    chartInstance.update('none'); // Update without animation
-                                    const imgBase64 = chartInstance.toBase64Image();
-                                    chartInstance.canvas.style.backgroundColor = originalBg; // Revert
-                                    chartInstance.update('none');
-
-                                    chart7ImagesHTML += `<div><img src="${imgBase64}" alt="${item.chartId}-${i}" style="width: 100%; max-width: none;"></div>`;
-                                    foundChart7Image = true;
-                                } catch (e) {
-                                     console.error(`Failed to get image for ${item.chartId}-${i}:`, e);
-                                     chart7ImagesHTML += `<div><i>[Chart image ${i} could not be generated]</i></div>`;
-                                }
+                            const img = getImageFromChart(chartInstance, 800, 400);
+                            if (img) {
+                                chart7ImagesHTML += `<div><img src="${img}" alt="${item.chartId}-${i}" style="width: 100%; max-width: none;"></div>`;
                             } else {
-                                chart7ImagesHTML += `<div><i>[Chart ${item.chartId}-${i} is not rendered]</i></div>`;
+                                chart7ImagesHTML += `<div><i>[Chart image ${i} not available]</i></div>`;
                             }
                         }
                         chart7ImagesHTML += '</div>';
-                        
-                        if (foundChart7Image) {
-                            reportHTML += chart7ImagesHTML;
-                        } else {
-                             reportHTML += `<p><i>[Chart ${item.chartId} is not rendered. Please view this chart on the 'Chart' tab first.]</i></p>`;
-                        }
-
-                        if (chart7Table) {
-                             reportHTML += `${chart7Table.outerHTML}`;
-                        } else {
-                             reportHTML += `<p><i>[Table ${item.chartId} is not rendered.]</i></p>`;
-                        }
-
+                        reportHTML += chart7ImagesHTML;
+                        const chart7Table = document.getElementById('perf-table-Chart-7');
+                        if (chart7Table) reportHTML += `${chart7Table.outerHTML}`;
                     } else {
-                        // --- MODIFICATION (Issue 1): Get chart instance directly from `activeCharts` ---
                         const chartInstance = activeCharts[`canvas-chart-${item.chartId}`];
-                        const tableElement = document.getElementById(`perf-table-${item.chartId}`);
+                        const img = getImageFromChart(chartInstance, 1200, 500);
+                        if (img) {
+                            reportHTML += `<img src="${img}" alt="${item.chartId}">`;
+                        } else {
+                            reportHTML += `<p><i>[Chart ${item.chartId} not available]</i></p>`;
+                        }
                         
-                        // --- MODIFICATION (Issue 2): Add AI Summary to report ---
-                        if (item.hasSummary) {
-                            if (item.summary && item.summary.summary_en) {
-                                reportHTML += `<h3>${item.name} (${item.ticker}) AI Summary</h3><p>${item.summary.summary_en}</p>`;
-                            } else {
-                                reportHTML += `<h3>${item.name} (${item.ticker}) AI Summary</h3><p>No summary available.</p>`;
+                        if (item.chartId !== 'Chart-0') {
+                             const tableElement = document.getElementById(`perf-table-${item.chartId}`);
+                             if (tableElement) {
+                                reportHTML += `${tableElement.outerHTML}`;
                             }
-                        }
-
-                        if (chartInstance) {
-                            try {
-                                const originalBg = chartInstance.canvas.style.backgroundColor;
-                                chartInstance.canvas.style.backgroundColor = 'white';
-                                chartInstance.update('none');
-                                const imgBase64 = chartInstance.toBase64Image();
-                                chartInstance.canvas.style.backgroundColor = originalBg;
-                                chartInstance.update('none');
-                                reportHTML += `<img src="${imgBase64}" alt="${item.chartId}">`;
-                            } catch (e) {
-                                console.error(`Failed to get image for ${item.chartId}:`, e);
-                                reportHTML += `<p><i>[Chart image for ${item.chartId} could not be generated]</i></p>`;
-                            }
-                        } else {
-                             reportHTML += `<p><i>[Chart ${item.chartId} is not rendered. Please view this chart on the 'Chart' tab first.]</i></p>`;
-                        }
-
-                        if (tableElement) {
-                            reportHTML += `${tableElement.outerHTML}`;
-                        } else {
-                            reportHTML += `<p><i>[Table ${item.chartId} is not rendered.]</i></p>`;
                         }
                     }
                 }
                 
                 document.getElementById('report-modal-content-area').innerHTML = reportHTML;
                 openModal('reportModal');
-
                 statusEl.textContent = '報表已產生！';
                 statusEl.style.color = 'var(--positive-color)';
 
@@ -2700,6 +2806,8 @@
                 console.error('Failed to generate report:', err);
                 statusEl.textContent = '產生失敗';
                 statusEl.style.color = 'var(--negative-color)';
+            } finally {
+                document.body.removeChild(tempContainer);
             }
 
             setTimeout(() => { statusEl.textContent = ''; }, 3000);
