@@ -621,8 +621,8 @@
                         <div class="table-content-wrapper"><table></table></div>
                     </div>
                     <div id="summary-tw-stocks" class="summary-card">
-                        <div class="summary-card-label">Affiliates</div>
-                        <div class="summary-card-header"><h3>Affiliates</h3></div>
+                        <div class="summary-card-label">Watchlist</div>
+                        <div class="summary-card-header"><h3>Watchlist</h3></div>
                         <div class="table-content-wrapper"><table></table></div>
                     </div>
                     <div id="summary-us-stocks" class="summary-card">
@@ -729,8 +729,8 @@
         const DEFAULT_CHART_TICKERS = {
             'Chart-1': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
             'Chart-2': "5347.TWO,2303.TW,0981.HK,688981.SS,GFS,.TWII",
-            'Chart-3': "5347.TWO,3443.TW,QCOM.O,6723.T,.TWII",
-            'Chart-4': "3443.TWO,3661.TW,3035.TW,.TWII",
+            'Chart-3': "5347.TWO,3034.TW,QCOM.O,6723.T,.TWII",
+            'Chart-4': "3443.TW,3661.TW,3035.TW,.TWII",
             'Chart-5': "3374.TWO,603005.SS,.TWII",
             'Chart-6': "6789.TW,.TWII",
             'Chart-7': "3443.TW,6789.TW,5347.TWO,3374.TWO"
@@ -1142,7 +1142,7 @@
                     container: 'summary-equity-index'
                 },
                 'tw-stocks': {
-                    title: 'Affiliates',
+                    title: 'Watchlist',
                     tickers: ['3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO'],
                     container: 'summary-tw-stocks'
                 },
@@ -2145,7 +2145,7 @@
             const priceColumns = finalHeaders.map((header, index) => ({
                 title: header,
                 width: index === 0 ? 120 : 100,
-                readOnly: true,
+                //readOnly: true,
                 type: index === 0 ? 'text' : 'numeric',
                 mask: index > 0 ? '#,##.00' : null,
             }));
@@ -2573,13 +2573,13 @@
             try {
                 // 1. Define tickers and chart IDs for ALL charts
                 const allReportItems = [
-                    { chartId: 'Chart-1', name: 'GUC', ticker: '3443.TW', hasSummary: true },
-                    { chartId: 'Chart-2', name: 'Vanguard', ticker: '5347.TWO', hasSummary: true },
-                    { chartId: 'Chart-3', name: 'Performance Comparison (Chart 3)', ticker: null, hasSummary: false },
-                    { chartId: 'Chart-4', name: 'Xintec', ticker: '3374.TWO', hasSummary: true },
-                    { chartId: 'Chart-5', name: 'Performance Comparison (Chart 5)', ticker: null, hasSummary: false },
-                    { chartId: 'Chart-6', name: 'VisEra', ticker: '6789.TW', hasSummary: true },
-                    { chartId: 'Chart-7', name: 'Volume Comparison', ticker: null, hasSummary: false }
+                    { chartId: 'Chart-1', name: 'Indexed share price', ticker: '3443.TW', hasSummary: true },
+                    { chartId: 'Chart-2', name: 'Indexed share price of Vanguard vs. peers 1', ticker: '5347.TWO', hasSummary: true },
+                    { chartId: 'Chart-3', name: 'Indexed share price of Vanguard vs. peers 2', ticker: null, hasSummary: false },
+                    { chartId: 'Chart-4', name: 'Indexed share price of GUC vs. peers', ticker: '3374.TWO', hasSummary: true },
+                    { chartId: 'Chart-5', name: 'Indexed share price of Xintec vs. peers', ticker: null, hasSummary: false },
+                    { chartId: 'Chart-6', name: 'Indexed share price of VisEra vs. TWSE', ticker: '6789.TW', hasSummary: true },
+                    { chartId: 'Chart-7', name: 'Trading Volume & ADVT', ticker: null, hasSummary: false }
                 ];
 
                 // --- MODIFICATION (Issue 2): Fetch all summaries in parallel ---
