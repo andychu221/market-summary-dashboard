@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 標題更新 -->
-    <title>Market Dashboard (Auto-updating) V14</title>
+    <title>Watchlist Dashboard V14</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
@@ -488,7 +488,7 @@
     padding: 20px;
     background-color: var(--hover-bg);
     display: none;
-}
+}		
 
         #news-right-pane {
             flex: 1;
@@ -2574,11 +2574,11 @@
                 // 1. Define tickers and chart IDs for ALL charts
                 const allReportItems = [
                     { chartId: 'Chart-1', name: 'Indexed share price', ticker: '3443.TW', hasSummary: true },
-                    { chartId: 'Chart-2', name: 'Indexed share price of Vanguard vs. peers 1', ticker: '5347.TWO', hasSummary: true },
+                    { chartId: 'Chart-2', name: 'Indexed share price of Vanguard vs. peers 1', ticker: null, hasSummary: false },
                     { chartId: 'Chart-3', name: 'Indexed share price of Vanguard vs. peers 2', ticker: null, hasSummary: false },
-                    { chartId: 'Chart-4', name: 'Indexed share price of GUC vs. peers', ticker: '3374.TWO', hasSummary: true },
+                    { chartId: 'Chart-4', name: 'Indexed share price of GUC vs. peers', ticker: null, hasSummary: false },
                     { chartId: 'Chart-5', name: 'Indexed share price of Xintec vs. peers', ticker: null, hasSummary: false },
-                    { chartId: 'Chart-6', name: 'Indexed share price of VisEra vs. TWSE', ticker: '6789.TW', hasSummary: true },
+                    { chartId: 'Chart-6', name: 'Indexed share price of VisEra vs. TWSE', ticker: null, hasSummary: false },
                     { chartId: 'Chart-7', name: 'Trading Volume & ADVT', ticker: null, hasSummary: false }
                 ];
 
@@ -2610,7 +2610,7 @@
                     if (item.chartId === 'Chart-7') {
                         const chart7Table = document.getElementById('perf-table-Chart-7');
                         
-                        reportHTML += `<h3>${item.chartId} Graphs</h3>`;
+                        //reportHTML += `<h3>${item.chartId} Graphs</h3>`;
                         let chart7ImagesHTML = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 1000px; margin: 10px auto;">';
                         let foundChart7Image = false;
                         
@@ -2646,7 +2646,7 @@
                         }
 
                         if (chart7Table) {
-                             reportHTML += `<h3>${item.chartId} Table</h3>${chart7Table.outerHTML}`;
+                             reportHTML += `${chart7Table.outerHTML}`;
                         } else {
                              reportHTML += `<p><i>[Table ${item.chartId} is not rendered.]</i></p>`;
                         }
