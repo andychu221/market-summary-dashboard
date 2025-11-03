@@ -2599,7 +2599,7 @@
                 });
 
                 let reportHTML = `
-                    <h1>Market Watchlist Report</h1>
+                    <h1>Watchlist Share Price Weekly Update</h1>
                     <p>As of: ${formatDateYYYYMMDD(summaryReferenceDate)}</p>
                 `;
 
@@ -2659,9 +2659,9 @@
                         // --- MODIFICATION (Issue 2): Add AI Summary to report ---
                         if (item.hasSummary) {
                             if (item.summary && item.summary.summary_en) {
-                                reportHTML += `<h3>${item.name} (${item.ticker}) AI Summary (EN)</h3><p>${item.summary.summary_en}</p>`;
+                                reportHTML += `<h3>${item.name} (${item.ticker}) AI Summary</h3><p>${item.summary.summary_en}</p>`;
                             } else {
-                                reportHTML += `<h3>${item.name} (${item.ticker}) AI Summary (EN)</h3><p>No summary available.</p>`;
+                                reportHTML += `<h3>${item.name} (${item.ticker}) AI Summary</h3><p>No summary available.</p>`;
                             }
                         }
 
@@ -2673,7 +2673,7 @@
                                 const imgBase64 = chartInstance.toBase64Image();
                                 chartInstance.canvas.style.backgroundColor = originalBg;
                                 chartInstance.update('none');
-                                reportHTML += `<h3>${item.chartId} Graph</h3><img src="${imgBase64}" alt="${item.chartId}">`;
+                                reportHTML += `<img src="${imgBase64}" alt="${item.chartId}">`;
                             } catch (e) {
                                 console.error(`Failed to get image for ${item.chartId}:`, e);
                                 reportHTML += `<p><i>[Chart image for ${item.chartId} could not be generated]</i></p>`;
@@ -2683,7 +2683,7 @@
                         }
 
                         if (tableElement) {
-                            reportHTML += `<h3>${item.chartId} Table</h3>${tableElement.outerHTML}`;
+                            reportHTML += `${tableElement.outerHTML}`;
                         } else {
                             reportHTML += `<p><i>[Table ${item.chartId} is not rendered.]</i></p>`;
                         }
