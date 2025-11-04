@@ -191,6 +191,16 @@
         }
         /* --- 請求 1 修復結束 --- */
 
+        /* --- 【修改】: 隱藏巢狀圖表容器 --- */
+        .indexed-chart-container {
+            display: none; /* 預設隱藏所有巢狀圖表 */
+        }
+        .indexed-chart-container.active {
+            display: block; /* 只顯示被選中的圖表 */
+        }
+        /* --- 【修改結束】 --- */
+
+
         .view-content { display: none; }
         .view-content.active { display: block; }
 
@@ -664,6 +674,7 @@
             </div>
 
             <div id="chart-main" class="tab-content">
+                <!-- 【修改】: 這裡的容器將由 setupChartTabs() 動態填入新結構 -->
                 <div id="chart-sub-tabs-container" class="chart-sub-tabs"></div>
                 <div id="chart-sub-content-container"></div>
             </div>
@@ -785,7 +796,7 @@
             '6789.TW': '#ff7f0e', // Safety Orange
             '5347.TWO': '#2ca02c', // Cooked Asparagus Green
             '3374.TWO': '#d62728', // Brick Red
-            '.TWII': '#9467bd', // Muted Purple
+            '.TWII': '#000000',//'#9467bd', // Muted Purple
             '2303.TW': '#8c564b', // Chestnut Brown
             '0981.HK': '#e377c2', // Raspberry Sorbet Pink
             '688981.SS': '#7f7f7f', // Middle Gray
@@ -1298,50 +1309,134 @@
 
         // --- 'Chart' Tab ---
 
-function setupChartTabs() {
+        // 【修改】: 新增函式，用於切換 "Indexed Share Price" 和 "Trading Volume"
+        function openChartMainSubTab(event, tabName) {
+            // 處理內容顯示
+            document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
+                const isActive = content.id === `${tabName}-content`;
+                content.classList.toggle('active', isActive);
+            });
+            
+            // 處理分頁標籤樣式
+            document.querySelectorAll('#chart-sub-tabs-container .chart-sub-tab-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+        }
+
+        // 【修改】: 新增函式，用於在 "Indexed Share Price" 頁籤中切換圖表
+        function showSelectedChart(chartId) {
+            // 隱藏所有巢狀圖表容器
+            document.querySelectorAll('#indexed-price-content .indexed-chart-container').forEach(container => {
+                container.classList.remove('active'); // 使用 classList 切換
+            });
+            // 顯示被選中的圖表容器
+            const containerToShow = document.getElementById(`chart-content-${chartId}`);
+            if (containerToShow) {
+                containerToShow.classList.add('active');
+            }
+        }
+
+
+        // 【修改】: 重寫 setupChartTabs 以建立新的 2-Tab 結構
+        function setupChartTabs() {
             const tabsContainer = document.getElementById('chart-sub-tabs-container');
             const contentContainer = document.getElementById('chart-sub-content-container');
-            const mainChartTab = document.getElementById('chart-main'); // 獲取主 Chart Tab 容器
+            const mainChartTab = document.getElementById('chart-main');
 
-            tabsContainer.innerHTML = '';
-            contentContainer.innerHTML = '';
+            if (!tabsContainer || !contentContainer || !mainChartTab) {
+                console.error("Chart tab containers not found.");
+                return;
+            }
 
-            const charts = ['Chart 0','Chart 1', 'Chart 2', 'Chart 3', 'Chart 4', 'Chart 5', 'Chart 6', 'Chart 7'];
+            // 1. 建立新的 2-Tab 結構
+            tabsContainer.innerHTML = `
+                <div class="chart-sub-tab-link active" onclick="openChartMainSubTab(event, 'indexed-price')">Indexed Share Price</div>
+                <div class="chart-sub-tab-link" onclick="openChartMainSubTab(event, 'trading-volume')">Trading Volume</div>
+            `;
 
-            // 步驟 1: 建立所有圖表的 HTML 結構 (這部分不變)
-            charts.forEach((chartName, index) => {
-                const isActive = index === 0;
-                const chartId = chartName.replace(/\s/g, '-');
-                tabsContainer.innerHTML += `<div class="chart-sub-tab-link ${isActive ? 'active' : ''}" onclick="openChartSubTab('${chartId}')">${chartName}</div>`;
-                contentContainer.innerHTML += `<div id="chart-content-${chartId}" class="chart-sub-tab-content ${isActive ? 'active' : ''}"></div>`;
+            contentContainer.innerHTML = `
+                <div id="indexed-price-content" class="chart-sub-tab-content active">
+                    <!-- Indexed content will be built here -->
+                </div>
+                <div id="trading-volume-content" class="chart-sub-tab-content">
+                    <!-- Volume content (Chart-7) will be built here -->
+                </div>
+            `;
+
+            // 2. 準備 "Indexed Share Price" 頁籤內容
+            const indexedContent = document.getElementById('indexed-price-content');
+            const chartTitles = {
+                'Chart-0': 'Indexed share price (1-Week)',
+                'Chart-1': 'Indexed share price',
+                'Chart-2': 'Indexed share price of Vanguard vs. peers 1',
+                'Chart-3': 'Indexed share price of Vanguard vs. peers 2',
+                'Chart-4': 'Indexed share price of GUC vs. peers',
+                'Chart-5': 'Indexed share price of Xintec vs. peers',
+                'Chart-6': 'Indexed share price of VisEra vs. TWSE'
+            };
+
+            // 建立下拉選單
+            let dropdownHTML = `<div class="chart-controls" style="margin-bottom: 10px; padding-top: 5px;">
+                <label for="chart-dropdown" style="font-weight: 500; color: var(--text-primary);">Chart ID</label>
+                <select id="chart-dropdown" onchange="showSelectedChart(this.value)" class="controls-input" style="flex-grow: 1; min-width: 250px;">
+            `;
+            Object.entries(chartTitles).forEach(([id, title]) => {
+                dropdownHTML += `<option value="${id}" ${id === 'Chart-1' ? 'selected' : ''}>${title}</option>`;
             });
+            dropdownHTML += `</select></div>`;
+            indexedContent.innerHTML = dropdownHTML; // 加入下拉選單
 
-            charts.forEach(chartName => {
-                const chartId = chartName.replace(/\s/g, '-');
+            // 建立 Chart 0-6 的巢狀容器
+            for (let i = 0; i <= 6; i++) {
+                const chartId = `Chart-${i}`;
+                const chartContentDiv = document.createElement('div');
+                chartContentDiv.id = `chart-content-${chartId}`;
+                // 【修改】: 使用 .indexed-chart-container 並根據預設選擇 (Chart-1) 設定 active
+                chartContentDiv.className = `indexed-chart-container ${chartId === 'Chart-1' ? 'active' : ''}`;
+                indexedContent.appendChild(chartContentDiv);
+                // 呼叫 renderChartTabHTML 來填入每個圖表的具體內容
                 renderChartTabHTML(chartId);
-            });
+            }
 
-            // 【修改重點】: 強制初始化所有圖表的終極方法
+            // 3. 準備 "Trading Volume" 頁籤內容
+            const volumeContent = document.getElementById('trading-volume-content');
+            const chart7ContentDiv = document.createElement('div');
+            chart7ContentDiv.id = 'chart-content-Chart-7';
+            volumeContent.appendChild(chart7ContentDiv);
+            // 呼叫 renderChartTabHTML 來填入 Chart 7 的內容
+            renderChartTabHTML('Chart-7');
+
+            // 4. 【修改】: 強制初始化所有圖表 (為了 Generate Report)
             // 儲存 #chart-main 的原始樣式
             const originalStyles = {
                 display: mainChartTab.style.display,
                 position: mainChartTab.style.position,
-                visibility: mainChartTab.style.visibility
+                visibility: mainChartTab.style.visibility,
+                left: mainChartTab.style.left,
+                top: mainChartTab.style.top
             };
 
             try {
-                // 步驟 2: 暫時讓主 Chart Tab 容器在背景中獲得尺寸
+                // 暫時讓主 Chart Tab 容器在背景中獲得尺寸
                 mainChartTab.style.display = 'block';
-                mainChartTab.style.position = 'absolute'; // 脫離文檔流，避免頁面跳動
+                mainChartTab.style.position = 'absolute'; // 脫離文檔流
+                mainChartTab.style.left = '0'; // 確保有位置
+                mainChartTab.style.top = '0'; // 確保有位置
                 mainChartTab.style.visibility = 'hidden'; // 使用者看不見
 
-                // 步驟 3: 在主容器有尺寸的前提下，迭代初始化每一個子圖表
-                charts.forEach(chartName => {
-                    const chartId = chartName.replace(/\s/g, '-');
+                const allChartIds = ['Chart-0', 'Chart-1', 'Chart-2', 'Chart-3', 'Chart-4', 'Chart-5', 'Chart-6', 'Chart-7'];
+
+                allChartIds.forEach(chartId => {
                     const contentEl = document.getElementById(`chart-content-${chartId}`);
                     if (contentEl) {
-                        contentEl.classList.add('active');
-                        updateComparisonChartFromUI(chartId); // 現在這個函式可以成功建立圖表了
+                        // 讓圖表容器暫時可見 (透過 class)
+                        contentEl.classList.add('active'); 
+                        // 強制更新圖表
+                        updateComparisonChartFromUI(chartId);
+                        // 恢復 class
                         contentEl.classList.remove('active');
                     }
                 });
@@ -1349,14 +1444,24 @@ function setupChartTabs() {
             } catch (e) {
                 console.error("Failed during forced chart initialization:", e);
             } finally {
-                // 步驟 4: 無論成功或失敗，都恢復主 Chart Tab 容器的原始樣式
+                // 無論成功或失敗，都恢復主 Chart Tab 容器的原始樣式
                 Object.assign(mainChartTab.style, originalStyles);
             }
             
-            // 步驟 5: 確保最終 UI 狀態正確 (只有第一個子 Tab 是 active)
-            openChartSubTab('Chart-1');
+            // 5. 確保最終 UI 狀態正確
+            // 確保 "Indexed Share Price" 內容是 active
+            document.getElementById('indexed-price-content').classList.add('active');
+            // 確保 "Trading Volume" 內容不是 active
+            document.getElementById('trading-volume-content').classList.remove('active');
+            // 確保 "Chart-1" 在 "Indexed Share Price" 內部是 active
+            showSelectedChart('Chart-1');
+            // 確保下拉選單也選中 "Chart-1"
+            document.getElementById('chart-dropdown').value = 'Chart-1';
         }
+
         
+        // 【修改】: renderChartTabHTML 不再需要建立 tabs，只需填入內容
+        // 它現在依賴 chart-content-${chartId} 存在
         function renderChartTabHTML(chartId) {
             const container = document.getElementById(`chart-content-${chartId}`);
             if (!container) {
@@ -1367,7 +1472,6 @@ function setupChartTabs() {
             const defaultTickers = DEFAULT_CHART_TICKERS[chartId] || '';
             const currentUnit = chartAxisUnits[chartId] || 'auto';
             
-            // 【修改重點】: 根據 chartId 決定預設按鈕和是否顯示表格
             const isChart0 = chartId === 'Chart-0';
             const defaultButton1W = isChart0 ? 'active' : '';
             const defaultButtonSinceLastYear = !isChart0 ? 'active' : '';
@@ -1378,7 +1482,7 @@ function setupChartTabs() {
 
             if (chartId === 'Chart-7') {
                 container.innerHTML = `
-                    <h3 style="margin-bottom: 15px; text-align: center; font-weight: 600;">Volume Comparison</h3>
+                    
                     <div class="chart-controls">
                         <label for="ticker-input-${chartId}">Tickers (4 max):</label>
                         <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
@@ -1414,10 +1518,9 @@ function setupChartTabs() {
                     </div>
                     ${tableHTML}`; // Chart 7 也使用 tableHTML 變數
             } else {
-                const chartTitle = isChart0 ? 'Performance Comparison (1-Week)' : 'Performance Comparison';
+                //const chartTitle = isChart0 ? 'Performance Comparison (1-Week)' : 'Performance Comparison';
                 container.innerHTML = `
-                    <h3 style="margin-bottom: 15px; text-align: center; font-weight: 600;">${chartTitle}</h3>
-                    <div class="chart-controls">
+                     <div class="chart-controls">
                         <label for="ticker-input-${chartId}">Tickers:</label>
                         <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
                         <div class="custom-date-inputs" id="custom-date-${chartId}">
@@ -1448,6 +1551,8 @@ function setupChartTabs() {
             }
         }
         
+        // 【刪除】: openChartSubTab(chartId) 不再需要，由 openChartMainSubTab 和 showSelectedChart 取代
+        /*
         function openChartSubTab(chartId) {
             document.querySelectorAll('#chart-sub-tabs-container .chart-sub-tab-link').forEach(link => link.classList.toggle('active', link.textContent === chartId.replace('-', ' ')));
             document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
@@ -1455,10 +1560,12 @@ function setupChartTabs() {
                 content.classList.toggle('active', isActive);
             });
         }
+        */
         
         function renderChartTab(chartId) {
-            renderChartTabHTML(chartId);
-            updateComparisonChartFromUI(chartId);
+            // 這個函式現在由 setupChartTabs 內部呼叫
+            // renderChartTabHTML(chartId);
+            // updateComparisonChartFromUI(chartId);
         }
 
         function setChartAxisUnit(chartId, unit, element) {
@@ -1480,22 +1587,27 @@ function setupChartTabs() {
             }
         }
 
+        // 【修改】: updateComparisonChartFromUI 保持不變，它仍然是更新單個圖表的核心
         function updateComparisonChartFromUI(chartId) {
             const tickerInput = document.getElementById(`ticker-input-${chartId}`);
             if (!tickerInput) {
-                console.warn(`ticker-input-${chartId} not found, skipping chart update.`);
-                return;
+                // console.warn(`ticker-input-${chartId} not found, skipping chart update.`);
+                return; // 在初始化期間，這是正常的
             }
             const tickers = (tickerInput.value).split(',').map(t => t.trim()).filter(Boolean);
 
             const activePeriodBtn = document.querySelector(`#time-controls-${chartId} div:first-child button.active`);
             if (!activePeriodBtn) { 
-                console.warn(`No active period button for ${chartId}, skipping chart update.`); 
+                // console.warn(`No active period button for ${chartId}, skipping chart update.`); 
                 const defaultButton = document.querySelector(`#time-controls-${chartId} div:first-child button[data-period="last_calendar"]`);
                 if(defaultButton) defaultButton.classList.add('active');
-                else return;
+                else {
+                    const chart0Button = document.querySelector(`#time-controls-${chartId} div:first-child button[data-period="1w"]`);
+                    if(chart0Button) chart0Button.classList.add('active');
+                    else return;
+                }
             }
-            const period = activePeriodBtn ? activePeriodBtn.dataset.period : 'last_calendar';
+            const period = activePeriodBtn ? activePeriodBtn.dataset.period : (chartId === 'Chart-0' ? '1w' : 'last_calendar');
 
             let timeConfig = { period };
             let endDate = latestDataDate;
@@ -1578,6 +1690,7 @@ function setupChartTabs() {
 
         // --- MODIFICATION (Req 5): Removed legendColorClickHandler ---
 
+        // 【修改】: createComparisonChart 保持不變，它仍然由 chartId 驅動
         function createComparisonChart(chartId, tickers, timeConfig) {
             const canvasId = `canvas-chart-${chartId}`;
             const ctx = document.getElementById(canvasId);
@@ -1731,6 +1844,7 @@ function setupChartTabs() {
             });
         }
 
+        // 【修改】: renderChartPerformanceTable 保持不變
         function renderChartPerformanceTable(chartId, tickers, endDate) {
             const container = document.getElementById(`perf-table-container-${chartId}`);
             if (!container) return;
@@ -1787,6 +1901,7 @@ function setupChartTabs() {
             container.innerHTML = tableHTML;
         }
 
+        // 【修改】: createChart7Grid 保持不變
         function createChart7Grid(chartId, tickers, timeConfig) {
             let startDate, endDate = latestDataDate;
             if (timeConfig.period) {
@@ -1991,6 +2106,7 @@ function setupChartTabs() {
             }
         }
 
+        // 【修改】: renderChart7Table 保持不變
         function renderChart7Table(chartId, tickers, timeConfig) {
              const container = document.getElementById(`perf-table-container-${chartId}`);
             if (!container) return;
@@ -2758,7 +2874,7 @@ function setupChartTabs() {
                             console.error(`Failed to generate image for ${canvas.id}:`, e);
                             return null;
                         } finally {
-                            originalParent.appendChild(canvas);
+                            if(originalParent) originalParent.appendChild(canvas);
                             chartInstance.resize();
                         }
                         return imgBase64;
@@ -2807,7 +2923,9 @@ function setupChartTabs() {
                 statusEl.textContent = '產生失敗';
                 statusEl.style.color = 'var(--negative-color)';
             } finally {
-                document.body.removeChild(tempContainer);
+                if (document.body.contains(tempContainer)) {
+                    document.body.removeChild(tempContainer);
+                }
             }
 
             setTimeout(() => { statusEl.textContent = ''; }, 3000);
