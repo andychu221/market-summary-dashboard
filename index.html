@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 標題更新 -->
-    <title>Watchlist Dashboard V14</title>
+    <title>Watchlist Dashboard V15</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
@@ -84,10 +85,20 @@
             padding: 25px; box-shadow: var(--shadow-light);
             transition: background-color 0.3s;
         }
-
+        
+        /* --- 【修改】: 新增 Top Bar 樣式 --- */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
         .header-controls {
-            display: flex; justify-content: flex-end; align-items: center;
-            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 10px;
         }
         #theme-toggle {
             cursor: pointer; background: none; border: none; padding: 5px;
@@ -96,8 +107,8 @@
         #theme-toggle svg { width: 24px; height: 24px; fill: var(--text-primary); }
 
         .tabs {
-            display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 20px;
-            position: sticky; top: 0; background: var(--bg-color); z-index: 100;
+            display: flex;
+            /* 【修改】: 移除邊界與邊框，交由 top-bar 處理 */
         }
         .tab-link {
             padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent;
@@ -108,9 +119,21 @@
         .tab-link.active {
             color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600;
         }
+        /* --- 修改結束 --- */
 
         .tab-content { display: none; animation: fadeIn 0.5s; }
         .tab-content.active { display: block; }
+        
+        /* 【新增】: 強制圖表在背景更新時可渲染的樣式 */
+        .is-updating-in-background {
+            display: block !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            z-index: -1;
+        }
+
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -171,35 +194,22 @@
         .cross-market-controls { border-bottom: none; justify-content: flex-start; }
 
 
-        /* --- 請求 1 修復: 確保圖表在背景也能繪製 --- */
         #chart-sub-content-container {
-            position: relative; /* 讓子層的 absolute 定位有依據 */
+            position: relative;
         }
         .chart-sub-tab-content {
             animation: fadeIn 0.4s;
-            position: absolute;  /* 改為絕對定位 */
-            left: -9999px;       /* 移出畫面外 */
-            top: 0;
-            opacity: 0;          /* 視覺上隱藏 */
-            width: 100%;         /* 改為 100% 確保寬度 */
         }
-        .chart-sub-tab-content.active {
-            position: relative;  /* 恢復正常定位 */
-            left: 0;
-            opacity: 1;
-            width: auto;         /* 恢復自動寬度 */
+        .chart-sub-tab-content:not(.active) {
+            display: none;
         }
-        /* --- 請求 1 修復結束 --- */
 
-        /* --- 【修改】: 隱藏巢狀圖表容器 --- */
         .indexed-chart-container {
-            display: none; /* 預設隱藏所有巢狀圖表 */
+            display: none; 
         }
         .indexed-chart-container.active {
-            display: block; /* 只顯示被選中的圖表 */
+            display: block; 
         }
-        /* --- 【修改結束】 --- */
-
 
         .view-content { display: none; }
         .view-content.active { display: block; }
@@ -261,7 +271,6 @@
             position: relative;
             transform: translateY(-50px); transition: transform 0.3s ease-out;
         }
-        /* --- Styles for new Report Modal content --- */
         #report-modal-content-area {
             max-height: 70vh;
             overflow-y: auto;
@@ -298,26 +307,22 @@
             text-align: right;
             white-space: nowrap;
          }
-         /* --- 請求 3 修復: 報表表格標題黑底白字 --- */
          #report-modal-content-area th {
             background-color: #000;
             color: #fff;
          }
-         /* --- 請求 3 修復結束 --- */
          #report-modal-content-area th:first-child, #report-modal-content-area td:first-child {
             text-align: left;
          }
-         /* --- MODIFICATION (Issue 2) --- */
          #report-modal-content-area img {
             width: 100%;
-            max-width: 1000px; /* Increased from 700px */
+            max-width: 1000px;
             height: auto;
             border: 1px solid var(--border-color);
-            background: white; /* Ensure chart background is white */
+            background: white; 
             display: block;
             margin: 10px auto;
          }
-         /* --- MODIFICATION (Req 3) --- */
          #report-modal-content-area .summary-block {
              margin-bottom: 15px;
              border-bottom: 1px solid var(--border-color);
@@ -335,6 +340,51 @@
              font-size: 0.9rem;
              line-height: 1.6;
          }
+        
+        .email-header-field {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 0;
+        }
+        .email-header-field label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-right: 10px;
+            min-width: 60px;
+            text-align: right;
+        }
+        .email-header-field input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 1rem;
+            padding: 5px;
+        }
+        .email-header-field input:focus {
+            outline: none;
+        }
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .download-eml-btn {
+            background-color: #28a745; 
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color: 0.3s ease;
+        }
+        .download-eml-btn:hover {
+            background-color: #218838;
+        }
 
 
         .modal.show .modal-content { transform: translateY(0); }
@@ -345,7 +395,6 @@
         .modal-header { text-align: center; margin-bottom: 10px; color: var(--text-primary); }
         .modal-chart-container { position: relative; height: 500px; width: 100%; }
 
-        /* --- Summary Tab --- */
         #summary { padding: 10px 0; }
         .summary-header {
             display: flex; justify-content: flex-start; align-items: center;
@@ -353,19 +402,10 @@
         }
         .summary-header label { font-size: 1.2rem; font-weight: 600; color: var(--text-primary); }
         
-        /* --- Style for new email button --- */
-        .summary-header {
-            justify-content: space-between; /* Change flex-start to space-between */
-        }
-        .summary-header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+        /* --- 【修改】: 更新按鈕樣式 --- */
         .email-report-btn {
-            background-color: #0078d4; /* Blue background */
-            color: white; /* White text */
+            background-color: #0078d4;
+            color: white;
             border: none;
             padding: 8px 15px;
             border-radius: 6px;
@@ -373,7 +413,6 @@
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            /* --- MODIFICATION (Req 3) --- */
             font-family: inherit;
         }
         .email-report-btn:hover {
@@ -383,7 +422,6 @@
             font-size: 0.9rem;
             font-weight: 500;
         }
-        /* --- End Modification --- */
 
 
         #summary-content-container {
@@ -452,16 +490,11 @@
         .custom-context-menu li:hover { background-color: var(--hover-bg); }
         .custom-context-menu li input { margin-right: 10px; cursor: pointer; }
         
-        /* --- Styles for jSuites color picker (REMOVED) --- */
-        /* --- MODIFICATION (Req 5) --- */
 
-
-        /* --- Data Tab --- */
         #data-table-container {
             min-height: 70vh;
         }
 
-        /* --- News Tab --- */
         #news-controls {
             display: none;
         }
@@ -476,8 +509,6 @@
         body.dark-mode .news-btn.active { color: #fff; }
         
         #news-container { display: flex; height: 70vh; gap: 0; }
-        
-
         
         #news-filters {
             padding: 10px;
@@ -501,34 +532,34 @@
         }
         
        #news-left-pane {
-    flex: 0 0 50%; /* <-- CHANGE THIS. Starts at 50% width, doesn't grow or shrink on its own. */
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    overflow: hidden;
-}
+            flex: 0 0 50%;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-#news-splitter {
-    flex-basis: 5px;
-    cursor: col-resize;
-    background-color: var(--border-color);
-    transition: background-color 0.3s;
-}
-#news-splitter:hover {
-    background-color: var(--primary-color);
-}
+        #news-splitter {
+            flex-basis: 5px;
+            cursor: col-resize;
+            background-color: var(--border-color);
+            transition: background-color 0.3s;
+        }
+        #news-splitter:hover {
+            background-color: var(--primary-color);
+        }
 
-#news-right-pane {
-    flex: 1 1 auto; /* <-- CHANGE THIS. Allows it to grow and shrink to fill remaining space. */
-    max-height: 70vh;
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 20px;
-    background-color: var(--hover-bg);
-    display: none;
-}		
+        #news-right-pane {
+            flex: 1 1 auto;
+            max-height: 70vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            background-color: var(--hover-bg);
+            display: none;
+        }		
 
         #news-right-pane {
             flex: 1;
@@ -602,7 +633,6 @@
         }
         .news-meta { font-size: 0.85rem; color: var(--text-secondary); }
         
-        /* Chart Grid for Chart 7 */
         .chart-grid-container {
             display: grid;
             grid-template-columns: repeat(2,1fr);
@@ -622,38 +652,41 @@
     </div>
 
     <div class="container">
-        <div class="header-controls">
-            <button id="theme-toggle" title="Toggle color mode">
-                <span id="theme-icon-sun">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.64 5.64c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L5.64 5.64zm12.73 12.73c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41l-1.41-1.41zM5.64 18.36l-1.41-1.41c-.39-.39-.39-1.02 0-1.41 .39-.39 1.02-.39 1.41 0l1.41 1.41c.39.39.39 1.02 0 1.41-.39.39-1.03.39-1.41 0zm12.73-12.73l-1.41-1.41c-.39-.39-.39-1.02 0-1.41s1.02-.39 1.41 0l1.41 1.41c.39.39.39 1.02 0 1.41s-1.02.39-1.41 0z"/></svg>
-                </span>
-                <span id="theme-icon-moon" style="display: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.1 12.08c-2.33-4.51-.5-8.48.53-10.07-6.25.21-11.21 5.19-11.21 11.49 0 6.34 5.16 11.49 11.49 11.49 5.3 0 9.68-3.66 11.01-8.44-.7.1-1.4.16-2.1.16-4.54 0-8.23-3.69-8.23-8.23 0-.64.07-1.25.19-1.84z"/></svg>
-                </span>
-            </button>
-        </div>
-
-        <div class="main-content">
+        <!-- --- 【修改】: 建立新的 top-bar 容器 --- -->
+        <div class="top-bar">
             <div class="tabs">
                 <div class="tab-link active" onclick="openTab(event, 'summary')">Summary</div>
                 <div class="tab-link" onclick="openTab(event, 'chart-main')">Chart</div>
                 <div class="tab-link" onclick="openTab(event, 'news')">News</div>
                 <div class="tab-link" onclick="openTab(event, 'data')">Data</div>
             </div>
+            <div class="header-controls">
+                <!-- 【修改】: 將 Report 按鈕和狀態移到這裡 -->
+                <span id="email-report-status"></span>
+                <button class="email-report-btn" onclick="generateReport()">Generate Report</button>
+                <button id="theme-toggle" title="Toggle color mode">
+                    <span id="theme-icon-sun">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.64 5.64c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L5.64 5.64zm12.73 12.73c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41l-1.41-1.41zM5.64 18.36l-1.41-1.41c-.39-.39-.39-1.02 0-1.41 .39-.39 1.02-.39 1.41 0l1.41 1.41c.39.39.39 1.02 0 1.41-.39.39-1.03.39-1.41 0zm12.73-12.73l-1.41-1.41c-.39-.39-.39-1.02 0-1.41s1.02-.39 1.41 0l1.41 1.41c.39.39.39 1.02 0 1.41s-1.02.39-1.41 0z"/></svg>
+                    </span>
+                    <span id="theme-icon-moon" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.1 12.08c-2.33-4.51-.5-8.48.53-10.07-6.25.21-11.21 5.19-11.21 11.49 0 6.34 5.16 11.49 11.49 11.49 5.3 0 9.68-3.66 11.01-8.44-.7.1-1.4.16-2.1.16-4.54 0-8.23-3.69-8.23-8.23 0-.64.07-1.25.19-1.84z"/></svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+        <!-- --- 修改結束 --- -->
 
+        <div class="main-content">
+            <!-- 【修改】: Tabs 已移到 top-bar -->
             <div id="summary" class="tab-content active">
-                <!-- --- Update button text and function call --- -->
                 <div class="summary-header">
                     <div class="summary-header-left">
                         <label for="summary-as-of-date">As of:</label>
                         <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)">
+                        <span id="chart-update-status" style="font-size: 0.9rem; font-weight: 500;"></span>
                     </div>
-                    <div class="summary-header-right">
-                        <span id="email-report-status"></span>
-                        <button class="email-report-btn" onclick="generateReport()">Generate Report</button>
-                    </div>
+                     <!-- 【修改】: 右側按鈕已移到 top-bar -->
                 </div>
-                <!-- --- End Modification --- -->
                 <div id="summary-content-container">
                     <div id="summary-equity-index" class="summary-card">
                         <div class="summary-card-label">Benchmark</div>
@@ -674,7 +707,6 @@
             </div>
 
             <div id="chart-main" class="tab-content">
-                <!-- 【修改】: 這裡的容器將由 setupChartTabs() 動態填入新結構 -->
                 <div id="chart-sub-tabs-container" class="chart-sub-tabs"></div>
                 <div id="chart-sub-content-container"></div>
             </div>
@@ -690,7 +722,6 @@
                             <select id="news-filter-source" class="controls-input" onchange="filterAndDisplayNews()">
                                 <option value="all">Source (All)</option>
                             </select>
-                            <!-- --- MODIFICATION (Issue 3) --- -->
                             <select id="news-filter-language" class="controls-input" onchange="filterAndDisplayNews()">
                                 <option value="all">Language (All)</option>
                             </select>
@@ -698,10 +729,10 @@
                             <button id="news-filter-reset" class="data-btn" style="padding: 8px 12px; font-size: 0.9rem;" onclick="resetNewsFilters()">Reset</button>
                         </div>
                         <p id="news-status">Please select a stock to view news.</p>
-                        <div id="news-content"></div> <!-- List items go here -->
+                        <div id="news-content"></div>
                     </div>
                     <div id="news-splitter"></div>
-                    <div id="news-right-pane"></div> <!-- Detail view -->
+                    <div id="news-right-pane"></div>
                 </div>
             </div>
 
@@ -727,32 +758,41 @@
         </div>
     </div>
     
-    <!-- --- 請求 2a 修復: 更新報表 Modal 的標題和關閉按鈕 --- -->
     <div id="reportModal" class="modal">
         <div class="modal-content">
-            <!-- NEW MODAL HEADER (Issue 2) -->
-            <!-- 變更: justify-content: center, position: relative -->
-            <div style="display: flex; justify-content: center; align-items: center; position: relative; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px;">
-                <!-- 變更: text-align: center -->
-                <h2 style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin: 0; text-align: center;">
-                    Email Draft Generator
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px;">
+                <h2 style="font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin: 0;">
+                    Email Draft
                 </h2>
-                <!-- 變更: position: absolute, right: 0, top: 50%, transform: translateY(-50%) -->
-                <span class="close" onclick="closeModal('reportModal')" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 32px; font-weight: bold; cursor: pointer; color: var(--text-secondary); line-height: 1;">&times;</span>
+                <span class="close" onclick="closeModal('reportModal')" style="font-size: 32px; font-weight: bold; cursor: pointer; color: var(--text-secondary); line-height: 1;">&times;</span>
             </div>
-            <!-- END NEW MODAL HEADER -->
             
+            <div id="email-headers" style="margin-bottom: 15px;">
+                <div class="email-header-field">
+                    <label for="email-to">To:</label>
+                    <input type="text" id="email-to">
+                </div>
+                <div class="email-header-field">
+                    <label for="email-cc">Cc:</label>
+                    <input type="text" id="email-cc">
+                </div>
+                <div class="email-header-field">
+                    <label for="email-subject">Subject:</label>
+                    <input type="text" id="email-subject">
+                </div>
+            </div>
+
             <div id="report-modal-content-area">
                 <!-- Report HTML will be injected here -->
             </div>
+            
+            <div class="modal-footer">
+                 <button class="download-eml-btn" onclick="downloadEmlFile()">Download Outlook Draft (.eml)</button>
+            </div>
         </div>
     </div>
-    <!-- --- 請求 2a 修復結束 --- -->
 
     <div id="summary-context-menu" class="custom-context-menu" style="display: none;"></div>
-
-    <!-- --- Add div for jSuites color picker (REMOVED) --- -->
-    <!-- --- MODIFICATION (Req 5) --- -->
 
     <script>
         // jspreadsheet License Key
@@ -775,9 +815,6 @@
         let currentNewsData = null; 
         const newsTickers = {'3443.TW': 'GUC', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'Xintec'};
         
-        // --- global var for color picker instance (REMOVED) ---
-        // --- MODIFICATION (Req 5) ---
-        
         const DEFAULT_CHART_TICKERS = {
         	'Chart-0': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
             'Chart-1': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
@@ -790,25 +827,24 @@
         };
         let chartAxisUnits = { 'Chart-0': 'auto','Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto', 'Chart-5': 'auto', 'Chart-6': 'auto', 'Chart-7': 'auto'};
 
-        // --- MODIFICATION (Req 5): Define fixed colors ---
         const TICKER_COLORS = {
-            '3443.TW': '#1f77b4', // Muted Blue
-            '6789.TW': '#ff7f0e', // Safety Orange
-            '5347.TWO': '#2ca02c', // Cooked Asparagus Green
-            '3374.TWO': '#d62728', // Brick Red
-            '.TWII': '#000000',//'#9467bd', // Muted Purple
-            '2303.TW': '#8c564b', // Chestnut Brown
-            '0981.HK': '#e377c2', // Raspberry Sorbet Pink
-            '688981.SS': '#7f7f7f', // Middle Gray
-            'GFS': '#bcbd22', // Curry Yello
-            '3034.TW': '#17becf', // Blue-Teal
-            'QCOM.O': '#aec7e8', // Light Blue
-            '6723.T': '#ffbb78', // Light Orange
-            '3661.TW': '#98df8a', // Light Green
-            '3035.TW': '#ff9896', // Light Red
-            '603005.SS': '#c5b0d5', // Light Purple
-            '.SOX': '#17becf', // Blue-Teal (duplicate, but ok)
-            'default': '#bab0ac' // Default gray
+            '3443.TW': '#1f77b4', 
+            '6789.TW': '#ff7f0e', 
+            '5347.TWO': '#2ca02c', 
+            '3374.TWO': '#d62728', 
+            '.TWII': '#000000',
+            '2303.TW': '#8c564b', 
+            '0981.HK': '#e377c2', 
+            '688981.SS': '#7f7f7f', 
+            'GFS': '#bcbd22', 
+            '3034.TW': '#17becf', 
+            'QCOM.O': '#aec7e8', 
+            '6723.T': '#ffbb78', 
+            '3661.TW': '#98df8a', 
+            '3035.TW': '#ff9896', 
+            '603005.SS': '#c5b0d5', 
+            '.SOX': '#17becf', 
+            'default': '#bab0ac' 
         };
 
         // --- Utility Functions ---
@@ -872,11 +908,8 @@
             initNewsSplitter();
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
             document.addEventListener('click', (e) => {
-                // Close context menu
                 const contextMenu = document.getElementById('summary-context-menu');
                 if (contextMenu) contextMenu.style.display = 'none';
-                
-                // --- MODIFICATION (Req 5): Removed color picker logic ---
             });
             loadAllDataFromGitHub();
         });
@@ -952,20 +985,17 @@
 
                 allData.sort((a, b) => a.date - b.date);
                 
-                // --- MODIFICATION (Req 6): Set latestDataDate based on watchlist tickers ---
                 const watchlistTickers = ['3443.TW', '6789.TW', '5347.TWO', '3374.TWO'];
                 const watchlistData = allData.filter(d => watchlistTickers.includes(d.ticker));
 
                 if (watchlistData.length > 0) {
                     latestDataDate = new Date(Math.max(...watchlistData.map(d => d.date)));
                 } else if (allData.length > 0) {
-                    // Fallback to all data if watchlist is empty
                     latestDataDate = new Date(Math.max(...allData.map(d => d.date)));
                 } else {
                     loadingText.textContent = 'No market data found.'; return;
                 }
                 summaryReferenceDate = latestDataDate; 
-                // --- End Modification (Req 6) ---
 
                 processPriceData();
 
@@ -995,8 +1025,6 @@
                 allPerformanceData.set(ticker, calculatePerformanceForTicker(ticker, market));
             });
 
-            // --- MODIFICATION (Issue 1) ---
-            // This now initializes all charts on page load, so the report can be generated immediately.
             setupChartTabs();
             renderSummaryTab();
             setupNewsTab();
@@ -1160,17 +1188,41 @@
             });
         }
 
-        function updateSummaryReferenceDate(dateString) {
+        // --- 【修改】: 更新此函式以觸發圖表重繪 ---
+        async function updateSummaryReferenceDate(dateString) {
             const newDate = new Date(dateString);
-            if (!isNaN(newDate)) {
-                if (newDate > latestDataDate) {
-                    summaryReferenceDate = latestDataDate;
-                    document.getElementById('summary-as-of-date').value = formatDateYYYYMMDD(latestDataDate);
-                } else {
-                    summaryReferenceDate = newDate;
-                }
-                renderSummaryTab();
+            if (isNaN(newDate) || !allData.length) return;
+
+            const earliestDate = allData[0].date;
+            if (newDate < earliestDate) {
+                summaryReferenceDate = earliestDate;
+                document.getElementById('summary-as-of-date').value = formatDateYYYYMMDD(earliestDate);
+            } else if (newDate > latestDataDate) {
+                summaryReferenceDate = latestDataDate;
+                document.getElementById('summary-as-of-date').value = formatDateYYYYMMDD(latestDataDate);
+            } else {
+                summaryReferenceDate = newDate;
             }
+            
+            renderSummaryTab();
+            
+            const statusEl = document.getElementById('chart-update-status');
+            statusEl.textContent = 'Updating charts...';
+            statusEl.style.color = 'var(--text-secondary)';
+            
+            await new Promise(resolve => setTimeout(resolve, 50)); 
+            
+            try {
+                await updateAllChartsForNewReferenceDate(summaryReferenceDate);
+                statusEl.textContent = 'Charts updated!';
+                statusEl.style.color = 'var(--positive-color)';
+            } catch (e) {
+                statusEl.textContent = 'Chart update failed!';
+                statusEl.style.color = 'var(--negative-color)';
+                console.error("Failed to update all charts:", e);
+            }
+            
+            setTimeout(() => { statusEl.textContent = ''; }, 3000);
         }
 
         function renderSummaryTab() {
@@ -1307,17 +1359,94 @@
             applyColumnVisibility();
         }
 
-        // --- 'Chart' Tab ---
+        // --- Chart Tab ---
+        
+        // --- 【修改】: 這是解決圖表更新問題的核心函式 ---
+        async function updateAllChartsForNewReferenceDate(newEndDate) {
+            const chartTab = document.getElementById('chart-main');
+            if (!chartTab) return;
 
-        // 【修改】: 新增函式，用於切換 "Indexed Share Price" 和 "Trading Volume"
-        function openChartMainSubTab(event, tabName) {
-            // 處理內容顯示
-            document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
-                const isActive = content.id === `${tabName}-content`;
-                content.classList.toggle('active', isActive);
+            // 儲存當前的 UI 狀態
+            const originallyActiveTab = document.querySelector('.tab-content.active');
+            const chartDropdown = document.getElementById('chart-dropdown');
+            const originalChartId = chartDropdown ? chartDropdown.value : null;
+
+            // 暫時將圖表分頁移到螢幕外並設為可見，以便 Chart.js 可以計算尺寸
+            chartTab.classList.add('is-updating-in-background');
+
+            const allChartIds = ['Chart-0', 'Chart-1', 'Chart-2', 'Chart-3', 'Chart-4', 'Chart-5', 'Chart-6', 'Chart-7'];
+
+            for (const chartId of allChartIds) {
+                // 強制啟動對應的巢狀容器
+                if (chartId !== 'Chart-7') {
+                    document.getElementById('indexed-price-content').classList.add('active');
+                    document.getElementById('trading-volume-content').classList.remove('active');
+                    document.querySelectorAll('.indexed-chart-container').forEach(c => c.classList.remove('active'));
+                    document.getElementById(`chart-content-${chartId}`).classList.add('active');
+                } else {
+                    document.getElementById('indexed-price-content').classList.remove('active');
+                    document.getElementById('trading-volume-content').classList.add('active');
+                }
+                
+                // --- 呼叫更新 ---
+                const tickerInput = document.getElementById(`ticker-input-${chartId}`);
+                if (!tickerInput) continue;
+
+                const tickers = tickerInput.value.split(',').map(t => t.trim()).filter(Boolean);
+                const activePeriodBtn = document.querySelector(`#time-controls-${chartId} div:first-child button.active`);
+                const period = activePeriodBtn ? activePeriodBtn.dataset.period : (chartId === 'Chart-0' ? '1w' : 'last_calendar');
+                
+                let timeConfig = { period };
+                if (period === 'custom') {
+                    const startDateInput = document.getElementById(`chart-start-${chartId}`);
+                    document.getElementById(`chart-end-${chartId}`).value = formatDateYYYYMMDD(newEndDate);
+                    if (!startDateInput.value) continue; 
+                    timeConfig = { start: startDateInput.value, end: formatDateYYYYMMDD(newEndDate) };
+                }
+
+                if (chartId === 'Chart-7') {
+                    createChart7Grid(chartId, tickers.slice(0, 4), timeConfig, newEndDate);
+                    renderChart7Table(chartId, tickers.slice(0, 4), timeConfig, newEndDate);
+                } else {
+                    createComparisonChart(chartId, tickers, timeConfig, newEndDate);
+                    renderChartPerformanceTable(chartId, tickers, newEndDate);
+                }
+                
+                // 等待一幀，讓瀏覽器有時間處理渲染
+                await new Promise(requestAnimationFrame);
+            }
+            
+            // 恢復 UI 狀態
+            chartTab.classList.remove('is-updating-in-background');
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.toggle('active', tab === originallyActiveTab);
             });
             
-            // 處理分頁標籤樣式
+            // 恢復圖表分頁內的原始狀態
+            if (originalChartId) {
+                if (originalChartId !== 'Chart-7') {
+                     document.getElementById('indexed-price-content').classList.add('active');
+                     document.getElementById('trading-volume-content').classList.remove('active');
+                     document.querySelectorAll('.indexed-chart-container').forEach(c => c.classList.remove('active'));
+                     document.getElementById(`chart-content-${originalChartId}`).classList.add('active');
+                     chartDropdown.value = originalChartId;
+                } else {
+                     document.getElementById('indexed-price-content').classList.remove('active');
+                     document.getElementById('trading-volume-content').classList.add('active');
+                }
+            } else {
+                 document.getElementById('indexed-price-content').classList.add('active');
+                 document.getElementById('trading-volume-content').classList.remove('active');
+                 showSelectedChart('Chart-1');
+            }
+        }
+
+
+        function openChartMainSubTab(event, tabName) {
+            document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === `${tabName}-content`);
+            });
+            
             document.querySelectorAll('#chart-sub-tabs-container .chart-sub-tab-link').forEach(link => {
                 link.classList.remove('active');
             });
@@ -1326,13 +1455,10 @@
             }
         }
 
-        // 【修改】: 新增函式，用於在 "Indexed Share Price" 頁籤中切換圖表
         function showSelectedChart(chartId) {
-            // 隱藏所有巢狀圖表容器
             document.querySelectorAll('#indexed-price-content .indexed-chart-container').forEach(container => {
-                container.classList.remove('active'); // 使用 classList 切換
+                container.classList.remove('active');
             });
-            // 顯示被選中的圖表容器
             const containerToShow = document.getElementById(`chart-content-${chartId}`);
             if (containerToShow) {
                 containerToShow.classList.add('active');
@@ -1340,7 +1466,6 @@
         }
 
 
-        // 【修改】: 重寫 setupChartTabs 以建立新的 2-Tab 結構
         function setupChartTabs() {
             const tabsContainer = document.getElementById('chart-sub-tabs-container');
             const contentContainer = document.getElementById('chart-sub-content-container');
@@ -1351,22 +1476,16 @@
                 return;
             }
 
-            // 1. 建立新的 2-Tab 結構
             tabsContainer.innerHTML = `
                 <div class="chart-sub-tab-link active" onclick="openChartMainSubTab(event, 'indexed-price')">Indexed Share Price</div>
                 <div class="chart-sub-tab-link" onclick="openChartMainSubTab(event, 'trading-volume')">Trading Volume</div>
             `;
 
             contentContainer.innerHTML = `
-                <div id="indexed-price-content" class="chart-sub-tab-content active">
-                    <!-- Indexed content will be built here -->
-                </div>
-                <div id="trading-volume-content" class="chart-sub-tab-content">
-                    <!-- Volume content (Chart-7) will be built here -->
-                </div>
+                <div id="indexed-price-content" class="chart-sub-tab-content active"></div>
+                <div id="trading-volume-content" class="chart-sub-tab-content"></div>
             `;
 
-            // 2. 準備 "Indexed Share Price" 頁籤內容
             const indexedContent = document.getElementById('indexed-price-content');
             const chartTitles = {
                 'Chart-0': 'Indexed share price (1-Week)',
@@ -1378,7 +1497,6 @@
                 'Chart-6': 'Indexed share price of VisEra vs. TWSE'
             };
 
-            // 建立下拉選單
             let dropdownHTML = `<div class="chart-controls" style="margin-bottom: 10px; padding-top: 5px;">
                 <label for="chart-dropdown" style="font-weight: 500; color: var(--text-primary);">Chart ID</label>
                 <select id="chart-dropdown" onchange="showSelectedChart(this.value)" class="controls-input" style="flex-grow: 1; min-width: 250px;">
@@ -1387,81 +1505,41 @@
                 dropdownHTML += `<option value="${id}" ${id === 'Chart-1' ? 'selected' : ''}>${title}</option>`;
             });
             dropdownHTML += `</select></div>`;
-            indexedContent.innerHTML = dropdownHTML; // 加入下拉選單
+            indexedContent.innerHTML = dropdownHTML;
 
-            // 建立 Chart 0-6 的巢狀容器
             for (let i = 0; i <= 6; i++) {
                 const chartId = `Chart-${i}`;
                 const chartContentDiv = document.createElement('div');
                 chartContentDiv.id = `chart-content-${chartId}`;
-                // 【修改】: 使用 .indexed-chart-container 並根據預設選擇 (Chart-1) 設定 active
                 chartContentDiv.className = `indexed-chart-container ${chartId === 'Chart-1' ? 'active' : ''}`;
                 indexedContent.appendChild(chartContentDiv);
-                // 呼叫 renderChartTabHTML 來填入每個圖表的具體內容
                 renderChartTabHTML(chartId);
             }
 
-            // 3. 準備 "Trading Volume" 頁籤內容
             const volumeContent = document.getElementById('trading-volume-content');
             const chart7ContentDiv = document.createElement('div');
             chart7ContentDiv.id = 'chart-content-Chart-7';
             volumeContent.appendChild(chart7ContentDiv);
-            // 呼叫 renderChartTabHTML 來填入 Chart 7 的內容
             renderChartTabHTML('Chart-7');
 
-            // 4. 【修改】: 強制初始化所有圖表 (為了 Generate Report)
-            // 儲存 #chart-main 的原始樣式
-            const originalStyles = {
-                display: mainChartTab.style.display,
-                position: mainChartTab.style.position,
-                visibility: mainChartTab.style.visibility,
-                left: mainChartTab.style.left,
-                top: mainChartTab.style.top
-            };
-
-            try {
-                // 暫時讓主 Chart Tab 容器在背景中獲得尺寸
-                mainChartTab.style.display = 'block';
-                mainChartTab.style.position = 'absolute'; // 脫離文檔流
-                mainChartTab.style.left = '0'; // 確保有位置
-                mainChartTab.style.top = '0'; // 確保有位置
-                mainChartTab.style.visibility = 'hidden'; // 使用者看不見
-
-                const allChartIds = ['Chart-0', 'Chart-1', 'Chart-2', 'Chart-3', 'Chart-4', 'Chart-5', 'Chart-6', 'Chart-7'];
-
-                allChartIds.forEach(chartId => {
-                    const contentEl = document.getElementById(`chart-content-${chartId}`);
-                    if (contentEl) {
-                        // 讓圖表容器暫時可見 (透過 class)
-                        contentEl.classList.add('active'); 
-                        // 強制更新圖表
-                        updateComparisonChartFromUI(chartId);
-                        // 恢復 class
-                        contentEl.classList.remove('active');
-                    }
-                });
-
-            } catch (e) {
-                console.error("Failed during forced chart initialization:", e);
-            } finally {
-                // 無論成功或失敗，都恢復主 Chart Tab 容器的原始樣式
-                Object.assign(mainChartTab.style, originalStyles);
-            }
+            mainChartTab.classList.add('is-updating-in-background');
             
-            // 5. 確保最終 UI 狀態正確
-            // 確保 "Indexed Share Price" 內容是 active
-            document.getElementById('indexed-price-content').classList.add('active');
-            // 確保 "Trading Volume" 內容不是 active
-            document.getElementById('trading-volume-content').classList.remove('active');
-            // 確保 "Chart-1" 在 "Indexed Share Price" 內部是 active
-            showSelectedChart('Chart-1');
-            // 確保下拉選單也選中 "Chart-1"
-            document.getElementById('chart-dropdown').value = 'Chart-1';
+            Promise.all(
+                ['Chart-0', 'Chart-1', 'Chart-2', 'Chart-3', 'Chart-4', 'Chart-5', 'Chart-6', 'Chart-7'].map(async chartId => {
+                    await updateComparisonChartFromUI(chartId);
+                })
+            ).then(() => {
+                mainChartTab.classList.remove('is-updating-in-background');
+                showSelectedChart('Chart-1');
+                 document.getElementById('indexed-price-content').classList.add('active');
+                 document.getElementById('trading-volume-content').classList.remove('active');
+            }).catch(e => {
+                 console.error("Failed during initial chart setup:", e);
+                 mainChartTab.classList.remove('is-updating-in-background');
+            });
         }
 
         
-        // 【修改】: renderChartTabHTML 不再需要建立 tabs，只需填入內容
-        // 它現在依賴 chart-content-${chartId} 存在
         function renderChartTabHTML(chartId) {
             const container = document.getElementById(`chart-content-${chartId}`);
             if (!container) {
@@ -1516,9 +1594,8 @@
                         <div class="modal-chart-container"><canvas id="canvas-chart-${chartId}-2"></canvas></div>
                         <div class="modal-chart-container"><canvas id="canvas-chart-${chartId}-3"></canvas></div>
                     </div>
-                    ${tableHTML}`; // Chart 7 也使用 tableHTML 變數
+                    ${tableHTML}`;
             } else {
-                //const chartTitle = isChart0 ? 'Performance Comparison (1-Week)' : 'Performance Comparison';
                 container.innerHTML = `
                      <div class="chart-controls">
                         <label for="ticker-input-${chartId}">Tickers:</label>
@@ -1547,27 +1624,10 @@
                         </div>
                     </div>
                     <div class="modal-chart-container" style="height: 500px;"><canvas id="canvas-chart-${chartId}"></canvas></div>
-                    ${tableHTML}`; // 使用 tableHTML 變數
+                    ${tableHTML}`;
             }
         }
         
-        // 【刪除】: openChartSubTab(chartId) 不再需要，由 openChartMainSubTab 和 showSelectedChart 取代
-        /*
-        function openChartSubTab(chartId) {
-            document.querySelectorAll('#chart-sub-tabs-container .chart-sub-tab-link').forEach(link => link.classList.toggle('active', link.textContent === chartId.replace('-', ' ')));
-            document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
-                const isActive = content.id === `chart-content-${chartId}`;
-                content.classList.toggle('active', isActive);
-            });
-        }
-        */
-        
-        function renderChartTab(chartId) {
-            // 這個函式現在由 setupChartTabs 內部呼叫
-            // renderChartTabHTML(chartId);
-            // updateComparisonChartFromUI(chartId);
-        }
-
         function setChartAxisUnit(chartId, unit, element) {
             chartAxisUnits[chartId] = unit;
             document.querySelectorAll(`#axis-controls-${chartId} button`).forEach(b => b.classList.remove('active'));
@@ -1575,7 +1635,6 @@
             updateComparisonChartFromUI(chartId);
         }
 
-        // --- Charting Functions ---
         function setComparisonChartPeriod(chartId, period, element) {
             document.querySelectorAll(`#time-controls-${chartId} div:first-child button`).forEach(b => b.classList.remove('active'));
             element.classList.add('active');
@@ -1587,30 +1646,18 @@
             }
         }
 
-        // 【修改】: updateComparisonChartFromUI 保持不變，它仍然是更新單個圖表的核心
-        function updateComparisonChartFromUI(chartId) {
+        async function updateComparisonChartFromUI(chartId) {
             const tickerInput = document.getElementById(`ticker-input-${chartId}`);
             if (!tickerInput) {
-                // console.warn(`ticker-input-${chartId} not found, skipping chart update.`);
-                return; // 在初始化期間，這是正常的
+                return; 
             }
             const tickers = (tickerInput.value).split(',').map(t => t.trim()).filter(Boolean);
 
             const activePeriodBtn = document.querySelector(`#time-controls-${chartId} div:first-child button.active`);
-            if (!activePeriodBtn) { 
-                // console.warn(`No active period button for ${chartId}, skipping chart update.`); 
-                const defaultButton = document.querySelector(`#time-controls-${chartId} div:first-child button[data-period="last_calendar"]`);
-                if(defaultButton) defaultButton.classList.add('active');
-                else {
-                    const chart0Button = document.querySelector(`#time-controls-${chartId} div:first-child button[data-period="1w"]`);
-                    if(chart0Button) chart0Button.classList.add('active');
-                    else return;
-                }
-            }
             const period = activePeriodBtn ? activePeriodBtn.dataset.period : (chartId === 'Chart-0' ? '1w' : 'last_calendar');
 
             let timeConfig = { period };
-            let endDate = latestDataDate;
+            let endDate = summaryReferenceDate;
 
             if (period === 'custom') {
                 const start = document.getElementById(`chart-start-${chartId}`).value;
@@ -1621,11 +1668,11 @@
             }
 
             if (chartId === 'Chart-7') {
-                createChart7Grid(chartId, tickers.slice(0, 4), timeConfig);
-                renderChart7Table(chartId, tickers.slice(0, 4), timeConfig);
+                await createChart7Grid(chartId, tickers.slice(0, 4), timeConfig, endDate);
+                await renderChart7Table(chartId, tickers.slice(0, 4), timeConfig, endDate);
             } else {
-                createComparisonChart(chartId, tickers, timeConfig);
-                renderChartPerformanceTable(chartId, tickers, endDate);
+                await createComparisonChart(chartId, tickers, timeConfig, endDate);
+                await renderChartPerformanceTable(chartId, tickers, endDate);
             }
         }
         
@@ -1639,7 +1686,6 @@
                 if (Object.keys(years).length === 0) return;
                 const { ctx, chartArea: { bottom, left, right }, scales: { x } } = chart;
                 ctx.save();
-                // --- MODIFICATION (Req 2): Increase font size ---
                 ctx.font = '18px sans-serif';
                 ctx.fillStyle = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
                 ctx.textAlign = 'center';
@@ -1688,26 +1734,25 @@
             return annotations;
         }
 
-        // --- MODIFICATION (Req 5): Removed legendColorClickHandler ---
-
-        // 【修改】: createComparisonChart 保持不變，它仍然由 chartId 驅動
-        function createComparisonChart(chartId, tickers, timeConfig) {
+        async function createComparisonChart(chartId, tickers, timeConfig, overrideEndDate = null) {
             const canvasId = `canvas-chart-${chartId}`;
             const ctx = document.getElementById(canvasId);
             if (!ctx) {
-                console.error(`Canvas not found: ${canvasId}. Chart will not be created.`);
+                console.error(`Canvas not found: ${canvasId}.`);
                 return;
             }
+            
+            let endDate = overrideEndDate ? new Date(overrideEndDate) : latestDataDate;
+            let startDate;
 
-            let startDate, endDate = latestDataDate;
             if (timeConfig.period) {
                  switch(timeConfig.period) {
-                    case '1w': startDate = new Date(new Date(latestDataDate).setDate(latestDataDate.getDate() - 7)); break;
-                    case 'ytd': startDate = new Date(latestDataDate.getFullYear(), 0, 1); break;
-                    case '3m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 3)); break;
-                    case '1m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 1)); break;
-                    case '6m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 6)); break;
-                    default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1); break;
+                    case '1w': startDate = new Date(new Date(endDate).setDate(endDate.getDate() - 7)); break;
+                    case 'ytd': startDate = new Date(endDate.getFullYear(), 0, 1); break;
+                    case '3m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 3)); break;
+                    case '1m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 1)); break;
+                    case '6m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 6)); break;
+                    default: startDate = new Date(endDate.getFullYear() - 1, 0, 1); break;
                 }
             } else {
                 startDate = new Date(timeConfig.start);
@@ -1767,7 +1812,6 @@
             const timeUnit = chartAxisUnits[chartId] || 'auto';
             let finalTimeUnit = (timeUnit === 'auto') ? undefined : timeUnit;
 
-            // 【修改重點】: 如果是 1-Week，強制時間單位為 'day'
             if (timeConfig.period === '1w') {
                 finalTimeUnit = 'day';
             }
@@ -1777,64 +1821,33 @@
                 plugins: [yearAxisPlugin],
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: {
-                        padding: {
-                            right: 50,
-                            bottom: 30
-                        }
-                    },
+                    animation: false, // Turn off animation for faster background rendering
+                    layout: { padding: { right: 50, bottom: 30 } },
                     scales: {
                         x: {
                             type: 'time',
-                            time: {
-                                unit: finalTimeUnit, 
-                                displayFormats: { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }
-                            },
-                            ticks: { 
-                                color: textColor, 
-                                source: 'data', 
-                                maxRotation: 0, 
-                                autoSkip: true,
-                                font: { size: 16 }
-                            },
+                            time: { unit: finalTimeUnit, displayFormats: { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' } },
+                            ticks: { color: textColor, source: 'data', maxRotation: 0, autoSkip: true, font: { size: 16 } },
                             grid: { color: gridColor }
                         },
                         yPerf: {
                             display: hasPerf, position: 'left',
-                            title: { 
-                                display: true, 
-                                text: 'Cumulative Return (%)',
-                                font: { size: 18 }
-                            },
-                            ticks: { 
-                                color: textColor, 
-                                callback: (value) => `${value}%`,
-                                font: { size: 16 }
-                            },
+                            title: { display: true, text: 'Cumulative Return (%)', font: { size: 18 } },
+                            ticks: { color: textColor, callback: (value) => `${value}%`, font: { size: 16 } },
                             grid: { color: gridColor }
                         }
                     },
                     plugins: {
                         yearAxis: { years: yearsInData },
-                        annotation: {
-                           clip: false,
-                           annotations: { ...annotations, ...yearEndLines }
-                        },
+                        annotation: { clip: false, annotations: { ...annotations, ...yearEndLines } },
                         legend: {
-                            labels: { 
-                                color: isDarkMode ? '#f0f0' : '#333',
-                                usePointStyle: false,
-                                font: { size: 16 }
-                            },
+                            labels: { color: isDarkMode ? '#f0f0' : '#333', usePointStyle: false, font: { size: 16 } },
                         },
                         tooltip: { mode: 'index', intersect: false ,
                                  callbacks: {
                                      title: function(tooltipItems) {
                                          const date = new Date(tooltipItems[0].parsed.x);
-                                         const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                                         const day = date.getDate().toString().padStart(2, '0');
-                                         const year = date.getFullYear();
-                                         return `${month}/${day}/${year}`;
+                                         return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
                                      }
                                  }    
                                  }
@@ -1844,16 +1857,17 @@
             });
         }
 
-        // 【修改】: renderChartPerformanceTable 保持不變
-        function renderChartPerformanceTable(chartId, tickers, endDate) {
+        async function renderChartPerformanceTable(chartId, tickers, endDate) {
             const container = document.getElementById(`perf-table-container-${chartId}`);
             if (!container) return;
+            
+            const effectiveEndDate = new Date(endDate);
 
             const data = tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
             if (data.length === 0) { container.innerHTML = 'No data to display.'; return; }
 
-            const asOfDateStr = `As of: ${formatDateMMDD(endDate)}`;
-            const endYear = endDate.getFullYear();
+            const asOfDateStr = `As of: ${formatDateMMDD(effectiveEndDate)}`;
+            const endYear = effectiveEndDate.getFullYear();
             const ytdStartDate = new Date(endYear, 0, 1);
 
             const sinceStartDate = new Date(endYear - 1, 0, 1);
@@ -1865,7 +1879,7 @@
 
             tableHTML += '<tr><td>Last Price</td>';
             data.forEach(item => {
-                const priceOnEndDate = item.findPriceOnOrBefore(endDate);
+                const priceOnEndDate = item.findPriceOnOrBefore(effectiveEndDate);
                 const priceFormatted = (priceOnEndDate === null) ? 'N/A' : formatNumberWithCommas(priceOnEndDate.toFixed(2));
                 tableHTML += `<td>${priceFormatted}</td>`;
             });
@@ -1875,7 +1889,7 @@
             data.forEach(item => {
                 const isRate = false;
                 const inverted = false;
-                const priceOnEndDate = item.findPriceOnOrBefore(endDate);
+                const priceOnEndDate = item.findPriceOnOrBefore(effectiveEndDate);
                 const priceOnYTDStart = item.findPriceOnOrBefore(ytdStartDate);
                 const rawPerf = item.calcPerf(priceOnYTDStart, priceOnEndDate, isRate, inverted);
                 const displayValue = formatValue(rawPerf, 'percent');
@@ -1888,7 +1902,7 @@
             data.forEach(item => {
                 const isRate = false;
                 const inverted = false;
-                const priceOnEndDate = item.findPriceOnOrBefore(endDate);
+                const priceOnEndDate = item.findPriceOnOrBefore(effectiveEndDate);
                 const priceOnSinceStart = item.findPriceOnOrBefore(sinceStartDate);
                 const rawPerf = item.calcPerf(priceOnSinceStart, priceOnEndDate, isRate, inverted);
                 const displayValue = formatValue(rawPerf, 'percent');
@@ -1901,17 +1915,18 @@
             container.innerHTML = tableHTML;
         }
 
-        // 【修改】: createChart7Grid 保持不變
-        function createChart7Grid(chartId, tickers, timeConfig) {
-            let startDate, endDate = latestDataDate;
+        async function createChart7Grid(chartId, tickers, timeConfig, overrideEndDate = null) {
+            let endDate = overrideEndDate ? new Date(overrideEndDate) : latestDataDate;
+            let startDate;
+
             if (timeConfig.period) {
                  switch(timeConfig.period) {
-                    case '1w': startDate = new Date(new Date(latestDataDate).setDate(latestDataDate.getDate() - 7)); break;
-                    case '1m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 1)); break;
-                    case '3m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 3)); break;
-                    case '6m': startDate = new Date(new Date(latestDataDate).setMonth(latestDataDate.getMonth() - 6)); break;
-                    case 'ytd': startDate = new Date(latestDataDate.getFullYear(), 0, 1); break;
-                    default: startDate = new Date(latestDataDate.getFullYear() - 1, 0, 1); break;
+                    case '1w': startDate = new Date(new Date(endDate).setDate(endDate.getDate() - 7)); break;
+                    case '1m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 1)); break;
+                    case '3m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 3)); break;
+                    case '6m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 6)); break;
+                    case 'ytd': startDate = new Date(endDate.getFullYear(), 0, 1); break;
+                    default: startDate = new Date(endDate.getFullYear() - 1, 0, 1); break;
                 }
             } else {
                 startDate = new Date(timeConfig.start);
@@ -1930,7 +1945,7 @@
                 const ctx = document.getElementById(canvasId);
                 if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
                 if (!ctx) {
-                    console.error(`Canvas not found: ${canvasId}. Chart 7 grid will not be created.`);
+                    console.error(`Canvas not found: ${canvasId}.`);
                     continue;
                 }
 
@@ -1955,7 +1970,7 @@
                 const priceData = tickerData.map(d => ({ x: d.date.getTime(), y: d.price }));
                 const volumeData = tickerData.map(d => ({ x: d.date.getTime(), y: d.volume }));
                 
-                yearsInData = {};
+                let yearsInData = {};
                 priceData.forEach(d => {
                     const year = new Date(d.x).getFullYear();
                     if (!yearsInData[year]) {
@@ -1986,14 +2001,8 @@
                             {
                                 type: 'line', label: 'Price', data: priceData,
                                 borderColor: '#8B0000', backgroundColor: 'transparent',
-                                borderWidth: 2, 
-                                pointRadius: 0,
-                                pointHoverRadius: 6,
-                                pointHoverBorderWidth: 3,
-                                pointHoverBackgroundColor: 'transparent',
-                                pointHoverBorderColor: '#8B0000',
-                                yAxisID: 'yPrice', tension: 0.1,
-                                spanGaps: true
+                                borderWidth: 2, pointRadius: 0,
+                                yAxisID: 'yPrice', tension: 0.1, spanGaps: true
                             },
                             {
                                 type: 'bar', label: 'Volume', data: volumeData,
@@ -2003,94 +2012,41 @@
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        layout: {
-                            padding: {
-                                right: 40,
-                                bottom: 30
-                            }
-                        },
+                        animation: false,
+                        layout: { padding: { right: 40, bottom: 30 } },
                         plugins: {
                             yearAxis: { years: yearsInData },
-                            annotation: { 
-                                clip: false,
-                                annotations: { ...annotations, ...yearEndLines } 
-                            },
-                            legend: {
-                                display: true,
-                                labels: { 
-                                    color: textColor,
-                                    usePointStyle: false,
-                                    // --- MODIFICATION (Req 2): Increase font size ---
-                                    font: { size: 16 } // From 14
-                                },
-                                // --- MODIFICATION (Req 5): Removed onClick handler ---
-                            },
+                            annotation: { clip: false, annotations: { ...annotations, ...yearEndLines } },
+                            legend: { display: true, labels: { color: textColor, usePointStyle: false, font: { size: 16 } } },
                             tooltip: {
-                                mode: 'index', 
-                                intersect: false,
+                                mode: 'index', intersect: false,
                                 callbacks: {
                                      title: function(tooltipItems) {
-                                         const date = new Date(tooltipItems[0].parsed.x);
-                                         const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                                         const day = date.getDate().toString().padStart(2, '0');
-                                         const year = date.getFullYear();
-                                         return `${month}/${day}/${year}`;
+                                        const date = new Date(tooltipItems[0].parsed.x);
+                                        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
                                      }
                                  }
                             },
-                            // --- MODIFICATION (Req 2): Increase font size ---
-                            title: { 
-                                display: true, 
-                                text: `${perfData.name} (${ticker})`, 
-                                color: textColor,
-                                font: { size: 20 } // From 18
-                            }
+                            title: { display: true, text: `${perfData.name} (${ticker})`, color: textColor, font: { size: 20 } }
                         },
                         scales: {
                             x: { 
-                                type: 'time', 
-                                time: {
-                                    unit: finalTimeUnit,
-                                    displayFormats: { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }
-                                },
-                                // --- MODIFICATION (Req 2): Increase font size ---
-                                ticks: { 
-                                    color: textColor, 
-                                    source: 'data', 
-                                    maxRotation: 0, 
-                                    autoSkip: true,
-                                    font: { size: 16 } // From 14
-                                }, 
+                                type: 'time', time: { unit: finalTimeUnit, displayFormats: { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' } },
+                                ticks: { color: textColor, source: 'data', maxRotation: 0, autoSkip: true, font: { size: 16 } }, 
                                 grid: { display: false } 
                             },
                             yPrice: {
                                 type: 'linear', position: 'right', 
-                                // --- MODIFICATION (Req 2): Increase font size ---
-                                title: { 
-                                    display: true, 
-                                    text: 'Price', 
-                                    color: textColor,
-                                    font: { size: 18 } // From 16
-                                },
-                                ticks: { 
-                                    color: textColor,
-                                    font: { size: 16 } // From 14
-                                }, 
+                                title: { display: true, text: 'Price', color: textColor, font: { size: 18 } },
+                                ticks: { color: textColor, font: { size: 16 } }, 
                                 grid: { color: gridColor },
                                 min: suggestedMin, max: suggestedMax
                             },
                             yVolume: {
                                 type: 'linear', position: 'left', 
-                                // --- MODIFICATION (Req 2): Increase font size ---
-                                title: { 
-                                    display: true, 
-                                    text: 'Volume', 
-                                    color: textColor,
-                                    font: { size: 18 } // From 16
-                                },
+                                title: { display: true, text: 'Volume', color: textColor, font: { size: 18 } },
                                 ticks: {
-                                    color: textColor,
-                                    font: { size: 16 }, // From 14
+                                    color: textColor, font: { size: 16 },
                                     callback: (value) => {
                                         if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B';
                                         if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
@@ -2106,21 +2062,15 @@
             }
         }
 
-        // 【修改】: renderChart7Table 保持不變
-        function renderChart7Table(chartId, tickers, timeConfig) {
+        async function renderChart7Table(chartId, tickers, timeConfig, endDate) {
              const container = document.getElementById(`perf-table-container-${chartId}`);
             if (!container) return;
-
-            let endDate = latestDataDate;
-            if (timeConfig.period && timeConfig.period !== 'custom') {
-                endDate = latestDataDate;
-            } else if (timeConfig.end) {
-                endDate = new Date(timeConfig.end);
-            }
             
-            const threeMonthStartDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 3));
+            const effectiveEndDate = new Date(endDate);
+            
+            const threeMonthStartDate = new Date(new Date(effectiveEndDate).setMonth(effectiveEndDate.getMonth() - 3));
 
-            const asOfDateStr = `As of: ${formatDateMMDD(endDate)}`;
+            const asOfDateStr = `As of: ${formatDateMMDD(effectiveEndDate)}`;
             let tableHTML = `<table id="perf-table-${chartId}"><thead><tr><th>${asOfDateStr}</th>`;
             tickers.forEach(ticker => {
                 const perfData = allPerformanceData.get(ticker);
@@ -2132,7 +2082,7 @@
             tickers.forEach(ticker => {
                 const perfData = allPerformanceData.get(ticker);
                 if (perfData) {
-                    const priceOnEndDate = perfData.findPriceOnOrBefore(endDate);
+                    const priceOnEndDate = perfData.findPriceOnOrBefore(effectiveEndDate);
                     const priceFormatted = (priceOnEndDate === null) ? 'N/A' : formatNumberWithCommas(priceOnEndDate.toFixed(2));
                     tableHTML += `<td>${priceFormatted}</td>`;
                 } else {
@@ -2144,7 +2094,7 @@
             const avgVolumes = {}; 
             tableHTML += '<tr><td>3m AVDT (M)</td>';
             tickers.forEach(ticker => {
-                const dataSlice = allData.filter(d => d.ticker === ticker && d.date >= threeMonthStartDate && d.date <= endDate);
+                const dataSlice = allData.filter(d => d.ticker === ticker && d.date >= threeMonthStartDate && d.date <= effectiveEndDate);
                 if (dataSlice.length > 0) {
                     const totalVolume = dataSlice.reduce((sum, d) => sum + (d.volume || 0), 0);
                     const avgVolume = totalVolume / dataSlice.length;
@@ -2235,10 +2185,6 @@
                     backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 2,
                     fill: true, 
                     pointRadius: 0,
-                    pointHoverRadius: 6,
-                    pointHoverBorderWidth: 3,
-                    pointHoverBackgroundColor: 'transparent',
-                    pointHoverBorderColor: 'rgba(74, 144, 226, 1)',
                     tension: 0.1, 
                     spanGaps: true
                 }] },
@@ -2246,29 +2192,13 @@
                     responsive: true, maintainAspectRatio: false,
                     scales: {
                         x: { 
-                            type: 'time', 
-                            time: { unit: 'month' },
-                            // --- MODIFICATION (Req 2): Increase font size ---
-                            ticks: { 
-                                color: textColor, 
-                                source: 'data', 
-                                maxRotation: 0, 
-                                autoSkip: true,
-                                font: { size: 16 } // From 14
-                            } 
+                            type: 'time', time: { unit: 'month' },
+                            ticks: { color: textColor, source: 'data', maxRotation: 0, autoSkip: true, font: { size: 16 } } 
                         },
                         y: { 
                             position: 'right', 
-                            // --- MODIFICATION (Req 2): Increase font size ---
-                            title: { 
-                                display: true, 
-                                text: 'Price',
-                                font: { size: 18 } // From 16
-                            }, 
-                            ticks: { 
-                                color: textColor,
-                                font: { size: 16 } // From 14
-                            }, 
+                            title: { display: true, text: 'Price', font: { size: 18 } }, 
+                            ticks: { color: textColor, font: { size: 16 } }, 
                             grid: { color: gridColor } 
                         }
                     },
@@ -2341,7 +2271,6 @@
             const priceColumns = finalHeaders.map((header, index) => ({
                 title: header,
                 width: index === 0 ? 120 : 100,
-                //readOnly: true,
                 type: index === 0 ? 'text' : 'numeric',
                 mask: index > 0 ? '#,##.00' : null,
             }));
@@ -2427,8 +2356,6 @@
             const statusEl = document.getElementById('news-status');
             if (!statusEl) return;
             
-            // --- MODIFICATION (Issue 3) ---
-            // Reset pane sizes when fetching new data
             document.getElementById('news-left-pane').style.flexBasis = '';
             document.getElementById('news-right-pane').style.flexBasis = '';
             
@@ -2535,7 +2462,6 @@
             const sourceFilter = document.getElementById('news-filter-source');
             sourceFilter.innerHTML = '<option value="all">Source (All)</option>';
 
-            // --- MODIFICATION (Issue 3) ---
             const languageFilter = document.getElementById('news-filter-language');
             languageFilter.innerHTML = '<option value="all">Language (All)</option>';
 
@@ -2549,8 +2475,6 @@
                 sourceFilter.appendChild(option);
             });
             
-            // --- MODIFICATION (Issue 3) ---
-            // Assumes a 'Language' property exists in the news item object (e.g., "EN", "ZH")
             const languages = [...new Set(newsItems.map(item => item.Language).filter(Boolean))].sort();
             languages.forEach(lang => {
                 const option = document.createElement('option');
@@ -2562,7 +2486,6 @@
         
         function resetNewsFilters() {
             document.getElementById('news-filter-source').value = 'all';
-            // --- MODIFICATION (Issue 3) ---
             document.getElementById('news-filter-language').value = 'all';
             filterAndDisplayNews();
         }
@@ -2580,23 +2503,18 @@
             }
 
             const selectedSource = document.getElementById('news-filter-source').value;
-            // --- MODIFICATION (Issue 3) ---
             const selectedLanguage = document.getElementById('news-filter-language').value;
             const selectedTicker = document.getElementById('news-filter-company').value;
             const tickerName = newsTickers[selectedTicker] || selectedTicker;
 
             const filteredNews = currentNewsData.news.filter(item => {
                 const sourceMatch = (selectedSource === 'all' || item.Source === selectedSource);
-                // --- MODIFICATION (Issue 3) ---
-                // Add language to filter condition. Assumes `item.Language` exists.
                 const languageMatch = (selectedLanguage === 'all' || item.Language === selectedLanguage);
                 return sourceMatch && languageMatch;
             });
 
             let newsHTML = '';
             
-            // --- MODIFICATION (Issue 3) ---
-            // Only show AI summary if language filter is 'all' or 'EN'/'ZH' depending on what is displayed
             if (selectedTicker !== 'all' && currentNewsData.summary && selectedSource === 'all' && selectedLanguage === 'all') {
                  newsHTML += `
                     <div class="news-item" id="news-item-summary" onclick="showNewsSummary()">
@@ -2728,26 +2646,18 @@
                 const containerRect = container.getBoundingClientRect();
                 let leftWidth = e.clientX - containerRect.left;
                 
-                // 設定最小與最大寬度，避免區塊被拖曳到消失
                 const minWidth = 200;
                 const maxWidth = containerRect.width - minWidth - splitter.offsetWidth;
                 
                 if (leftWidth < minWidth) leftWidth = minWidth;
                 if (leftWidth > maxWidth) leftWidth = maxWidth;
 
-                // 只需要設定左邊區塊的 flex-basis
                 leftPane.style.flexBasis = `${leftWidth}px`;
-                
-                // 右邊區塊會因為 Flexbox 的特性自動調整寬度，不需再設定
             });
         }
         
-        // --- MODIFICATION (Issue 2): Function to fetch a single AI summary ---
-        /**
-         * Fetches the AI summary for a specific ticker.
-         */
         async function fetchNewsSummary(ticker) {
-            if (!ticker) return null; // Guard against items without tickers
+            if (!ticker) return null;
             const url = `https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${ticker}.json`;
             try {
                 const data = await fetchJsonWithRetry(url);
@@ -2758,7 +2668,6 @@
             }
         }
         
-        // --- MODIFICATION (Req 3): New function to fetch all news data for report ---
         async function fetchAllNewsDataForReport() {
             let allNewsItems = [];
             const tickers = ['3443.TW', '6789.TW', '5347.TWO', '3374.TWO'];
@@ -2780,12 +2689,6 @@
             return allNewsItems;
         }
 
-        /**
-         * Generates the report and shows it in a modal.
-         */
-        /**
-         * Generates the report and shows it in a modal.
-         */
         async function generateReport() {
             const statusEl = document.getElementById('email-report-status');
             statusEl.textContent = 'generating...';
@@ -2793,11 +2696,7 @@
 
             const tempContainer = document.createElement('div');
             tempContainer.style.cssText = `
-                position: absolute;
-                left: -9999px;
-                top: 0;
-                width: 1200px;
-                height: 600px;
+                position: absolute; left: -9999px; top: 0; width: 1200px; height: 600px;
             `;
             document.body.appendChild(tempContainer);
 
@@ -2812,13 +2711,15 @@
                     { chartId: 'Chart-6', name: 'Indexed share price of VisEra vs. TWSE' },
                     { chartId: 'Chart-7', name: 'Trading Volume & ADVT' }
                 ];
-
+                
+                const reportDate = new Date(summaryReferenceDate);
+                const reportDateString = `${reportDate.getMonth() + 1}/${reportDate.getDate()}/${reportDate.getFullYear()}`;
+                
                 let reportHTML = `
                     <h1 style="text-align: center;">Watchlist Share Price Weekly Update</h1>
-                    <p style="text-align: center; font-size: 1.1rem; margin-bottom: 20px;">As of: ${formatDateYYYYMMDD(summaryReferenceDate)}</p>
+                    <p style="text-align: center; font-size: 1.1rem; margin-bottom: 20px;">As of: ${reportDateString}</p>
                 `;
                 
-                // 【修改重點】: 恢復 AI Summaries 的產生邏輯
                 reportHTML += `<hr><h2 style="text-align: center; margin-top: 20px; margin-bottom: 15px;">AI Summaries</h2>`;
         
                 const summaryTickers = ['6789.TW', '3374.TWO', '3443.TW', '5347.TWO'];
@@ -2848,14 +2749,12 @@
                     }
                 }
                 reportHTML += '</div>';
-                // --- AI Summaries 邏輯結束 ---
-
 
                 for (const item of allReportItems) {
                     reportHTML += `<hr><h2 style="text-align: center; margin-top: 20px;">${item.name}</h2>`;
 
                     const getImageFromChart = (chartInstance, width, height) => {
-                        if (!chartInstance || !chartInstance.canvas) return null;
+                        if (!chartInstance || !chartInstance.canvas || chartInstance.canvas.width === 0) return null;
                         const canvas = chartInstance.canvas;
                         const originalParent = canvas.parentNode;
                         let imgBase64 = null;
@@ -2881,18 +2780,26 @@
                     };
 
                     if (item.chartId === 'Chart-7') {
-                        let chart7ImagesHTML = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 1000px; margin: 10px auto;">';
+                        let chart7ImagesHTML = '<table role="presentation" border="0" cellpadding="0" cellspacing="10" width="1000" align="center" style="margin: 10px auto; max-width: 1000px;"><tr>';
                         for (let i = 0; i < 4; i++) {
                             const chartInstance = activeCharts[`canvas-chart-${item.chartId}-${i}`];
                             const img = getImageFromChart(chartInstance, 800, 400);
-                            if (img) {
-                                chart7ImagesHTML += `<div><img src="${img}" alt="${item.chartId}-${i}" style="width: 100%; max-width: none;"></div>`;
-                            } else {
-                                chart7ImagesHTML += `<div><i>[Chart image ${i} not available]</i></div>`;
+                            
+                            if (i === 2) {
+                                chart7ImagesHTML += '</tr><tr>';
                             }
+
+                            chart7ImagesHTML += '<td width="50%" valign="top">';
+                            if (img) {
+                                chart7ImagesHTML += `<img src="${img}" alt="${item.chartId}-${i}" style="width: 100%; height: auto; max-width: 100%;">`;
+                            } else {
+                                chart7ImagesHTML += `<i>[Chart image ${i} not available]</i>`;
+                            }
+                            chart7ImagesHTML += '</td>';
                         }
-                        chart7ImagesHTML += '</div>';
+                        chart7ImagesHTML += '</tr></table>';
                         reportHTML += chart7ImagesHTML;
+                        
                         const chart7Table = document.getElementById('perf-table-Chart-7');
                         if (chart7Table) reportHTML += `${chart7Table.outerHTML}`;
                     } else {
@@ -2913,14 +2820,18 @@
                     }
                 }
                 
+                document.getElementById('email-to').value = 'andy@gmail.com;jack@gmail.com';
+                document.getElementById('email-cc').value = 'tony@gmail.com';
+                document.getElementById('email-subject').value = `Watchlist Share Price Weekly Update - ${reportDateString}`;
                 document.getElementById('report-modal-content-area').innerHTML = reportHTML;
+                
                 openModal('reportModal');
-                statusEl.textContent = '報表已產生！';
+                statusEl.textContent = 'Report generated!';
                 statusEl.style.color = 'var(--positive-color)';
 
             } catch (err) {
                 console.error('Failed to generate report:', err);
-                statusEl.textContent = '產生失敗';
+                statusEl.textContent = 'Generation failed';
                 statusEl.style.color = 'var(--negative-color)';
             } finally {
                 if (document.body.contains(tempContainer)) {
@@ -2929,6 +2840,39 @@
             }
 
             setTimeout(() => { statusEl.textContent = ''; }, 3000);
+        }
+
+        function downloadEmlFile() {
+            const to = document.getElementById('email-to').value;
+            const cc = document.getElementById('email-cc').value;
+            const subject = document.getElementById('email-subject').value;
+            const htmlBody = document.getElementById('report-modal-content-area').innerHTML;
+            
+            let emlContent = "";
+            emlContent += `To: ${to}\r\n`;
+            emlContent += `Cc: ${cc}\r\n`;
+            emlContent += `Subject: ${subject}\r\n`;
+            emlContent += "MIME-Version: 1.0\r\n";
+            emlContent += "Content-Type: text/html; charset=UTF-8\r\n";
+            emlContent += "Content-Transfer-Encoding: 7bit\r\n";
+            emlContent += "\r\n";
+            emlContent += htmlBody;
+
+            const blob = new Blob([emlContent], { type: 'message/rfc822' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            const safeSubject = subject.replace(/[^a-z0-9\s-]/gi, '_').replace(/\s+/g, ' ');
+            const dateStr = formatDateYYYYMMDD(summaryReferenceDate);
+            a.href = url;
+            a.download = `${safeSubject} ${dateStr}.eml`;
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
         }
 
         // --- UI Utility Functions ---
