@@ -2810,50 +2810,88 @@
             return allNewsItems;
         }
 
-        function generateEmailSafeTableHTML(tableId) {
-            const tableElement = document.getElementById(tableId);
-            if (!tableElement) return '';
+function generateEmailSafeTableHTML(tableId) {
+    const tableElement = document.getElementById(tableId);
+    if (!tableElement) return '';
 
-            let html = '<table width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%; max-width:700px; margin:10px auto; border-collapse:collapse; font-family: Arial, sans-serif; font-size: 14px; background-color: #ffffff;">';
+    // 使用 inline table 確保 Outlook 相容性
+    let html = '<table width="100%" border="1" cellspacing="0" cellpadding="5" style="';  // cellpadding 改為 5
+    html += 'width:100%; ';
+    html += 'max-width:700px; ';
+    html += 'margin:10px auto; ';
+    html += 'border-collapse:collapse; ';
+    html += 'border:1px solid #e0e0e0; ';
+    html += 'font-family: Arial, Helvetica, sans-serif; ';
+    html += 'font-size: 12px; ';  // 改為 12px
+    html += 'line-height: 1.2; ';  // 改為 1.2
+    html += 'background-color: #ffffff; ';
+    html += 'table-layout: fixed;';
+    html += '">';
 
-            const headers = tableElement.querySelectorAll('thead tr th');
-            if (headers.length > 0) {
-                html += '<thead><tr>';
-                headers.forEach((th, index) => {
-                    const align = (index === 0) ? 'left' : 'right';
-                    html += `<th style="background-color:#000000; color:#ffffff; padding:8px 10px; border:1px solid #e0e0e0; text-align:${align}; white-space:nowrap;">${th.innerHTML}</th>`;
-                });
-                html += '</tr></thead>';
-            }
+    const headers = tableElement.querySelectorAll('thead tr th');
+    if (headers.length > 0) {
+        html += '<thead><tr>';
+        headers.forEach((th, index) => {
+            const align = (index === 0) ? 'left' : 'right';
+            const width = (index === 0) ? '35%' : `${65/(headers.length-1)}%`;
+            
+            html += `<th width="${width}" style="`;
+            html += 'background-color:#000000; ';
+            html += 'color:#ffffff; ';
+            html += 'padding:6px 5px; ';  // 改為 6px 5px
+            html += 'border:1px solid #e0e0e0; ';
+            html += `text-align:${align}; `;
+            html += 'white-space:nowrap; ';
+            html += 'font-weight:600; ';
+            html += 'font-size:12px; ';  // 改為 12px
+            html += 'line-height:1.2; ';  // 改為 1.2
+            html += 'vertical-align:middle;';
+            html += '">';
+            html += th.textContent.trim();
+            html += '</th>';
+        });
+        html += '</tr></thead>';
+    }
 
-            const rows = tableElement.querySelectorAll('tbody tr');
-            if (rows.length > 0) {
-                html += '<tbody>';
-                rows.forEach(row => {
-                    html += '<tr>';
-                    row.querySelectorAll('td').forEach((td, index) => {
-                        let styles = 'padding:8px 10px; border:1px solid #e0e0e0; white-space:nowrap;';
-                        const align = (index === 0) ? 'left' : 'right';
-                        styles += `text-align:${align};`;
+    const rows = tableElement.querySelectorAll('tbody tr');
+    if (rows.length > 0) {
+        html += '<tbody>';
+        rows.forEach(row => {
+            html += '<tr>';
+            row.querySelectorAll('td').forEach((td, index) => {
+                const align = (index === 0) ? 'left' : 'right';
+                const width = (index === 0) ? '35%' : `${65/(row.querySelectorAll('td').length-1)}%`;
+                
+                let styles = '';
+                styles += 'padding:5px; ';  // 改為 5px
+                styles += 'border:1px solid #e0e0e0; ';
+                styles += 'white-space:nowrap; ';
+                styles += `text-align:${align}; `;
+                styles += 'font-size:12px; ';  // 改為 12px
+                styles += 'line-height:1.2; ';  // 改為 1.2
+                styles += 'vertical-align:middle; ';
 
-                        if (td.classList.contains('text-positive')) {
-                            styles += `color:${getComputedStyle(document.documentElement).getPropertyValue('--positive-color').trim()}; font-weight:500;`;
-                        } else if (td.classList.contains('text-negative')) {
-                            styles += `color:${getComputedStyle(document.documentElement).getPropertyValue('--negative-color').trim()}; font-weight:500;`;
-                        } else {
-                            styles += 'color:#2c3e50;';
-                        }
-                        
-                        html += `<td style="${styles}">${td.innerHTML}</td>`;
-                    });
-                    html += '</tr>';
-                });
-                html += '</tbody>';
-            }
+                // 處理顏色
+                if (td.classList.contains('text-positive')) {
+                    styles += 'color:#28a745; font-weight:500;';
+                } else if (td.classList.contains('text-negative')) {
+                    styles += 'color:#dc3545; font-weight:500;';
+                } else {
+                    styles += 'color:#2c3e50;';
+                }
+                
+                html += `<td width="${width}" style="${styles}">`;
+                html += td.textContent.trim();
+                html += '</td>';
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+    }
 
-            html += '</table>';
-            return html;
-        }
+    html += '</table>';
+    return html;
+}
 
         // --- MODIFICATION: This is the critical fix. This function is now defined BEFORE generateReport ---
         function getImageFromChart(chartInstance, width, height) {
