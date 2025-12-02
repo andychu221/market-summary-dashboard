@@ -12,6 +12,7 @@
     <!-- jspreadsheet and Material Icons libraries -->
     <script src="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.js"></script>
     <script src="https://jsuites.net/v5/jsuites.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.css" type="text/css" />
     <link rel="stylesheet" href="https://jsuites.net/v5/jsuites.css" type="text/css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons" />
@@ -690,7 +691,32 @@
                     <div class="summary-header-left">
                         <label for="summary-as-of-date">As of:</label>
                         <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)">
+
+                        <!-- Ticker Search -->
+                        <div style="position: relative; display: inline-block;">
+                            <input type="text" id="summary-ticker-search" class="controls-input" placeholder="Search Ticker..." oninput="handleTickerSearch(this.value)" autocomplete="off">
+                            <div id="ticker-search-results" class="custom-context-menu" style="display:none; position: absolute; top: 100%; left: 0; width: 300px; max-height: 300px; overflow-y: auto; z-index: 2000;"></div>
+                        </div>
+
+                        <!-- Column Settings -->
+                        <div style="position: relative; display: inline-block;">
+                            <button class="controls-input" onclick="toggleColumnSettings()">Columns ▼</button>
+                            <div id="column-settings-menu" class="custom-context-menu" style="display:none; position: absolute; top: 100%; left: 0; min-width: 200px; z-index: 2000;">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Since Date Customization -->
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <label for="summary-since-date">Since:</label>
+                            <input type="date" id="summary-since-date" class="controls-input" onchange="updateSummarySinceDate(this.value)">
+                            <button class="news-btn" onclick="resetSummarySinceDate()" title="Reset to Last Year">Reset</button>
+                        </div>
+
                         <span id="chart-update-status" style="font-size: 0.9rem; font-weight: 500;"></span>
+                    </div>
+                    <div class="summary-header-right" style="margin-left: auto;">
+                        <button class="email-report-btn" onclick="exportSummaryToExcel()">Export to Excel</button>
                     </div>
                 </div>
                 <div id="summary-content-container">
@@ -727,9 +753,24 @@
                             <select id="news-filter-source" class="controls-input" onchange="filterAndDisplayNews()">
                                 <option value="all">Source (All)</option>
                             </select>
-                            <select id="news-filter-language" class="controls-input" onchange="filterAndDisplayNews()">
-                                <option value="all">Language (All)</option>
-                            </select>
+                            <div style="position: relative; display: inline-block;">
+                                <div id="news-date-range-display" class="controls-input" onclick="toggleNewsDateRangePicker()" style="min-width: 220px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Date Range (All)</span>
+                                    <span style="font-size: 0.8rem;">▼</span>
+                                </div>
+                                <div id="news-date-range-picker" class="custom-context-menu" style="display:none; position: absolute; top: 100%; left: 0; min-width: 300px; padding: 15px; z-index: 2000;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                        <button class="news-btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="changeNewsPickerMonth(-1)"><</button>
+                                        <span id="news-picker-month-year" style="font-weight: 600;"></span>
+                                        <button class="news-btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="changeNewsPickerMonth(1)">></button>
+                                    </div>
+                                    <div id="news-picker-calendar" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 0.9rem;"></div>
+                                    <div style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 5px;">
+                                        <button class="news-btn" onclick="clearNewsDateRange()">Clear</button>
+                                        <button class="news-btn active" onclick="applyNewsDateRange()">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <button id="news-filter-reset" class="data-btn" style="padding: 8px 12px; font-size: 0.9rem;" onclick="resetNewsFilters()">Reset</button>
                         </div>
@@ -809,9 +850,15 @@
         let isDataPivoted = false;
         let jspreadsheetInstance = null;
         
-        let hiddenSummaryColumns = {};
+        let hiddenSummaryColumns = {'Time': true};
+        let customSinceDate = null;
         let summaryReferenceDate = null;
         let currentNewsData = null; 
+
+        // News Date Picker Globals
+        let newsPickerCurrentMonth = new Date();
+        let newsSelectedStartDate = null;
+        let newsSelectedEndDate = null;
         const newsTickers = {'3443.TW': 'GUC', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'Xintec'};
         
         const DEFAULT_CHART_TICKERS = {
@@ -1121,40 +1168,168 @@
 
 
         // --- Summary Tab ---
-        function showColumnContextMenu(event, tableId) {
-            event.preventDefault();
-            const menu = document.getElementById('summary-context-menu');
+        function getCurrency(ticker) {
+            if (ticker.endsWith('.TW') || ticker.endsWith('.TWO') || ticker === '.TWII') return 'TWD';
+            if (ticker.endsWith('.HK')) return 'HKD';
+            if (ticker.endsWith('.SS') || ticker.endsWith('.ss')) return 'CNY';
+            if (ticker.endsWith('.T')) return 'JPY';
+            return 'USD';
+        }
 
-            const headers = Array.from(document.querySelectorAll(`#${tableId} th`));
-            let menuHTML = '<ul>';
+        function handleTickerSearch(value) {
+            const resultsContainer = document.getElementById('ticker-search-results');
+            if (!value || value.trim() === '') {
+                resultsContainer.style.display = 'none';
+                return;
+            }
 
-            headers.forEach((th, index) => {
-                const colName = th.textContent;
-                if (hiddenSummaryColumns[colName] === undefined) {
-                    hiddenSummaryColumns[colName] = false;
+            const searchTerm = value.toLowerCase();
+            const matched = [];
+            const seenTickers = new Set();
+
+            allData.forEach(item => {
+                if (!seenTickers.has(item.ticker)) {
+                    if (item.ticker.toLowerCase().includes(searchTerm) || item.name.toLowerCase().includes(searchTerm)) {
+                        matched.push({ ticker: item.ticker, name: item.name });
+                        seenTickers.add(item.ticker);
+                    }
                 }
-                const isHidden = hiddenSummaryColumns[colName];
-                menuHTML += `
+            });
+
+            if (matched.length === 0) {
+                 resultsContainer.style.display = 'none';
+                 return;
+            }
+
+            let html = '<ul>';
+            matched.slice(0, 10).forEach(item => {
+                html += `<li onclick="scrollToTicker('${item.ticker}', '${item.name}')">${item.ticker} - ${item.name}</li>`;
+            });
+            html += '</ul>';
+
+            resultsContainer.innerHTML = html;
+            resultsContainer.style.display = 'block';
+        }
+
+        function scrollToTicker(ticker, name) {
+            document.getElementById('ticker-search-results').style.display = 'none';
+            document.getElementById('summary-ticker-search').value = `${ticker} - ${name}`;
+
+            const rows = document.querySelectorAll('.summary-card tr[data-ticker]');
+            for (let row of rows) {
+                if (row.dataset.ticker === ticker) {
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Visual feedback
+                    const originalBg = row.style.backgroundColor;
+                    row.style.backgroundColor = 'var(--button-active-bg)';
+                    setTimeout(() => { row.style.backgroundColor = originalBg; }, 2000);
+                    return;
+                }
+            }
+            alert('Ticker is in the database but not currently shown in the summary tables.');
+        }
+
+        function toggleColumnSettings() {
+             const menu = document.getElementById('column-settings-menu');
+             if (menu.style.display === 'block') {
+                 menu.style.display = 'none';
+             } else {
+                 initColumnSettings();
+                 menu.style.display = 'block';
+             }
+        }
+
+        function initColumnSettings() {
+             const menu = document.getElementById('column-settings-menu');
+             const columns = ['Name', 'Ticker', 'Local Ccy', 'Date', 'Time', 'Price', '1-Day', '1-Week', '1-Month', 'YTD'];
+
+             let html = '<ul>';
+             columns.forEach(col => {
+                 const isHidden = hiddenSummaryColumns[col] === true;
+                 html += `
                     <li>
                         <label style="display: flex; align-items: center; width: 100%; cursor: pointer;">
-                            <input type="checkbox" ${!isHidden ? 'checked' : ''} onchange="toggleSummaryColumn('${colName}', this.checked)">
-                            ${colName}
+                            <input type="checkbox" ${!isHidden ? 'checked' : ''} onchange="toggleSummaryColumn('${col}', this.checked)">
+                            ${col}
                         </label>
                     </li>`;
-            });
-            menuHTML += '</ul>';
-            menu.innerHTML = menuHTML;
+             });
 
-            menu.style.display = 'block';
-            const pageX = Math.min(event.pageX, window.innerWidth - menu.offsetWidth - 10);
-            const pageY = Math.min(event.pageY, window.innerHeight - menu.offsetHeight - 10);
-            menu.style.left = `${pageX}px`;
-            menu.style.top = `${pageY}px`;
+             const isSinceHidden = hiddenSummaryColumns['Since'] === true;
+              html += `
+                    <li>
+                        <label style="display: flex; align-items: center; width: 100%; cursor: pointer;">
+                            <input type="checkbox" ${!isSinceHidden ? 'checked' : ''} onchange="toggleSummaryColumn('Since', this.checked)">
+                            Since Performance
+                        </label>
+                    </li>`;
+
+             html += '</ul>';
+             menu.innerHTML = html;
         }
 
         function toggleSummaryColumn(colName, isVisible) {
             hiddenSummaryColumns[colName] = !isVisible;
             applyColumnVisibility();
+        }
+
+        function updateSummarySinceDate(val) {
+            if (!val) {
+                resetSummarySinceDate();
+                return;
+            }
+            customSinceDate = new Date(val);
+            renderSummaryTab();
+        }
+
+        function resetSummarySinceDate() {
+            customSinceDate = null;
+            document.getElementById('summary-since-date').value = '';
+            renderSummaryTab();
+        }
+
+        function exportSummaryToExcel() {
+             const wb = XLSX.utils.book_new();
+             const dateStr = formatDateYYYYMMDD(summaryReferenceDate);
+
+             document.querySelectorAll('.summary-card').forEach(card => {
+                 const title = card.querySelector('.summary-card-label').textContent;
+                 const table = card.querySelector('table');
+
+                 const wsData = [];
+
+                 // Headers
+                 const headerRow = [];
+                 table.querySelectorAll('th').forEach(th => {
+                     // Export all columns even if hidden? The requirement implies exporting "Summary Table",
+                     // usually means what is visible or the full data.
+                     // Let's export what is visible to match user expectation of "Export Summary Table".
+                     // But typically data export is all columns.
+                     // Requirement 1.2 "Export entire Summary Table to Excel".
+                     // Let's export all columns for completeness, or filter hidden.
+                     // If I filter hidden, the Excel matches the view.
+                     if (!th.classList.contains('hidden-col')) {
+                        headerRow.push(th.textContent);
+                     }
+                 });
+                 wsData.push(headerRow);
+
+                 // Rows
+                 table.querySelectorAll('tbody tr').forEach(tr => {
+                     const rowData = [];
+                     tr.querySelectorAll('td').forEach(td => {
+                         if (!td.classList.contains('hidden-col')) {
+                            rowData.push(td.innerText);
+                         }
+                     });
+                     wsData.push(rowData);
+                 });
+
+                 const ws = XLSX.utils.aoa_to_sheet(wsData);
+                 XLSX.utils.book_append_sheet(wb, ws, title);
+             });
+
+             XLSX.writeFile(wb, `Summary_Export_${dateStr}.xlsx`);
         }
 
         function applyColumnVisibility() {
@@ -1166,20 +1341,21 @@
                 const rows = table.querySelectorAll('tbody tr');
 
                 headers.forEach((th, index) => {
-                    const colName = th.textContent;
-                    const colIdx = index + 1;
-                    const isHidden = hiddenSummaryColumns[colName];
+                    const colType = th.getAttribute('data-col');
+                    if (!colType) return;
+
+                    const isHidden = hiddenSummaryColumns[colType] === true;
 
                     if (isHidden) {
                         th.classList.add('hidden-col');
                         rows.forEach(row => {
-                            const cell = row.querySelector(`td:nth-child(${colIdx})`);
+                            const cell = row.querySelector(`td:nth-child(${index + 1})`);
                             if (cell) cell.classList.add('hidden-col');
                         });
                     } else {
                         th.classList.remove('hidden-col');
                         rows.forEach(row => {
-                            const cell = row.querySelector(`td:nth-child(${colIdx})`);
+                            const cell = row.querySelector(`td:nth-child(${index + 1})`);
                             if (cell) cell.classList.remove('hidden-col');
                         });
                     }
@@ -1258,8 +1434,15 @@
             const refDate = summaryReferenceDate;
             const refYear = refDate.getFullYear();
             const ytdStartDate = new Date(refYear, 0, 1);
-            const sinceStartDate = new Date(refYear - 1, 0, 1);
-            const sinceHeader = `Since ${refYear - 1}`;
+
+            let sinceStartDate, sinceHeader;
+            if (customSinceDate) {
+                sinceStartDate = customSinceDate;
+                sinceHeader = `Since ${formatDateMMDD(customSinceDate)}/${customSinceDate.getFullYear()}`;
+            } else {
+                sinceStartDate = new Date(refYear - 1, 0, 1);
+                sinceHeader = `Since ${refYear - 1}`;
+            }
 
             const weekAgoDate = new Date(refDate.getTime());
             weekAgoDate.setDate(weekAgoDate.getDate() - 7);
@@ -1278,17 +1461,21 @@
                 const data = config.tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
 
                 const tableId = `table-${config.container}`;
+
+                // Added Local Ccy column
+                // Added data-col attributes for visibility control
                 let tableHTML = `<table id="${tableId}"><thead><tr>
-                    <th>Name</th>
-                    <th>Ticker</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Price</th>
-                    <th>1-Day</th>
-                    <th>1-Week</th>
-                    <th>1-Month</th>
-                    <th>YTD</th>
-                    <th class="custom-date-header">${sinceHeader}</th>
+                    <th data-col="Name">Name</th>
+                    <th data-col="Ticker">Ticker</th>
+                    <th data-col="Local Ccy">Local Ccy</th>
+                    <th data-col="Date">Date</th>
+                    <th data-col="Time">Time</th>
+                    <th data-col="Price">Price</th>
+                    <th data-col="1-Day">1-Day</th>
+                    <th data-col="1-Week">1-Week</th>
+                    <th data-col="1-Month">1-Month</th>
+                    <th data-col="YTD">YTD</th>
+                    <th data-col="Since" class="custom-date-header">${sinceHeader}</th>
                 </tr></thead><tbody>`;
 
                 data.forEach(item => {
@@ -1299,8 +1486,9 @@
 
                     if (!dataPointOnRefDate) {
                         tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
-                            <td title="${item.name}">${item.name}</td>
+                            <td>${item.name}</td>
                             <td>${item.ticker}</td>
+                            <td>${getCurrency(item.ticker)}</td>
                             <td>N/A</td><td>N/A</td><td>N/A</td>
                             <td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td>
                         </tr>`;
@@ -1331,6 +1519,7 @@
                     tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
                         <td title="${item.name}">${item.name}</td>
                         <td>${item.ticker}</td>
+                        <td>${getCurrency(item.ticker)}</td>
                         <td>${dateOnRefDate}</td>
                         <td>${timeOnRefDate}</td>
                         <td>${formatNumberWithCommas(priceOnRefDate.toFixed(2))}</td>
@@ -1346,10 +1535,6 @@
                 if (tableWrapper) {
                     tableWrapper.innerHTML = tableHTML + '</tbody></table>';
                 }
-
-                document.querySelectorAll(`#${tableId} th`).forEach(th => {
-                    th.addEventListener('contextmenu', (e) => showColumnContextMenu(e, tableId));
-                });
             });
 
             document.querySelectorAll('#summary-content-container .summary-card table').forEach(table => {
@@ -2579,12 +2764,117 @@
             }
         }
         
+        // --- News Date Picker Functions ---
+        function toggleNewsDateRangePicker() {
+            const picker = document.getElementById('news-date-range-picker');
+            if (picker.style.display === 'block') {
+                picker.style.display = 'none';
+            } else {
+                renderNewsCalendar();
+                picker.style.display = 'block';
+            }
+        }
+
+        function changeNewsPickerMonth(delta) {
+            newsPickerCurrentMonth.setMonth(newsPickerCurrentMonth.getMonth() + delta);
+            renderNewsCalendar();
+        }
+
+        function renderNewsCalendar() {
+            const year = newsPickerCurrentMonth.getFullYear();
+            const month = newsPickerCurrentMonth.getMonth();
+            document.getElementById('news-picker-month-year').textContent = `${newsPickerCurrentMonth.toLocaleString('default', { month: 'long' })} ${year}`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDay = firstDay.getDay();
+
+            let html = '';
+            const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+            days.forEach(d => html += `<div style="font-weight: bold; color: var(--text-secondary);">${d}</div>`);
+
+            for (let i = 0; i < startDay; i++) {
+                html += `<div></div>`;
+            }
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const date = new Date(year, month, i);
+                const dateStr = formatDateYYYYMMDD(date);
+
+                let classes = 'news-calendar-day';
+                let style = 'cursor: pointer; padding: 5px; border-radius: 4px;';
+
+                // Styling logic for range
+                let isSelected = false;
+                if (newsSelectedStartDate && newsSelectedEndDate) {
+                    if (date >= newsSelectedStartDate && date <= newsSelectedEndDate) {
+                         style += 'background-color: var(--button-active-bg); color: var(--primary-color);';
+                         isSelected = true;
+                    }
+                } else if (newsSelectedStartDate) {
+                    if (date.getTime() === newsSelectedStartDate.getTime()) {
+                         style += 'background-color: var(--primary-color); color: white;';
+                         isSelected = true;
+                    }
+                }
+
+                html += `<div class="${classes}" style="${style}" onclick="handleNewsDateClick('${dateStr}')" onmouseover="handleNewsDateHover('${dateStr}')">${i}</div>`;
+            }
+
+            document.getElementById('news-picker-calendar').innerHTML = html;
+        }
+
+        function handleNewsDateClick(dateStr) {
+            const date = new Date(dateStr);
+            if (!newsSelectedStartDate || (newsSelectedStartDate && newsSelectedEndDate)) {
+                newsSelectedStartDate = date;
+                newsSelectedEndDate = null;
+            } else {
+                if (date < newsSelectedStartDate) {
+                    newsSelectedEndDate = newsSelectedStartDate;
+                    newsSelectedStartDate = date;
+                } else {
+                    newsSelectedEndDate = date;
+                }
+            }
+            renderNewsCalendar();
+        }
+
+        function handleNewsDateHover(dateStr) {
+            if (newsSelectedStartDate && !newsSelectedEndDate) {
+                 // Optional: Visual feedback for range selection on hover could be added here
+                 // But sticking to simple click logic for now to ensure reliability
+            }
+        }
+
+        function clearNewsDateRange() {
+            newsSelectedStartDate = null;
+            newsSelectedEndDate = null;
+            renderNewsCalendar();
+            applyNewsDateRange();
+        }
+
+        function applyNewsDateRange() {
+            const display = document.getElementById('news-date-range-display').querySelector('span');
+            if (newsSelectedStartDate && newsSelectedEndDate) {
+                display.textContent = `${formatDateMMDD(newsSelectedStartDate)} - ${formatDateMMDD(newsSelectedEndDate)}`;
+            } else if (newsSelectedStartDate) {
+                 display.textContent = `${formatDateMMDD(newsSelectedStartDate)}`;
+                 // Treat single click as single day range
+                 newsSelectedEndDate = newsSelectedStartDate;
+            } else {
+                display.textContent = 'Date Range (All)';
+            }
+            document.getElementById('news-date-range-picker').style.display = 'none';
+            filterAndDisplayNews();
+        }
+
         function populateNewsFilters(newsItems) {
             const sourceFilter = document.getElementById('news-filter-source');
             sourceFilter.innerHTML = '<option value="all">Source (All)</option>';
 
-            const languageFilter = document.getElementById('news-filter-language');
-            languageFilter.innerHTML = '<option value="all">Language (All)</option>';
+            // Language filter removed as requested
 
             if (!newsItems || newsItems.length === 0) return;
 
@@ -2595,20 +2885,11 @@
                 option.textContent = source;
                 sourceFilter.appendChild(option);
             });
-            
-            const languages = [...new Set(newsItems.map(item => item.Language).filter(Boolean))].sort();
-            languages.forEach(lang => {
-                const option = document.createElement('option');
-                option.value = lang;
-                option.textContent = lang;
-                languageFilter.appendChild(option);
-            });
         }
         
         function resetNewsFilters() {
             document.getElementById('news-filter-source').value = 'all';
-            document.getElementById('news-filter-language').value = 'all';
-            filterAndDisplayNews();
+            clearNewsDateRange(); // This will also trigger filterAndDisplayNews
         }
 
         function filterAndDisplayNews() {
@@ -2624,14 +2905,30 @@
             }
 
             const selectedSource = document.getElementById('news-filter-source').value;
-            const selectedLanguage = document.getElementById('news-filter-language').value;
             const selectedTicker = document.getElementById('news-filter-company').value;
             const tickerName = newsTickers[selectedTicker] || selectedTicker;
 
             const filteredNews = currentNewsData.news.filter(item => {
                 const sourceMatch = (selectedSource === 'all' || item.Source === selectedSource);
-                const languageMatch = (selectedLanguage === 'all' || item.Language === selectedLanguage);
-                return sourceMatch && languageMatch;
+
+                let dateMatch = true;
+                if (newsSelectedStartDate && newsSelectedEndDate) {
+                    // item.Date format is usually "YYYY-MM-DD" or similar.
+                    // Let's assume standard format from JSON which seemed to be YYYY-MM-DD based on other code.
+                    // But wait, "2023-10-27".
+                    const itemDate = new Date(item.Date);
+                    // Reset times to midnight for comparison
+                    const start = new Date(newsSelectedStartDate); start.setHours(0,0,0,0);
+                    const end = new Date(newsSelectedEndDate); end.setHours(23,59,59,999);
+
+                    if (isNaN(itemDate.getTime())) {
+                        dateMatch = false;
+                    } else {
+                        dateMatch = itemDate >= start && itemDate <= end;
+                    }
+                }
+
+                return sourceMatch && dateMatch;
             });
 
             let newsHTML = '';
