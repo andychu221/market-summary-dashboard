@@ -1,13 +1,17 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watchlist Dashboard V18 (Fixed)</title>
+    <title>Watchlist Dashboard V20 (Fixed)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
+    
+    <!-- SheetJS for .xlsx export -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
     <!-- jspreadsheet and Material Icons libraries -->
     <script src="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.js"></script>
@@ -233,7 +237,7 @@
             position: sticky; top: 0; z-index: 10;
         }
         .summary-card th {
-            cursor: context-menu;
+            cursor: pointer;
         }
 
         tr:hover { background-color: var(--hover-bg); }
@@ -380,7 +384,7 @@
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color: 0.3s ease;
+            transition: background-color 0.3s ease;
         }
         .download-eml-btn:hover {
             background-color: #218838;
@@ -397,18 +401,15 @@
 
         #summary { padding: 10px 0; }
         .summary-header {
-            display: flex; justify-content: flex-start; align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
         }
-        .summary-header label { font-size: 1.2rem; font-weight: 600; color: var(--text-primary); }
+        .summary-header label { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
         
-        .summary-header {
-            justify-content: flex-start; 
-        }
         .summary-header-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             flex-wrap: wrap;
         }
         .email-report-btn {
@@ -431,7 +432,25 @@
             cursor: not-allowed;
             opacity: 0.7;
         }
-
+        
+        .export-excel-btn {
+            background-color: #217346;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .export-excel-btn:hover {
+            background-color: #1a5c38;
+        }
 
         #summary-content-container {
             display: flex;
@@ -481,23 +500,18 @@
         .summary-card td:first-child, .summary-card th:first-child { width: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .summary-card .clickable-row:hover { background-color: var(--hover-bg); }
         .summary-card .custom-date-header { text-decoration: none; cursor: default; }
+        
+        /* Interactive header for Since... */
+        .clickable-header {
+            cursor: pointer;
+        }
+        .clickable-header:hover {
+            background-color: var(--button-active-bg);
+        }
 
         .summary-card th.hidden-col,
         .summary-card td.hidden-col { display: none; }
-        .custom-context-menu {
-            position: absolute;
-            background-color: var(--modal-bg);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-strong);
-            border-radius: 8px;
-            padding: 10px;
-            z-index: 1010;
-            min-width: 180px;
-        }
-        .custom-context-menu ul { list-style: none; padding: 0; margin: 0; }
-        .custom-context-menu li { padding: 5px 10px; display: flex; align-items: center; cursor: pointer; }
-        .custom-context-menu li:hover { background-color: var(--hover-bg); }
-        .custom-context-menu li input { margin-right: 10px; cursor: pointer; }
+        
         
         #data-table-container {
             min-height: 70vh;
@@ -525,6 +539,7 @@
             flex-wrap: wrap;
             gap: 10px;
             background-color: var(--header-bg);
+            align-items: center;
         }
         
         #news-status {
@@ -650,6 +665,81 @@
         .chart-grid-container .modal-chart-container {
             height: 400px;
         }
+        
+        /* Custom Date Range Picker for News */
+        .date-range-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .date-range-content {
+            display: none;
+            position: absolute;
+            background-color: var(--modal-bg);
+            min-width: 280px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: var(--shadow-strong);
+            padding: 5px;
+            z-index: 1000;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+        .date-range-content.show { display: block; }
+        .date-option {
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        .date-option:hover { background-color: var(--hover-bg); }
+        .date-option.selected { background-color: var(--primary-color); color: white; }
+        .date-option.in-range { background-color: var(--button-active-bg); }
+
+        /* Custom Column Modal Styles */
+        .column-modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 10px;
+        }
+        .column-list-container {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .column-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+        }
+        .column-item:last-child { border-bottom: none; }
+        .column-item.dragging { opacity: 0.5; background: var(--hover-bg); }
+        .column-drag-handle {
+            cursor: grab;
+            margin-right: 10px;
+            color: var(--text-secondary);
+        }
+        .column-checkbox {
+            margin-right: 10px;
+        }
+        .column-label {
+            flex-grow: 1;
+        }
+        .manage-tickers-textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
 
     </style>
 </head>
@@ -690,7 +780,21 @@
                     <div class="summary-header-left">
                         <label for="summary-as-of-date">As of:</label>
                         <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)">
+                        
+                        <!-- Hidden Input for Custom Since Date Interaction -->
+                        <input type="date" id="summary-since-date" style="display:none;" onchange="renderSummaryTab()">
+
+                        <input type="text" id="summary-ticker-search" class="controls-input" placeholder="Filter Ticker/Name..." oninput="filterSummaryTable(this.value)">
+
+                        <button class="controls-input" onclick="openColumnModal()">Customize Columns</button>
+                        <button class="controls-input" onclick="openManageTickersModal()">Manage Tickers</button>
+
                         <span id="chart-update-status" style="font-size: 0.9rem; font-weight: 500;"></span>
+                    </div>
+                    <div>
+                         <button class="export-excel-btn" onclick="exportSummaryToExcel()">
+                            <i class="material-icons" style="font-size: 18px;">download</i> Export to Excel (.xlsx)
+                        </button>
                     </div>
                 </div>
                 <div id="summary-content-container">
@@ -724,12 +828,17 @@
                         <div id="news-filters">
                             <select id="news-filter-company" class="controls-input" onchange="handleCompanyFilterChange(this.value)">
                             </select>
+                            
                             <select id="news-filter-source" class="controls-input" onchange="filterAndDisplayNews()">
                                 <option value="all">Source (All)</option>
                             </select>
-                            <select id="news-filter-language" class="controls-input" onchange="filterAndDisplayNews()">
-                                <option value="all">Language (All)</option>
-                            </select>
+
+                            <div class="date-range-dropdown">
+                                <button id="news-date-range-btn" class="controls-input" onclick="toggleDateRangeMenu()">Date Range (All) &#9662;</button>
+                                <div id="news-date-range-content" class="date-range-content">
+                                    <!-- Date list populated by JS -->
+                                </div>
+                            </div>
                             
                             <button id="news-filter-reset" class="data-btn" style="padding: 8px 12px; font-size: 0.9rem;" onclick="resetNewsFilters()">Reset</button>
                         </div>
@@ -742,6 +851,14 @@
             </div>
 
             <div id="data" class="tab-content">
+                <div class="header-controls" style="margin-bottom: 10px; justify-content: flex-start; gap: 10px;">
+                    <label>Start:</label><input type="date" id="data-start-date" class="controls-input">
+                    <label>End:</label><input type="date" id="data-end-date" class="controls-input">
+                    <button class="controls-input" onclick="renderDataTab()">Filter</button>
+                    <button class="export-excel-btn" onclick="exportDataToExcel()">
+                        <i class="material-icons" style="font-size: 18px;">download</i> Export to Excel (.xlsx)
+                    </button>
+                </div>
                 <div id="data-table-container"><p>Loading data...</p></div>
             </div>
         </div>
@@ -790,8 +907,41 @@
         </div>
     </div>
 
-    <div id="summary-context-menu" class="custom-context-menu" style="display: none;"></div>
+    <!-- Column Customization Modal -->
+    <div id="columnModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeModal('columnModal')">&times;</span>
+            <h2 class="modal-header">Customize Columns</h2>
+            <div class="column-modal-body">
+                <p style="font-size: 0.9rem; color: var(--text-secondary);">Drag to reorder. Uncheck to hide.</p>
+                <div id="column-list" class="column-list-container"></div>
+                <button class="email-report-btn" onclick="applyColumnChanges()" style="width: 100%;">Apply</button>
+            </div>
+        </div>
+    </div>
 
+    <!-- Manage Tickers Modal -->
+    <div id="manageTickersModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeModal('manageTickersModal')">&times;</span>
+            <h2 class="modal-header">Manage Tickers</h2>
+            <div class="column-modal-body">
+                <div>
+                    <label style="font-weight:600;">Benchmark:</label>
+                    <textarea id="manage-benchmark" class="manage-tickers-textarea"></textarea>
+                </div>
+                <div>
+                    <label style="font-weight:600;">Watchlist:</label>
+                    <textarea id="manage-watchlist" class="manage-tickers-textarea"></textarea>
+                </div>
+                <div>
+                    <label style="font-weight:600;">Peers:</label>
+                    <textarea id="manage-peers" class="manage-tickers-textarea"></textarea>
+                </div>
+                <button class="email-report-btn" onclick="applyTickerChanges()" style="width: 100%;">Save Changes</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // jspreadsheet License Key
@@ -809,11 +959,40 @@
         let isDataPivoted = false;
         let jspreadsheetInstance = null;
         
-        let hiddenSummaryColumns = {};
+        // Summary Ticker Groups (Editable)
+        let summaryTickersConfig = {
+            'equity-index': ['.TWII', '.SOX'],
+            'tw-stocks': ['3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO'],
+            'us-stocks': ['2303.TW', '3034.TW','3035.TW','3661.TW', '0981.HK','688981.SS','603005.SS', '6723.T','QCOM.O','GFS']
+        };
+
+        // Summary Column Configuration
+        // Initial state
+        let summaryColumnsState = [
+            { id: 'Name', label: 'Name', visible: true },
+            { id: 'Ticker', label: 'Ticker', visible: true },
+            { id: 'Date', label: 'Date', visible: true },
+            { id: 'Time', label: 'Time', visible: false },
+            { id: 'Local Ccy', label: 'Local Ccy', visible: true },
+            { id: 'Price', label: 'Price', visible: true },
+            { id: '1-Day', label: '1-Day', visible: true },
+            { id: '1-Week', label: '1-Week', visible: true },
+            { id: '1-Month', label: '1-Month', visible: true },
+            { id: 'WTD', label: 'WTD', visible: true },
+            { id: 'MTD', label: 'MTD', visible: true },
+            { id: 'YTD', label: 'YTD', visible: true },
+            { id: 'Since', label: 'Since...', visible: true } 
+        ];
+
         let summaryReferenceDate = null;
         let currentNewsData = null; 
         const newsTickers = {'3443.TW': 'GUC', '6789.TW': 'VisEra', '5347.TWO': 'Vanguard', '3374.TWO': 'Xintec'};
         
+        // News Date Selection State
+        let newsAvailableDates = [];
+        let newsSelectedRange = { start: null, end: null };
+        let isSelectingDateRange = false;
+
         const DEFAULT_CHART_TICKERS = {
         	'Chart-0': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
             'Chart-1': "3443.TW,6789.TW,5347.TWO,3374.TWO,.TWII",
@@ -872,6 +1051,14 @@
             switch(period) {
                 case '1d': d.setDate(d.getDate() - 1); return d;
                 case '1w': d.setDate(d.getDate() - 7); return d;
+                case 'wtd': 
+                    // Calculate start of week (Sunday as start)
+                    const day = d.getDay(); // 0 (Sun) to 6 (Sat)
+                    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust to get Monday? 
+                    // Standard WTD usually means since Sunday/Monday. Let's start from Monday or if Sunday is trading, Sunday.
+                    // Simple: Go back to last Sunday.
+                    d.setDate(d.getDate() - d.getDay()); 
+                    return d;
                 case 'mtd': return new Date(d.getFullYear(), d.getMonth(), 1);
                 case '1m': d.setMonth(d.getMonth() - 1); return d;
                 case '3m': d.setMonth(d.getMonth() - 3); return d;
@@ -899,6 +1086,30 @@
             const day = date.getDate().toString().padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
+        
+        function formatDateDDMMMYYYY(date) {
+            if (!(date instanceof Date) || isNaN(date)) return "";
+            const d = new Date(date);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = d.toLocaleString('en-US', { month: 'short' });
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function formatDateUS(date) {
+             if (!(date instanceof Date) || isNaN(date)) return "";
+             const year = date.getFullYear();
+             const month = (date.getMonth() + 1).toString().padStart(2, '0');
+             const day = date.getDate().toString().padStart(2, '0');
+             return `${month}/${day}/${year}`;
+        }
+        
+        function getCurrency(market) {
+            if (market === 'TW Stocks' || market === 'Equity Index') return 'TWD'; // Simplified logic, assumes TWII/SOX logic
+            if (market === 'US Stocks') return 'USD';
+            // Fallback heuristics based on typical tickers if market is ambiguous
+            return '';
+        }
 
 
         // --- Initialization & Data Loading ---
@@ -907,8 +1118,9 @@
             initNewsSplitter();
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
             document.addEventListener('click', (e) => {
-                const contextMenu = document.getElementById('summary-context-menu');
-                if (contextMenu) contextMenu.style.display = 'none';
+               if (!e.target.closest('.date-range-dropdown')) {
+                   document.getElementById('news-date-range-content').classList.remove('show');
+               }
             });
             loadAllDataFromGitHub();
         });
@@ -1041,6 +1253,14 @@
             if (lastDataPoint.originalDateStr && lastDataPoint.originalDateStr.includes(' ')) {
                 lastTime = lastDataPoint.originalDateStr.split(' ')[1];
             }
+            
+            // Determine currency based on market or ticker suffix
+            let currency = '';
+            if (ticker.endsWith('.TW') || ticker.endsWith('.TWO') || ticker === '.TWII') currency = 'TWD';
+            else if (ticker.endsWith('.HK')) currency = 'HKD';
+            else if (ticker.endsWith('.SS')) currency = 'CNY';
+            else if (ticker.endsWith('.T')) currency = 'JPY';
+            else if (ticker === '.SOX' || ticker.endsWith('.O') || market === 'US Stocks') currency = 'USD';
 
             const findDataPointOnOrBefore = (date, data = tickerData) => {
                 if (!date || isNaN(date.getTime())) return null;
@@ -1077,9 +1297,10 @@
                 ticker,
                 name: tickerData[0].name,
                 market,
+                currency,
                 lastPrice: lastPrice,
                 lastPriceFormatted: formatNumberWithCommas(lastPrice.toFixed(2)),
-                lastDate: formatDateMMDD(refDate),
+                lastDate: formatDateDDMMMYYYY(refDate),
                 lastTime: lastTime,
                 firstDate: firstDataPoint.date
             };
@@ -1091,7 +1312,7 @@
             perf['1d_pts'] = formatValue(prevPrice1d !== null ? (lastPrice - prevPrice1d) : null, 'points', market);
             perf['1d_pts_raw'] = prevPrice1d !== null ? (lastPrice - prevPrice1d) : null;
 
-            ['1w', 'mtd', '1m', '3m', 'ytd', '1y'].forEach(p => {
+            ['1w', 'wtd', 'mtd', '1m', '3m', 'ytd', '1y'].forEach(p => {
                 const startDate = getStartDate(p, refDate);
                 const startPrice = findPriceOnOrBefore(startDate);
                 const pPerf = calcPerf(startPrice, lastPrice, isRate, invertedFx);
@@ -1120,71 +1341,189 @@
         }
 
 
-        // --- Summary Tab ---
-        function showColumnContextMenu(event, tableId) {
-            event.preventDefault();
-            const menu = document.getElementById('summary-context-menu');
-
-            const headers = Array.from(document.querySelectorAll(`#${tableId} th`));
-            let menuHTML = '<ul>';
-
-            headers.forEach((th, index) => {
-                const colName = th.textContent;
-                if (hiddenSummaryColumns[colName] === undefined) {
-                    hiddenSummaryColumns[colName] = false;
-                }
-                const isHidden = hiddenSummaryColumns[colName];
-                menuHTML += `
-                    <li>
-                        <label style="display: flex; align-items: center; width: 100%; cursor: pointer;">
-                            <input type="checkbox" ${!isHidden ? 'checked' : ''} onchange="toggleSummaryColumn('${colName}', this.checked)">
-                            ${colName}
-                        </label>
-                    </li>`;
+        // --- Summary Tab Logic ---
+        
+        // 1. Column Customization Modal
+        function openColumnModal() {
+            const listContainer = document.getElementById('column-list');
+            listContainer.innerHTML = '';
+            
+            summaryColumnsState.forEach((col, index) => {
+                const item = document.createElement('div');
+                item.className = 'column-item';
+                item.draggable = true;
+                item.dataset.index = index;
+                item.innerHTML = `
+                    <div style="display:flex; align-items:center;">
+                        <span class="material-icons column-drag-handle">drag_handle</span>
+                        <input type="checkbox" class="column-checkbox" ${col.visible ? 'checked' : ''} data-id="${col.id}">
+                        <span class="column-label">${col.label}</span>
+                    </div>
+                `;
+                
+                // Drag Events
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragleave', handleDragLeave);
+                
+                listContainer.appendChild(item);
             });
-            menuHTML += '</ul>';
-            menu.innerHTML = menuHTML;
-
-            menu.style.display = 'block';
-            const pageX = Math.min(event.pageX, window.innerWidth - menu.offsetWidth - 10);
-            const pageY = Math.min(event.pageY, window.innerHeight - menu.offsetHeight - 10);
-            menu.style.left = `${pageX}px`;
-            menu.style.top = `${pageY}px`;
+            
+            openModal('columnModal');
         }
 
-        function toggleSummaryColumn(colName, isVisible) {
-            hiddenSummaryColumns[colName] = !isVisible;
-            applyColumnVisibility();
+        let dragSrcEl = null;
+
+        function handleDragStart(e) {
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            this.classList.add('dragging');
         }
 
-        function applyColumnVisibility() {
-            document.querySelectorAll('.summary-card').forEach(card => {
-                const table = card.querySelector('table');
-                if (!table) return;
+        function handleDragOver(e) {
+            if (e.preventDefault) e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
 
-                const headers = table.querySelectorAll('th');
-                const rows = table.querySelectorAll('tbody tr');
+        function handleDragEnter(e) { this.classList.add('over'); }
+        function handleDragLeave(e) { this.classList.remove('over'); }
 
-                headers.forEach((th, index) => {
-                    const colName = th.textContent;
-                    const colIdx = index + 1;
-                    const isHidden = hiddenSummaryColumns[colName];
-
-                    if (isHidden) {
-                        th.classList.add('hidden-col');
-                        rows.forEach(row => {
-                            const cell = row.querySelector(`td:nth-child(${colIdx})`);
-                            if (cell) cell.classList.add('hidden-col');
-                        });
-                    } else {
-                        th.classList.remove('hidden-col');
-                        rows.forEach(row => {
-                            const cell = row.querySelector(`td:nth-child(${colIdx})`);
-                            if (cell) cell.classList.remove('hidden-col');
-                        });
-                    }
+        function handleDrop(e) {
+            if (e.stopPropagation) e.stopPropagation();
+            if (dragSrcEl !== this) {
+                // Swap DOM elements
+                const list = this.parentNode;
+                const items = Array.from(list.children);
+                const fromIndex = items.indexOf(dragSrcEl);
+                const toIndex = items.indexOf(this);
+                
+                if (fromIndex < toIndex) {
+                    list.insertBefore(dragSrcEl, this.nextSibling);
+                } else {
+                    list.insertBefore(dragSrcEl, this);
+                }
+            }
+            return false;
+        }
+        
+        function applyColumnChanges() {
+            const listContainer = document.getElementById('column-list');
+            const items = listContainer.querySelectorAll('.column-item');
+            let newState = [];
+            
+            items.forEach(item => {
+                const checkbox = item.querySelector('input');
+                const id = checkbox.dataset.id;
+                const oldConfig = summaryColumnsState.find(c => c.id === id);
+                newState.push({
+                    id: id,
+                    label: oldConfig.label,
+                    visible: checkbox.checked
                 });
             });
+            
+            summaryColumnsState = newState;
+            closeModal('columnModal');
+            renderSummaryTab(); // Re-render table with new columns
+        }
+
+        // 2. Manage Tickers Modal
+        function openManageTickersModal() {
+            document.getElementById('manage-benchmark').value = summaryTickersConfig['equity-index'].join(', ');
+            document.getElementById('manage-watchlist').value = summaryTickersConfig['tw-stocks'].join(', ');
+            document.getElementById('manage-peers').value = summaryTickersConfig['us-stocks'].join(', ');
+            openModal('manageTickersModal');
+        }
+        
+        function applyTickerChanges() {
+            const parseTickers = (str) => str.split(',').map(s => s.trim()).filter(s => s);
+            
+            summaryTickersConfig['equity-index'] = parseTickers(document.getElementById('manage-benchmark').value);
+            summaryTickersConfig['tw-stocks'] = parseTickers(document.getElementById('manage-watchlist').value);
+            summaryTickersConfig['us-stocks'] = parseTickers(document.getElementById('manage-peers').value);
+            
+            closeModal('manageTickersModal');
+            processPriceData(); // Recalculate
+        }
+
+        // 3. Since Date Picker Interaction
+        function triggerSinceDate() {
+            const picker = document.getElementById('summary-since-date');
+            if(picker) picker.showPicker();
+        }
+
+        function filterSummaryTable(query) {
+            const filter = query.toUpperCase();
+            document.querySelectorAll('.summary-card').forEach(card => {
+                const tbody = card.querySelector('tbody');
+                const rows = tbody.querySelectorAll('tr');
+                let hasVisibleRow = false;
+
+                rows.forEach(row => {
+                    const name = row.querySelector('td:nth-child(1)') ? row.querySelector('td:nth-child(1)').textContent.toUpperCase() : '';
+                    // Ticker is usually column 2
+                    const tickerIndex = summaryColumnsState.findIndex(c => c.id === 'Ticker');
+                    const ticker = (tickerIndex > -1) ? row.querySelectorAll('td')[tickerIndex].textContent.toUpperCase() : '';
+                    
+                    if (name.indexOf(filter) > -1 || ticker.indexOf(filter) > -1) {
+                        row.style.display = "";
+                        hasVisibleRow = true;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+
+                // Hide entire section if no rows match
+                if (!hasVisibleRow && filter.length > 0) {
+                    card.style.display = 'none';
+                } else {
+                    card.style.display = 'flex';
+                }
+            });
+        }
+        
+        function exportSummaryToExcel() {
+            const wb = XLSX.utils.book_new();
+            
+            document.querySelectorAll('.summary-card').forEach(card => {
+                if (card.style.display === 'none') return; // Skip hidden sections
+                
+                const title = card.querySelector('.summary-card-header h3').textContent;
+                const table = card.querySelector('table');
+                
+                // Clone table to remove hidden columns for export if needed, 
+                // but simpler to use sheet_add_aoa for control or parse visible text.
+                // Let's rely on table_to_sheet but filter hidden cols manually? 
+                // Actually, table_to_sheet grabs display:none? Usually yes.
+                
+                const data = [];
+                // Headers
+                const headers = [];
+                table.querySelectorAll('th').forEach(th => {
+                    if (!th.classList.contains('hidden-col')) headers.push(th.innerText);
+                });
+                data.push(headers);
+                
+                // Rows
+                table.querySelectorAll('tbody tr').forEach(tr => {
+                    if (tr.style.display === 'none') return;
+                    const row = [];
+                    tr.querySelectorAll('td').forEach(td => {
+                        if (!td.classList.contains('hidden-col')) row.push(td.innerText);
+                    });
+                    data.push(row);
+                });
+                
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                XLSX.utils.book_append_sheet(wb, ws, title.substring(0, 31)); // Sheet names max 31 chars
+            });
+
+            const dateStr = formatDateYYYYMMDD(summaryReferenceDate);
+            XLSX.writeFile(wb, `Watchlist_Summary_${dateStr}.xlsx`);
         }
 
         async function updateSummaryReferenceDate(dateString) {
@@ -1240,17 +1579,17 @@
             const summaryConfig = {
                 'equity-index': {
                     title: 'Benchmark',
-                    tickers: ['.TWII', '.SOX'],
+                    tickers: summaryTickersConfig['equity-index'],
                     container: 'summary-equity-index'
                 },
                 'tw-stocks': {
                     title: 'Watchlist',
-                    tickers: ['3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO'],
+                    tickers: summaryTickersConfig['tw-stocks'],
                     container: 'summary-tw-stocks'
                 },
                 'us-stocks': {
                     title: 'Peers',
-                    tickers: ['2303.TW', '3034.TW','3035.TW','3661.TW', '0981.HK','688981.SS','603005.SS', '6723.T','QCOM.O','GFS'],
+                    tickers: summaryTickersConfig['us-stocks'],
                     container: 'summary-us-stocks'
                 }
             };
@@ -1258,11 +1597,27 @@
             const refDate = summaryReferenceDate;
             const refYear = refDate.getFullYear();
             const ytdStartDate = new Date(refYear, 0, 1);
-            const sinceStartDate = new Date(refYear - 1, 0, 1);
-            const sinceHeader = `Since ${refYear - 1}`;
+            
+            // Custom Since Date Logic
+            const sinceInput = document.getElementById('summary-since-date');
+            let sinceStartDate;
+            let sinceHeader;
+
+            if (sinceInput && sinceInput.value) {
+                sinceStartDate = new Date(sinceInput.value);
+                // Ensure since date isn't after ref date
+                if (sinceStartDate > refDate) sinceStartDate = new Date(refYear - 1, 0, 1);
+            } else {
+                // Default: Jan 1 of Last Year
+                sinceStartDate = new Date(refYear - 1, 0, 1);
+                if (sinceInput) sinceInput.value = formatDateYYYYMMDD(sinceStartDate);
+            }
+            sinceHeader = `Since <span style="text-decoration:underline; font-weight:bold;">${formatDateUS(sinceStartDate)}</span>`;
 
             const weekAgoDate = new Date(refDate.getTime());
             weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+            const wtdDate = getStartDate('wtd', refDate);
+            const mtdDate = getStartDate('mtd', refDate);
             const monthAgoDate = new Date(refDate.getTime());
             monthAgoDate.setMonth(monthAgoDate.getMonth() - 1);
             const dayAgoDate = new Date(refDate.getTime());
@@ -1276,92 +1631,132 @@
                 if (label) label.textContent = config.title;
 
                 const data = config.tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
-
                 const tableId = `table-${config.container}`;
-                let tableHTML = `<table id="${tableId}"><thead><tr>
-                    <th>Name</th>
-                    <th>Ticker</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Price</th>
-                    <th>1-Day</th>
-                    <th>1-Week</th>
-                    <th>1-Month</th>
-                    <th>YTD</th>
-                    <th class="custom-date-header">${sinceHeader}</th>
-                </tr></thead><tbody>`;
+                
+                // Build Table Header based on summaryColumnsState
+                let headerHTML = '<thead><tr>';
+                summaryColumnsState.forEach(col => {
+                    let thClass = col.visible ? '' : 'hidden-col';
+                    let content = col.label;
+                    let extraAttr = '';
+                    
+                    if (col.id === 'Since') {
+                        content = sinceHeader;
+                        thClass += ' clickable-header';
+                        extraAttr = 'onclick="triggerSinceDate()"';
+                    }
+                    
+                    headerHTML += `<th class="${thClass}" ${extraAttr}>${content}</th>`;
+                });
+                headerHTML += '</tr></thead>';
+
+                let bodyHTML = '<tbody>';
 
                 data.forEach(item => {
                     const isRate = false;
                     const inverted = false;
-
                     const dataPointOnRefDate = item.findDataPointOnOrBefore(refDate);
 
                     if (!dataPointOnRefDate) {
-                        tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
-                            <td title="${item.name}">${item.name}</td>
-                            <td>${item.ticker}</td>
-                            <td>N/A</td><td>N/A</td><td>N/A</td>
-                            <td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td>
-                        </tr>`;
+                        bodyHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">`;
+                        summaryColumnsState.forEach(col => {
+                             bodyHTML += `<td class="${col.visible ? '' : 'hidden-col'}">N/A</td>`;
+                        });
+                        bodyHTML += '</tr>';
                         return;
                     }
 
                     const priceOnRefDate = dataPointOnRefDate.price;
-                    const dateOnRefDate = formatDateMMDD(dataPointOnRefDate.date);
+                    const dateOnRefDate = formatDateDDMMMYYYY(dataPointOnRefDate.date);
                     const timeOnRefDate = dataPointOnRefDate.originalDateStr.includes(' ') ? dataPointOnRefDate.originalDateStr.split(' ')[1] : 'c';
                     
                     const actualDayAgo = new Date(dataPointOnRefDate.date.getTime());
                     actualDayAgo.setDate(actualDayAgo.getDate() - 1);
                     const price1D = item.findPriceOnOrBefore(actualDayAgo);
-
                     const price1W = item.findPriceOnOrBefore(weekAgoDate);
+                    const priceWTD = item.findPriceOnOrBefore(wtdDate);
+                    const priceMTD = item.findPriceOnOrBefore(mtdDate);
                     const price1M = item.findPriceOnOrBefore(monthAgoDate);
                     const priceYTD = item.findPriceOnOrBefore(ytdStartDate);
                     const priceSince = item.findPriceOnOrBefore(sinceStartDate);
 
                     const perf1D = item.calcPerf(price1D, priceOnRefDate, isRate, inverted);
                     const perf1W = item.calcPerf(price1W, priceOnRefDate, isRate, inverted);
+                    const perfWTD = item.calcPerf(priceWTD, priceOnRefDate, isRate, inverted);
+                    const perfMTD = item.calcPerf(priceMTD, priceOnRefDate, isRate, inverted);
                     const perf1M = item.calcPerf(price1M, priceOnRefDate, isRate, inverted);
                     const perfYTD = item.calcPerf(priceYTD, priceOnRefDate, isRate, inverted);
                     const perfSince = item.calcPerf(priceSince, priceOnRefDate, isRate, inverted);
 
                     const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
-
-                    tableHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">
-                        <td title="${item.name}">${item.name}</td>
-                        <td>${item.ticker}</td>
-                        <td>${dateOnRefDate}</td>
-                        <td>${timeOnRefDate}</td>
-                        <td>${formatNumberWithCommas(priceOnRefDate.toFixed(2))}</td>
-                        <td class="${colorClass(perf1D)}">${formatValue(perf1D, 'percent')}</td>
-                        <td class="${colorClass(perf1W)}">${formatValue(perf1W, 'percent')}</td>
-                        <td class="${colorClass(perf1M)}">${formatValue(perf1M, 'percent')}</td>
-                        <td class="${colorClass(perfYTD)}">${formatValue(perfYTD, 'percent')}</td>
-                        <td class="${colorClass(perfSince)}">${formatValue(perfSince, 'percent')}</td>
-                    </tr>`;
+                    
+                    bodyHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">`;
+                    
+                    summaryColumnsState.forEach(col => {
+                        let cellContent = '';
+                        let cellClass = col.visible ? '' : 'hidden-col';
+                        
+                        switch(col.id) {
+                            case 'Name': cellContent = item.name; break;
+                            case 'Ticker': cellContent = item.ticker; break;
+                            case 'Date': cellContent = dateOnRefDate; break;
+                            case 'Time': cellContent = timeOnRefDate; break;
+                            case 'Local Ccy': cellContent = item.currency; break;
+                            case 'Price': cellContent = formatNumberWithCommas(priceOnRefDate.toFixed(2)); break;
+                            case '1-Day': 
+                                cellClass += ` ${colorClass(perf1D)}`; 
+                                cellContent = formatValue(perf1D, 'percent'); 
+                                break;
+                            case '1-Week': 
+                                cellClass += ` ${colorClass(perf1W)}`; 
+                                cellContent = formatValue(perf1W, 'percent'); 
+                                break;
+                            case 'WTD': 
+                                cellClass += ` ${colorClass(perfWTD)}`; 
+                                cellContent = formatValue(perfWTD, 'percent'); 
+                                break;
+                             case 'MTD': 
+                                cellClass += ` ${colorClass(perfMTD)}`; 
+                                cellContent = formatValue(perfMTD, 'percent'); 
+                                break;
+                            case '1-Month': 
+                                cellClass += ` ${colorClass(perf1M)}`; 
+                                cellContent = formatValue(perf1M, 'percent'); 
+                                break;
+                            case 'YTD': 
+                                cellClass += ` ${colorClass(perfYTD)}`; 
+                                cellContent = formatValue(perfYTD, 'percent'); 
+                                break;
+                            case 'Since': 
+                                cellClass += ` ${colorClass(perfSince)}`; 
+                                cellContent = formatValue(perfSince, 'percent'); 
+                                break;
+                        }
+                        
+                        bodyHTML += `<td class="${cellClass}" title="${col.id === 'Name' ? item.name : ''}">${cellContent}</td>`;
+                    });
+                    bodyHTML += '</tr>';
                 });
+                bodyHTML += '</tbody>';
                 
                 const tableWrapper = container.querySelector('.table-content-wrapper');
                 if (tableWrapper) {
-                    tableWrapper.innerHTML = tableHTML + '</tbody></table>';
+                    tableWrapper.innerHTML = `<table id="${tableId}">${headerHTML}${bodyHTML}</table>`;
                 }
-
-                document.querySelectorAll(`#${tableId} th`).forEach(th => {
-                    th.addEventListener('contextmenu', (e) => showColumnContextMenu(e, tableId));
-                });
             });
 
             document.querySelectorAll('#summary-content-container .summary-card table').forEach(table => {
                 table.addEventListener('click', (event) => {
                     const row = event.target.closest('tr');
-                    if (row && row.dataset.ticker) {
+                    if (row && row.dataset.ticker && !event.target.closest('th')) { // Avoid clicking header
                         showIndividualTickerChart(row.dataset.ticker, 'last_calendar', summaryReferenceDate);
                     }
                 });
             });
-
-            applyColumnVisibility();
+            
+            // Re-apply filter if searching
+            const searchVal = document.getElementById('summary-ticker-search').value;
+            if(searchVal) filterSummaryTable(searchVal);
         }
 
         // --- 'Chart' Tab ---
@@ -1429,30 +1824,35 @@
         }
 
 
-        function openChartMainSubTab(event, tabName) {
+        function openChartMainSubTab(event, chartId) {
             document.querySelectorAll('#chart-sub-content-container .chart-sub-tab-content').forEach(content => {
-                const isActive = content.id === `${tabName}-content`;
-                content.classList.toggle('active', isActive);
+                content.classList.remove('active');
             });
-            
             document.querySelectorAll('#chart-sub-tabs-container .chart-sub-tab-link').forEach(link => {
                 link.classList.remove('active');
             });
+            
+            // Activate Tab
             if (event && event.currentTarget) {
                 event.currentTarget.classList.add('active');
+            } else {
+                 // Fallback if triggered manually without event
+                 const btn = document.querySelector(`#chart-sub-tabs-container button[onclick*="${chartId}"]`);
+                 if(btn) btn.classList.add('active');
+            }
+            
+            // Activate Content
+            // Chart 7 is separate
+            if (chartId === 'Chart-7') {
+                document.getElementById('trading-volume-content').classList.add('active');
+            } else {
+                 document.getElementById('indexed-price-content').classList.add('active');
+                 // Also hide all indexed charts, show only specific one
+                 document.querySelectorAll('#indexed-price-content .indexed-chart-container').forEach(c => c.classList.remove('active'));
+                 const target = document.getElementById(`chart-content-${chartId}`);
+                 if(target) target.classList.add('active');
             }
         }
-
-        function showSelectedChart(chartId) {
-            document.querySelectorAll('#indexed-price-content .indexed-chart-container').forEach(container => {
-                container.classList.remove('active');
-            });
-            const containerToShow = document.getElementById(`chart-content-${chartId}`);
-            if (containerToShow) {
-                containerToShow.classList.add('active');
-            }
-        }
-
 
         function setupChartTabs() {
             const tabsContainer = document.getElementById('chart-sub-tabs-container');
@@ -1464,10 +1864,29 @@
                 return;
             }
 
-            tabsContainer.innerHTML = `
-                <div class="chart-sub-tab-link active" onclick="openChartMainSubTab(event, 'indexed-price')">Indexed Share Price</div>
-                <div class="chart-sub-tab-link" onclick="openChartMainSubTab(event, 'trading-volume')">Trading Volume</div>
-            `;
+            // Generate Sub-Tabs
+            // Map IDs to meaningful names if possible, but user asked for "Sub tabs in current order"
+            // Current Order: 0 (Week), 1 (Main), 2 (Peers1), 3 (Peers2), 4 (GUC), 5 (Xintec), 6 (VisEra), 7 (Volume)
+            // User requested to split the dropdown into tabs.
+            
+            const chartLabels = {
+                'Chart-0': '1-Week View',
+                'Chart-1': 'Main',
+                'Chart-2': 'Vanguard Peers 1',
+                'Chart-3': 'Vanguard Peers 2',
+                'Chart-4': 'GUC Peers',
+                'Chart-5': 'Xintec Peers',
+                'Chart-6': 'VisEra vs TWSE',
+                'Chart-7': 'Trading Volume'
+            };
+            
+            let tabsHTML = '';
+            Object.keys(chartLabels).forEach((key, index) => {
+                const isActive = index === 1 ? 'active' : ''; // Default to Main (Chart-1)
+                tabsHTML += `<button class="chart-sub-tab-link ${isActive}" onclick="openChartMainSubTab(event, '${key}')">${chartLabels[key]}</button>`;
+            });
+
+            tabsContainer.innerHTML = tabsHTML;
 
             contentContainer.innerHTML = `
                 <div id="indexed-price-content" class="chart-sub-tab-content active"></div>
@@ -1475,25 +1894,9 @@
             `;
 
             const indexedContent = document.getElementById('indexed-price-content');
-            const chartTitles = {
-                'Chart-0': 'Indexed share price (1-Week)',
-                'Chart-1': 'Indexed share price',
-                'Chart-2': 'Indexed share price of Vanguard vs. peers 1',
-                'Chart-3': 'Indexed share price of Vanguard vs. peers 2',
-                'Chart-4': 'Indexed share price of GUC vs. peers',
-                'Chart-5': 'Indexed share price of Xintec vs. peers',
-                'Chart-6': 'Indexed share price of VisEra vs. TWSE'
-            };
-
-            let dropdownHTML = `<div class="chart-controls" style="margin-bottom: 10px; padding-top: 5px;">
-                <label for="chart-dropdown" style="font-weight: 500; color: var(--text-primary);">Chart ID</label>
-                <select id="chart-dropdown" onchange="showSelectedChart(this.value)" class="controls-input" style="flex-grow: 1; min-width: 250px;">
-            `;
-            Object.entries(chartTitles).forEach(([id, title]) => {
-                dropdownHTML += `<option value="${id}" ${id === 'Chart-1' ? 'selected' : ''}>${title}</option>`;
-            });
-            dropdownHTML += `</select></div>`;
-            indexedContent.innerHTML = dropdownHTML;
+            
+            // Remove dropdown logic, just append containers
+            indexedContent.innerHTML = ''; // Clear dropdown
 
             for (let i = 0; i <= 6; i++) {
                 const chartId = `Chart-${i}`;
@@ -1507,9 +1910,11 @@
             const volumeContent = document.getElementById('trading-volume-content');
             const chart7ContentDiv = document.createElement('div');
             chart7ContentDiv.id = 'chart-content-Chart-7';
+            // Chart 7 container is always active within the Volume tab content
             volumeContent.appendChild(chart7ContentDiv);
             renderChartTabHTML('Chart-7');
 
+            // Force initial render off-screen
             const originalStyles = { display: mainChartTab.style.display, position: mainChartTab.style.position, visibility: mainChartTab.style.visibility, left: mainChartTab.style.left, top: mainChartTab.style.top };
             try {
                 mainChartTab.style.display = 'block';
@@ -1521,15 +1926,8 @@
                 const allChartIds = ['Chart-0', 'Chart-1', 'Chart-2', 'Chart-3', 'Chart-4', 'Chart-5', 'Chart-6', 'Chart-7'];
                 
                 allChartIds.forEach(chartId => {
-                    const contentEl = document.getElementById(`chart-content-${chartId}`);
-                    if (contentEl) {
-                        const wasActive = contentEl.classList.contains('active');
-                        contentEl.classList.add('active');
-                        updateComparisonChartFromUI(chartId);
-                        if (!wasActive) {
-                             contentEl.classList.remove('active');
-                        }
-                    }
+                    // Update all, but Chart 7 is special
+                    updateComparisonChartFromUI(chartId);
                 });
 
             } catch (e) {
@@ -1537,20 +1935,12 @@
             } finally {
                 Object.assign(mainChartTab.style, originalStyles);
             }
-            
-            document.getElementById('indexed-price-content').classList.add('active');
-            document.getElementById('trading-volume-content').classList.remove('active');
-            showSelectedChart('Chart-1');
-            document.getElementById('chart-dropdown').value = 'Chart-1';
         }
 
         
         function renderChartTabHTML(chartId) {
             const container = document.getElementById(`chart-content-${chartId}`);
-            if (!container) {
-                console.error(`Container not found for ${chartId}`);
-                return;
-            }
+            if (!container) return;
 
             const defaultTickers = DEFAULT_CHART_TICKERS[chartId] || '';
             const currentUnit = chartAxisUnits[chartId] || 'auto';
@@ -1563,36 +1953,39 @@
                     <table id="perf-table-${chartId}"></table>
                 </div>`;
 
+            // HTML Structure for Charts
+            // Note: Added WTD button
+            container.innerHTML = `
+                 <div class="chart-controls">
+                    <label for="ticker-input-${chartId}">Tickers:</label>
+                    <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
+                    <div class="custom-date-inputs" id="custom-date-${chartId}">
+                        <input type="date" id="chart-start-${chartId}" class="controls-input">
+                        <input type="date" id="chart-end-${chartId}" class="controls-input">
+                    </div>
+                    <button class="update-btn" onclick="updateComparisonChartFromUI('${chartId}')">Update Chart</button>
+                </div>
+                <div class="chart-time-controls" id="time-controls-${chartId}">
+                    <div>
+                        <button class="${defaultButton1W}" data-period="1w" onclick="setComparisonChartPeriod('${chartId}', '1w', this)">1-Week</button>
+                        <button data-period="wtd" onclick="setComparisonChartPeriod('${chartId}', 'wtd', this)">WTD</button>
+                        <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
+                        <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
+                        <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
+                        <button class="${defaultButtonSinceLastYear}" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
+                        <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
+                    </div>
+                    <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;">
+                        <span style="margin-right: 10px; font-weight: 500; color: var(--text-secondary);">X-Axis Unit:</span>
+                        <button data-unit="auto" class="${currentUnit === 'auto' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'auto', this)">Auto</button>
+                        <button data-unit="week" class="${currentUnit === 'week' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'week', this)">Week</button>
+                        <button data-unit="month" class="${currentUnit === 'month' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'month', this)">Month</button>
+                        <button data-unit="quarter" class="${currentUnit === 'quarter' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'quarter', this)">Quarter</button>
+                    </div>
+                </div>`;
+
             if (chartId === 'Chart-7') {
-                container.innerHTML = `
-                    
-                    <div class="chart-controls">
-                        <label for="ticker-input-${chartId}">Tickers (4 max):</label>
-                        <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
-                        <div class="custom-date-inputs" id="custom-date-${chartId}">
-                            <input type="date" id="chart-start-${chartId}" class="controls-input">
-                            <input type="date" id="chart-end-${chartId}" class="controls-input">
-                        </div>
-                        <button class="update-btn" onclick="updateComparisonChartFromUI('${chartId}')">Update Chart</button>
-                    </div>
-                    <div class="chart-time-controls" id="time-controls-${chartId}">
-                        <div>
-                            <button data-period="1w" onclick="setComparisonChartPeriod('${chartId}', '1w', this)">1-Week</button>
-                            <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
-                            <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
-                            <button data-period="6m" onclick="setComparisonChartPeriod('${chartId}', '6m', this)">6-Month</button>
-                            <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
-                            <button class="active" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
-                            <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
-                        </div>
-                        <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;">
-                            <span style="margin-right: 10px; font-weight: 500; color: var(--text-secondary);">X-Axis Unit:</span>
-                            <button data-unit="auto" class="${currentUnit === 'auto' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'auto', this)">Auto</button>
-                            <button data-unit="week" class="${currentUnit === 'week' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'week', this)">Week</button>
-                            <button data-unit="month" class="${currentUnit === 'month' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'month', this)">Month</button>
-                            <button data-unit="quarter" class="${currentUnit === 'quarter' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'quarter', this)">Quarter</button>
-                        </div>
-                    </div>
+                 container.innerHTML += `
                     <div class="chart-grid-container">
                         <div class="modal-chart-container"><canvas id="canvas-chart-${chartId}-0"></canvas></div>
                         <div class="modal-chart-container"><canvas id="canvas-chart-${chartId}-1"></canvas></div>
@@ -1601,33 +1994,7 @@
                     </div>
                     ${tableHTML}`;
             } else {
-                container.innerHTML = `
-                     <div class="chart-controls">
-                        <label for="ticker-input-${chartId}">Tickers:</label>
-                        <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
-                        <div class="custom-date-inputs" id="custom-date-${chartId}">
-                            <input type="date" id="chart-start-${chartId}" class="controls-input">
-                            <input type="date" id="chart-end-${chartId}" class="controls-input">
-                        </div>
-                        <button class="update-btn" onclick="updateComparisonChartFromUI('${chartId}')">Update Chart</button>
-                    </div>
-                    <div class="chart-time-controls" id="time-controls-${chartId}">
-                        <div>
-                            <button class="${defaultButton1W}" data-period="1w" onclick="setComparisonChartPeriod('${chartId}', '1w', this)">1-Week</button>
-                            <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
-                            <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
-                            <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
-                            <button class="${defaultButtonSinceLastYear}" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
-                            <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
-                        </div>
-                        <div id="axis-controls-${chartId}" style="display: flex; align-items: center; flex-wrap: wrap;">
-                            <span style="margin-right: 10px; font-weight: 500; color: var(--text-secondary);">X-Axis Unit:</span>
-                            <button data-unit="auto" class="${currentUnit === 'auto' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'auto', this)">Auto</button>
-                            <button data-unit="week" class="${currentUnit === 'week' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'week', this)">Week</button>
-                            <button data-unit="month" class="${currentUnit === 'month' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'month', this)">Month</button>
-                            <button data-unit="quarter" class="${currentUnit === 'quarter' ? 'active' : ''}" onclick="setChartAxisUnit('${chartId}', 'quarter', this)">Quarter</button>
-                        </div>
-                    </div>
+                 container.innerHTML += `
                     <div class="modal-chart-container" style="height: 500px;"><canvas id="canvas-chart-${chartId}"></canvas></div>
                     ${tableHTML}`;
             }
@@ -1660,6 +2027,7 @@
 
             const activePeriodBtn = document.querySelector(`#time-controls-${chartId} div:first-child button.active`);
             if (!activePeriodBtn) { 
+                // Fallback defaults
                 const defaultButton = document.querySelector(`#time-controls-${chartId} div:first-child button[data-period="last_calendar"]`);
                 if(defaultButton) defaultButton.classList.add('active');
                 else {
@@ -1762,6 +2130,7 @@
             if (timeConfig.period) {
                  switch(timeConfig.period) {
                     case '1w': startDate = new Date(new Date(endDate).setDate(endDate.getDate() - 7)); break;
+                    case 'wtd': startDate = getStartDate('wtd', endDate); break;
                     case 'ytd': startDate = new Date(endDate.getFullYear(), 0, 1); break;
                     case '3m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 3)); break;
                     case '1m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 1)); break;
@@ -1825,8 +2194,13 @@
 
             const timeUnit = chartAxisUnits[chartId] || 'auto';
             let finalTimeUnit = (timeUnit === 'auto') ? undefined : timeUnit;
-
-            if (timeConfig.period === '1w') {
+            
+            // X-Axis Date Format Logic
+            let xFormat = { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }; // Default
+            if (timeConfig.period === '1w' || timeConfig.period === 'wtd' || timeConfig.period === '1m' || timeConfig.period === '3m') {
+                xFormat = { day: 'dd/MMM', week: 'dd/MMM', month: 'MMM', quarter: 'QQQ' };
+            }
+            if (timeConfig.period === '1w' || timeConfig.period === 'wtd') {
                 finalTimeUnit = 'day';
             }
 
@@ -1846,7 +2220,7 @@
                             type: 'time',
                             time: {
                                 unit: finalTimeUnit, 
-                                displayFormats: { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }
+                                displayFormats: xFormat
                             },
                             ticks: { 
                                 color: textColor, 
@@ -1861,7 +2235,7 @@
                             display: hasPerf, position: 'left',
                             title: { 
                                 display: true, 
-                                text: 'Cumulative Return (%)',
+                                text: 'Indexed Share Price', // Fixed title per request
                                 font: { size: 18 }
                             },
                             ticks: { 
@@ -1889,10 +2263,7 @@
                                  callbacks: {
                                      title: function(tooltipItems) {
                                          const date = new Date(tooltipItems[0].parsed.x);
-                                         const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                                         const day = date.getDate().toString().padStart(2, '0');
-                                         const year = date.getFullYear();
-                                         return `${month}/${day}/${year}`;
+                                         return formatDateDDMMMYYYY(date);
                                      }
                                  }    
                                  }
@@ -1911,7 +2282,7 @@
             const data = tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
             if (data.length === 0) { container.innerHTML = 'No data to display.'; return; }
 
-            const asOfDateStr = `As of: ${formatDateMMDD(effectiveEndDate)}`;
+            const asOfDateStr = `As of: ${formatDateDDMMMYYYY(effectiveEndDate)}`;
             const endYear = effectiveEndDate.getFullYear();
             const ytdStartDate = new Date(endYear, 0, 1);
 
@@ -1967,6 +2338,7 @@
             if (timeConfig.period) {
                  switch(timeConfig.period) {
                     case '1w': startDate = new Date(new Date(endDate).setDate(endDate.getDate() - 7)); break;
+                    case 'wtd': startDate = getStartDate('wtd', endDate); break;
                     case '1m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 1)); break;
                     case '3m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 3)); break;
                     case '6m': startDate = new Date(new Date(endDate).setMonth(endDate.getMonth() - 6)); break;
@@ -1984,6 +2356,15 @@
             
             const timeUnit = chartAxisUnits[chartId] || 'auto';
             let finalTimeUnit = (timeUnit === 'auto') ? undefined : timeUnit;
+            
+            // X-Axis Date Format Logic
+            let xFormat = { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }; // Default
+            if (timeConfig.period === '1w' || timeConfig.period === 'wtd' || timeConfig.period === '1m' || timeConfig.period === '3m') {
+                xFormat = { day: 'dd/MMM', week: 'dd/MMM', month: 'MMM', quarter: 'QQQ' };
+            }
+            if (timeConfig.period === '1w' || timeConfig.period === 'wtd') {
+                finalTimeUnit = 'day';
+            }
 
             for (let i = 0; i < 4; i++) {
                 const canvasId = `canvas-chart-${chartId}-${i}`;
@@ -2089,10 +2470,7 @@
                                 callbacks: {
                                      title: function(tooltipItems) {
                                          const date = new Date(tooltipItems[0].parsed.x);
-                                         const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                                         const day = date.getDate().toString().padStart(2, '0');
-                                         const year = date.getFullYear();
-                                         return `${month}/${day}/${year}`;
+                                         return formatDateDDMMMYYYY(date);
                                      }
                                  }
                             },
@@ -2108,7 +2486,7 @@
                                 type: 'time', 
                                 time: {
                                     unit: finalTimeUnit,
-                                    displayFormats: { day: 'MM/dd', week: 'MM/dd', month: 'MMM', quarter: 'QQQ' }
+                                    displayFormats: xFormat
                                 },
                                 ticks: { 
                                     color: textColor, 
@@ -2167,13 +2545,10 @@
             const effectiveEndDate = new Date(endDate);
 
             let tableHTML = '';
-            if (timeConfig.period && timeConfig.period !== 'custom') {
-            } else if (timeConfig.end) {
-            }
             
             const threeMonthStartDate = new Date(new Date(effectiveEndDate).setMonth(effectiveEndDate.getMonth() - 3));
 
-            const asOfDateStr = `As of: ${formatDateMMDD(effectiveEndDate)}`;
+            const asOfDateStr = `As of: ${formatDateDDMMMYYYY(effectiveEndDate)}`;
             tableHTML = `<table id="perf-table-${chartId}"><thead><tr><th>${asOfDateStr}</th>`;
             tickers.forEach(ticker => {
                 const perfData = allPerformanceData.get(ticker);
@@ -2350,11 +2725,31 @@
                     priceDataMap.get(dateStr).set(d.ticker, d.price);
                     volumeDataMap.get(dateStr).set(d.ticker, d.volume);
                 });
-
+                
+                // Forward Fill Logic for Price
+                // Iterate dates in chronological order
+                let lastKnownPrices = {};
+                uniqueTickers.forEach(t => lastKnownPrices[t] = null);
+                
                 uniqueDates.forEach(date => {
-                    const pMap = priceDataMap.get(date);
+                     const pMap = priceDataMap.get(date);
+                     const rowData = [];
+                     
+                     uniqueTickers.forEach(ticker => {
+                         let val = pMap.get(ticker);
+                         if (val !== undefined && val !== null) {
+                             lastKnownPrices[ticker] = val;
+                         } else {
+                             val = lastKnownPrices[ticker]; // Forward fill
+                         }
+                         rowData.push(val);
+                     });
+                     pivotedPriceData.set(date, rowData);
+                });
+
+                // Volume (No forward fill usually, keeping as null if no trade)
+                uniqueDates.forEach(date => {
                     const vMap = volumeDataMap.get(date);
-                    pivotedPriceData.set(date, uniqueTickers.map(ticker => pMap.get(ticker) || null));
                     pivotedVolumeData.set(date, uniqueTickers.map(ticker => vMap.get(ticker) || null));
                 });
 
@@ -2376,11 +2771,14 @@
             }
 
             const container = document.getElementById('data-table-container');
-            if (jspreadsheetInstance) {
-                jspreadsheetInstance.destroy();
-                jspreadsheetInstance = null;
-            }
+            // Clean up existing instance to prevent duplication
             container.innerHTML = ''; 
+            
+            // Filter by Date
+            const startDateVal = document.getElementById('data-start-date').value;
+            const endDateVal = document.getElementById('data-end-date').value;
+            const startDate = startDateVal ? new Date(startDateVal) : null;
+            const endDate = endDateVal ? new Date(endDateVal) : null;
 
             const summaryTickers = [
                 '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO','3034.TW','2303.TW','3035.TW','3661.TW','0981.HK','6723.T','688981.SS','603005.SS','QCOM.O', 'GFS'
@@ -2406,6 +2804,10 @@
 
             const priceSheetData = [];
             [...pivotedPriceData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
+                // Apply Date Filter
+                if (startDate && new Date(date) < startDate) return;
+                if (endDate && new Date(date) > endDate) return;
+
                 const allValues = pivotedPriceData.get(date);
                 const filteredValues = tickerIndicesToKeep.map(i => allValues[i]);
                 if(filteredValues.some(v => v !== null)) {
@@ -2415,6 +2817,10 @@
 
             const volumeSheetData = [];
             [...pivotedVolumeData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
+                 // Apply Date Filter
+                if (startDate && new Date(date) < startDate) return;
+                if (endDate && new Date(date) > endDate) return;
+
                 const allValues = pivotedVolumeData.get(date);
                 const filteredValues = tickerIndicesToKeep.map(i => allValues[i]);
                  if(filteredValues.some(v => v !== null)) {
@@ -2450,6 +2856,55 @@
                 toolbar: true
             });
         }
+        
+        function exportDataToExcel() {
+             // Re-fetch filtered data logic manually to build the workbook
+             // This ensures we export what's visible (or logically filtered) without relying on jspreadsheet internal export
+             
+             if (!pivotedPriceData || pivotedPriceData.size === 0) return;
+
+             const wb = XLSX.utils.book_new();
+             
+             const startDateVal = document.getElementById('data-start-date').value;
+             const endDateVal = document.getElementById('data-end-date').value;
+             const startDate = startDateVal ? new Date(startDateVal) : null;
+             const endDate = endDateVal ? new Date(endDateVal) : null;
+
+             const summaryTickers = [
+                '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO','3034.TW','2303.TW','3035.TW','3661.TW','0981.HK','6723.T','688981.SS','603005.SS','QCOM.O', 'GFS'
+             ];
+             const headerRow = ['Date', ...summaryTickers];
+             const tickerIndicesToKeep = summaryTickers.map(ticker => pivotedDataHeaders.indexOf(ticker) -1);
+
+             // 1. Price Sheet
+             const priceData = [headerRow];
+             [...pivotedPriceData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
+                if (startDate && new Date(date) < startDate) return;
+                if (endDate && new Date(date) > endDate) return;
+                
+                const allValues = pivotedPriceData.get(date);
+                const filteredValues = tickerIndicesToKeep.map(i => allValues[i]);
+                priceData.push([date, ...filteredValues]);
+             });
+             const wsPrice = XLSX.utils.aoa_to_sheet(priceData);
+             XLSX.utils.book_append_sheet(wb, wsPrice, "Price");
+
+             // 2. Volume Sheet
+             const volumeData = [headerRow];
+             [...pivotedVolumeData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
+                if (startDate && new Date(date) < startDate) return;
+                if (endDate && new Date(date) > endDate) return;
+                
+                const allValues = pivotedVolumeData.get(date);
+                const filteredValues = tickerIndicesToKeep.map(i => allValues[i]);
+                volumeData.push([date, ...filteredValues]);
+             });
+             const wsVol = XLSX.utils.aoa_to_sheet(volumeData);
+             XLSX.utils.book_append_sheet(wb, wsVol, "Volume");
+             
+             const dateStr = formatDateYYYYMMDD(summaryReferenceDate || new Date());
+             XLSX.writeFile(wb, `Watchlist_Data_${dateStr}.xlsx`);
+        }
 
 
         // --- News Tab Functions ---
@@ -2484,6 +2939,8 @@
             document.getElementById('news-content').innerHTML = '';
             document.getElementById('news-right-pane').style.display = 'none';
             currentNewsData = null;
+            newsAvailableDates = [];
+            newsSelectedRange = { start: null, end: null };
 
             if (ticker === 'all') {
                 statusEl.textContent = 'Loading news for All Companies...';
@@ -2582,9 +3039,9 @@
         function populateNewsFilters(newsItems) {
             const sourceFilter = document.getElementById('news-filter-source');
             sourceFilter.innerHTML = '<option value="all">Source (All)</option>';
-
-            const languageFilter = document.getElementById('news-filter-language');
-            languageFilter.innerHTML = '<option value="all">Language (All)</option>';
+            
+            // Collect Dates for Range Picker
+            newsAvailableDates = [];
 
             if (!newsItems || newsItems.length === 0) return;
 
@@ -2596,18 +3053,103 @@
                 sourceFilter.appendChild(option);
             });
             
-            const languages = [...new Set(newsItems.map(item => item.Language).filter(Boolean))].sort();
-            languages.forEach(lang => {
-                const option = document.createElement('option');
-                option.value = lang;
-                option.textContent = lang;
-                languageFilter.appendChild(option);
+            newsAvailableDates = [...new Set(newsItems.map(item => item.Date))].sort((a,b) => new Date(b) - new Date(a)); // Descending
+            renderDateRangePicker();
+        }
+        
+        function renderDateRangePicker() {
+            const container = document.getElementById('news-date-range-content');
+            container.innerHTML = '';
+            
+            if(newsAvailableDates.length === 0) {
+                 container.innerHTML = '<div style="padding:10px;">No dates available</div>';
+                 return;
+            }
+
+            newsAvailableDates.forEach(date => {
+                const div = document.createElement('div');
+                div.className = 'date-option';
+                // Format for display
+                const displayDate = formatDateUS(new Date(date));
+                div.textContent = displayDate;
+                div.dataset.date = date; // Keep ISO format for logic
+                div.onclick = (e) => handleDateClick(e, date);
+                div.onmouseover = (e) => handleDateHover(e, date);
+                container.appendChild(div);
+            });
+        }
+        
+        function toggleDateRangeMenu() {
+             document.getElementById('news-date-range-content').classList.toggle('show');
+        }
+
+        function handleDateClick(e, date) {
+            e.stopPropagation(); // Prevent menu close
+            
+            if (!isSelectingDateRange) {
+                // First click: Set start
+                newsSelectedRange.start = date;
+                newsSelectedRange.end = null;
+                isSelectingDateRange = true;
+                updateDateVisuals();
+            } else {
+                // Second click: Set end and finish
+                if(new Date(date) > new Date(newsSelectedRange.start)) {
+                     newsSelectedRange.end = newsSelectedRange.start; // Swap if backward
+                     newsSelectedRange.start = date;
+                } else {
+                     newsSelectedRange.end = date;
+                }
+                
+                isSelectingDateRange = false;
+                updateDateVisuals();
+                
+                // Update Button Text
+                const startStr = formatDateUS(new Date(newsSelectedRange.start));
+                const endStr = formatDateUS(new Date(newsSelectedRange.end));
+                
+                document.getElementById('news-date-range-btn').textContent = `${endStr} - ${startStr} \u25BE`;
+                document.getElementById('news-date-range-content').classList.remove('show');
+                filterAndDisplayNews();
+            }
+        }
+
+        function handleDateHover(e, date) {
+            if (!isSelectingDateRange) return;
+            // Temporarily visualize range
+            updateDateVisuals(date);
+        }
+
+        function updateDateVisuals(hoverDate = null) {
+            const options = document.querySelectorAll('.date-option');
+            const startD = newsSelectedRange.start ? new Date(newsSelectedRange.start) : null;
+            const endD = hoverDate ? new Date(hoverDate) : (newsSelectedRange.end ? new Date(newsSelectedRange.end) : null);
+
+            options.forEach(opt => {
+                const d = new Date(opt.dataset.date);
+                opt.classList.remove('selected', 'in-range');
+
+                if (opt.dataset.date === newsSelectedRange.start || opt.dataset.date === (newsSelectedRange.end || hoverDate)) {
+                    opt.classList.add('selected');
+                }
+
+                if (startD && endD) {
+                    // Handle reverse selection
+                    const low = startD < endD ? startD : endD;
+                    const high = startD < endD ? endD : startD;
+                    
+                    if (d <= high && d >= low) {
+                        opt.classList.add('in-range');
+                    }
+                }
             });
         }
         
         function resetNewsFilters() {
             document.getElementById('news-filter-source').value = 'all';
-            document.getElementById('news-filter-language').value = 'all';
+            newsSelectedRange = { start: null, end: null };
+            document.getElementById('news-date-range-btn').textContent = 'Date Range (All) \u25BE';
+            renderDateRangePicker(); // Reset styling
             filterAndDisplayNews();
         }
 
@@ -2624,19 +3166,29 @@
             }
 
             const selectedSource = document.getElementById('news-filter-source').value;
-            const selectedLanguage = document.getElementById('news-filter-language').value;
             const selectedTicker = document.getElementById('news-filter-company').value;
             const tickerName = newsTickers[selectedTicker] || selectedTicker;
 
             const filteredNews = currentNewsData.news.filter(item => {
                 const sourceMatch = (selectedSource === 'all' || item.Source === selectedSource);
-                const languageMatch = (selectedLanguage === 'all' || item.Language === selectedLanguage);
-                return sourceMatch && languageMatch;
+                
+                let dateMatch = true;
+                if (newsSelectedRange.start && newsSelectedRange.end) {
+                    const itemDate = new Date(item.Date);
+                    const start = new Date(newsSelectedRange.start);
+                    const end = new Date(newsSelectedRange.end); // Older date usually
+                    const rangeMax = start > end ? start : end;
+                    const rangeMin = start > end ? end : start;
+                    
+                    dateMatch = itemDate >= rangeMin && itemDate <= rangeMax;
+                }
+                
+                return sourceMatch && dateMatch;
             });
 
             let newsHTML = '';
             
-            if (selectedTicker !== 'all' && currentNewsData.summary && selectedSource === 'all' && selectedLanguage === 'all') {
+            if (selectedTicker !== 'all' && currentNewsData.summary && selectedSource === 'all' && (!newsSelectedRange.start)) {
                  newsHTML += `
                     <div class="news-item" id="news-item-summary" onclick="showNewsSummary()">
                         <div class="news-meta-top">
@@ -2651,11 +3203,12 @@
                 if (originalIndex === -1) return;
                 
                 const itemTickerName = item.tickerName || tickerName;
+                const displayDate = formatDateUS(new Date(item.Date));
                 
                 newsHTML += `
                     <div class="news-item" id="news-item-${originalIndex}" onclick="showNewsDetail(${originalIndex})">
                          <div class="news-meta-top">
-                            <span>${item.Date} ${item.Time}</span>
+                            <span>${displayDate} ${item.Time}</span>
                             <span class="ticker-name">${itemTickerName}</span>
                             <span>${item.Source}</span>
                         </div>
@@ -2700,11 +3253,12 @@
             const item = currentNewsData.news[index];
             const detailView = document.getElementById('news-right-pane');
             const linkHTML = item.URL ? `<div class="news-link-container"><a href="${item.URL}" target="_blank" rel="noopener noreferrer">Read Original Article</a></div>` : '';
-            
+            const displayDate = formatDateUS(new Date(item.Date));
+
             detailView.innerHTML = `
                 <div id="news-detail-content">
                     <h3>${item.Title}</h3>
-                    <div class="meta">Source: ${item.Source} | Date: ${item.Date} ${item.Time}</div>
+                    <div class="meta">Source: ${item.Source} | Date: ${displayDate} ${item.Time}</div>
                     ${linkHTML}
                     <pre class="content">${item.Content || 'No content available.'}</pre>
                 </div>`;
