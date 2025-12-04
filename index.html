@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watchlist Dashboard V22 (Fixed & Customized)</title>
+    <title>Watchlist Dashboard V26 (Final Polish)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
@@ -248,13 +248,26 @@
             border: 1px solid var(--border-color); border-radius: 8px;
             margin-top: 20px;
         }
-        table { width: 100%; border-collapse: collapse; text-align: right; }
-        th, td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 0.95rem;}
-        th:first-child, td:first-child { text-align: left; }
+        /* Chart Tables */
+        #chart-main table { width: 100%; border-collapse: collapse; text-align: right; }
+        #chart-main th, #chart-main td { 
+            padding: 8px 12px; 
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color); /* Grid Lines */
+            white-space: nowrap; font-size: 0.95rem;
+        }
+        #chart-main th:last-child, #chart-main td:last-child { border-right: none; }
+        
         th {
             background-color: var(--header-bg); font-weight: 600; user-select: none;
             position: sticky; top: 0; z-index: 10;
+            text-align: right;
         }
+        th:first-child, td:first-child { text-align: left; }
+        
+        .summary-card table { width: 100%; border-collapse: collapse; text-align: right; }
+        .summary-card th, .summary-card td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 0.95rem; border-right: none; }
+        
         .summary-card th {
             cursor: pointer;
         }
@@ -267,17 +280,18 @@
         .text-positive { color: var(--positive-color) !important; font-weight: 500; }
         .text-negative { color: var(--negative-color) !important; font-weight: 500; }
         
-        .editable-date {
+        /* Clickable text for headers in chart */
+        .clickable-text {
             cursor: pointer;
             text-decoration: underline;
             text-decoration-style: dotted;
             text-underline-offset: 3px;
         }
-        .editable-date:hover {
+        .clickable-text:hover {
             color: var(--primary-color);
         }
 
-        .chart-controls { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; }
+        .chart-controls { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; margin-top: 15px; }
         .chart-controls label { font-weight: 500; }
         .chart-controls input {
             flex-grow: 1; border: 1px solid var(--border-color); padding: 8px;
@@ -289,6 +303,15 @@
             border-radius: 6px; font-size: 0.95rem;
             background-color: var(--bg-color); color: var(--text-primary);
         }
+        
+        /* Cursor Fixes for Buttons/Inputs */
+        .controls-input[type="button"], 
+        .controls-input[type="submit"], 
+        .controls-input[onclick], 
+        button.controls-input {
+            cursor: pointer;
+        }
+        
         .chart-controls button.update-btn {
              background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;
         }
@@ -329,12 +352,12 @@
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 5px;
         }
-         #report-modal-content-area h2, #report-modal-content-area h3 {
+         #report-modal-content-area h2, #report-modal-content-area h3, #report-modal-content-area h4 {
             color: var(--text-primary);
             margin-top: 20px;
         }
-        #report-modal-content-area p {
-            white-space: pre-wrap;
+        #report-modal-content-area p, #report-modal-content-area ul {
+            color: var(--text-primary);
             line-height: 1.6;
         }
          #report-modal-content-area table {
@@ -374,15 +397,6 @@
              background-color: var(--bg-color);
              padding: 10px;
              border-radius: 5px;
-         }
-         #report-modal-content-area .summary-block h4 {
-             margin-bottom: 5px;
-         }
-         #report-modal-content-area .summary-block pre {
-             white-space: pre-wrap;
-             word-wrap: break-word;
-             font-size: 0.9rem;
-             line-height: 1.6;
          }
         
         .email-header-field {
@@ -533,16 +547,16 @@
         .summary-card th, .summary-card td { padding: 8px 10px; }
         .summary-card td:first-child, .summary-card th:first-child { width: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .summary-card .clickable-row:hover { background-color: var(--hover-bg); }
-        .summary-card .custom-date-header { text-decoration: none; cursor: default; }
         
-        /* Interactive header for Since... */
-        .clickable-header {
+        /* Interactive header for Summary */
+        .summary-clickable-header {
             cursor: pointer;
-            background-color: var(--button-active-bg);
-            border-radius: 4px;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 3px;
         }
-        .clickable-header:hover {
-            filter: brightness(0.95);
+        .summary-clickable-header:hover {
+             color: var(--primary-color);
         }
 
         .summary-card th.hidden-col,
@@ -791,6 +805,12 @@
             background-color: var(--bg-color);
             color: var(--text-primary);
         }
+        .date-format-list button {
+            display: block; width: 100%; margin-bottom: 5px; text-align: left;
+            padding: 8px 12px; background: var(--button-bg); border: 1px solid var(--border-color);
+            border-radius: 5px; color: var(--text-primary); cursor: pointer;
+        }
+        .date-format-list button:hover { background: var(--hover-bg); color: var(--primary-color); }
 
     </style>
 </head>
@@ -1009,6 +1029,28 @@
         </div>
     </div>
 
+    <!-- Summary Date Format Modal -->
+    <div id="summaryDateFormatModal" class="modal">
+        <div class="modal-content modal-sm">
+            <span class="close" onclick="closeModal('summaryDateFormatModal')">&times;</span>
+            <h2 class="modal-header">Select Date Format</h2>
+            <div class="column-modal-body date-format-list" id="summary-date-format-list">
+                <!-- Buttons injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Table Date Format Modal -->
+    <div id="chartDateFormatModal" class="modal">
+        <div class="modal-content modal-sm">
+            <span class="close" onclick="closeModal('chartDateFormatModal')">&times;</span>
+            <h2 class="modal-header">Select Date Format</h2>
+            <div class="column-modal-body date-format-list" id="chart-date-format-list">
+                <!-- Buttons injected by JS -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- Global Variables ---
         let allData = [], dataByMarket = {};
@@ -1025,10 +1067,13 @@
         // Sorting State
         let currentSort = { column: null, direction: 'asc' };
         
-        // Global Settings (Fixed to mm/dd/yyyy)
-        let globalSettings = {
-            dateFormat: 'mm/dd/yyyy'
-        };
+        // Date Format State
+        const DATE_FORMATS = ['mm/dd', 'dd/mm', 'dd/mmm', 'yyyy/mm/dd', 'mm/dd/yyyy'];
+        let currentDateFormatIndex = 0; // Default mm/dd for summary
+        
+        // Chart Table Date Format State
+        const CHART_TABLE_DATE_FORMATS = ['dd/mmm/yyyy', 'mm/dd/yyyy', 'dd/mm/yyyy', 'yyyy/mm/dd'];
+        let chartTableDateFormatIndex = 0; // Default dd/mmm/yyyy
 
         // Summary Ticker Groups (Editable)
         let summaryTickersConfig = {
@@ -1047,7 +1092,6 @@
         };
 
         // Summary Column Configuration
-        // Initial state
         let summaryColumnsState = [
             { id: 'Name', label: 'Name', visible: true },
             { id: 'Ticker', label: 'Ticker', visible: true },
@@ -1183,6 +1227,13 @@
             const year = d.getFullYear();
             return `${day}/${month}/${year}`;
         }
+        
+        function formatDateDDMMM(date) {
+             if (!(date instanceof Date) || isNaN(date)) return "";
+             const month = date.toLocaleString('en-US', { month: 'short' });
+             const day = String(date.getDate()).padStart(2, '0');
+             return `${day}/${month}`;
+        }
 
         function formatDateUS(date) {
              if (!(date instanceof Date) || isNaN(date)) return "";
@@ -1200,14 +1251,32 @@
         }
         
         function formatGlobalDate(date) {
-            // Force mm/dd/yyyy as requested
             if (!(date instanceof Date) || isNaN(date)) return "";
             const year = date.getFullYear();
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
             const day = date.getDate().toString().padStart(2, '0');
             return `${month}/${day}/${year}`;
         }
-
+        
+        function formatDateByPattern(date, pattern) {
+            if (!(date instanceof Date) || isNaN(date)) return "N/A";
+            const d = date.getDate().toString().padStart(2, '0');
+            const m = (date.getMonth() + 1).toString().padStart(2, '0');
+            const mmm = date.toLocaleString('en-US', { month: 'short' });
+            const yyyy = date.getFullYear();
+            
+            switch(pattern) {
+                case 'mm/dd': return `${m}/${d}`;
+                case 'dd/mm': return `${d}/${m}`;
+                case 'dd/mmm': return `${d}/${mmm}`;
+                case 'dd/mmm/yyyy': return `${d}/${mmm}/${yyyy}`;
+                case 'yyyy/mm/dd': return `${yyyy}/${m}/${d}`;
+                case 'mm/dd/yyyy': return `${m}/${d}/${yyyy}`;
+                case 'dd/mm/yyyy': return `${d}/${m}/${yyyy}`;
+                default: return `${m}/${d}`;
+            }
+        }
+        
         // --- Initialization & Data Loading ---
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
@@ -1584,11 +1653,48 @@
             }
         }
         
-        // New: Open Global Date Picker from Table
-        function openGlobalDatePicker() {
-            const dateInput = document.getElementById('summary-as-of-date');
-            if(dateInput) dateInput.showPicker();
+        // --- Summary Date Format Modal ---
+        function openSummaryDateFormatModal() {
+            const list = document.getElementById('summary-date-format-list');
+            list.innerHTML = '';
+            DATE_FORMATS.forEach((fmt, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = fmt;
+                btn.onclick = () => applySummaryDateFormat(index);
+                list.appendChild(btn);
+            });
+            openModal('summaryDateFormatModal');
         }
+
+        function applySummaryDateFormat(index) {
+            currentDateFormatIndex = index;
+            closeModal('summaryDateFormatModal');
+            renderSummaryTab();
+        }
+
+        // --- Chart Table Date Format Modal ---
+        let currentChartIdForFormat = null;
+        function openChartTableDateFormatModal(chartId) {
+            currentChartIdForFormat = chartId;
+            const list = document.getElementById('chart-date-format-list');
+            list.innerHTML = '';
+            CHART_TABLE_DATE_FORMATS.forEach((fmt, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = fmt;
+                btn.onclick = () => applyChartTableDateFormat(index);
+                list.appendChild(btn);
+            });
+            openModal('chartDateFormatModal');
+        }
+        
+        function applyChartTableDateFormat(index) {
+            chartTableDateFormatIndex = index;
+            closeModal('chartDateFormatModal');
+            if (currentChartIdForFormat) {
+                 updateComparisonChartFromUI(currentChartIdForFormat);
+            }
+        }
+
 
         function filterSummaryTable(query) {
             const filter = query.toUpperCase();
@@ -1786,7 +1892,7 @@
                 sinceStartDate = new Date(refYear - 1, 0, 1);
                 if (sinceInput) sinceInput.value = formatDateYYYYMMDD(sinceStartDate);
             }
-            sinceHeader = `Since <span style="text-decoration:underline; font-weight:bold;">${formatDateUS(sinceStartDate)}</span>`;
+            sinceHeader = `Since ${formatDateUS(sinceStartDate)}`;
 
             const weekAgoDate = new Date(refDate.getTime());
             weekAgoDate.setDate(weekAgoDate.getDate() - 7);
@@ -1814,10 +1920,15 @@
                     let content = col.label; // Renamed label
                     let extraAttr = `onclick="sortSummaryTable('${config.container}', ${idx})"`;
                     
-                    if (col.id === 'Since') {
+                    if (col.id === 'Date') {
+                        content = "Date"; // Just "Date" per request
+                        thClass += ' summary-clickable-header';
+                        extraAttr = 'onclick="openSummaryDateFormatModal()"';
+                    }
+                    else if (col.id === 'Since') {
                         content = sinceHeader;
-                        thClass += ' clickable-header';
-                        extraAttr = 'onclick="openSinceDateModal()"'; // Override sort for this col interaction
+                        thClass += ' summary-clickable-header';
+                        extraAttr = 'onclick="openSinceDateModal()"'; 
                     }
                     
                     headerHTML += `<th class="${thClass}" ${extraAttr}>${content}</th>`;
@@ -1841,7 +1952,7 @@
                     }
 
                     const priceOnRefDate = dataPointOnRefDate.price;
-                    const dateOnRefDate = formatDateMMDD(dataPointOnRefDate.date); // Force MM/DD
+                    const dateOnRefDate = formatDateByPattern(dataPointOnRefDate.date, DATE_FORMATS[currentDateFormatIndex]);
                     const timeOnRefDate = dataPointOnRefDate.originalDateStr.includes(' ') ? dataPointOnRefDate.originalDateStr.split(' ')[1] : 'c';
                     
                     const actualDayAgo = new Date(dataPointOnRefDate.date.getTime());
@@ -1875,7 +1986,6 @@
                             case 'Ticker': cellContent = item.ticker; break;
                             case 'Date': 
                                 cellContent = dateOnRefDate; 
-                                cellClass += ' editable-date'; // Add editable style
                                 break;
                             case 'Time': cellContent = timeOnRefDate; break;
                             case 'Local Ccy': cellContent = item.currency; break;
@@ -1910,10 +2020,7 @@
                                 break;
                         }
                         
-                        // Add click handler specifically for Date column
-                        const cellAttr = col.id === 'Date' ? 'onclick="openGlobalDatePicker(); event.stopPropagation();"' : '';
-                        
-                        bodyHTML += `<td class="${cellClass}" title="${col.id === 'Name' ? item.name : ''}" ${cellAttr}>${cellContent}</td>`;
+                        bodyHTML += `<td class="${cellClass}" title="${col.id === 'Name' ? item.name : ''}">${cellContent}</td>`;
                     });
                     bodyHTML += '</tr>';
                 });
@@ -1928,8 +2035,8 @@
             document.querySelectorAll('#summary-content-container .summary-card table').forEach(table => {
                 table.addEventListener('click', (event) => {
                     const row = event.target.closest('tr');
-                    // Ensure click is on a body row and not header, and ignore date cell clicks (handled inline)
-                    if (row && row.parentNode.tagName === 'TBODY' && row.dataset.ticker && !event.target.classList.contains('editable-date')) {
+                    // Ensure click is on a body row and not header
+                    if (row && row.parentNode.tagName === 'TBODY' && row.dataset.ticker) {
                         showIndividualTickerChart(row.dataset.ticker, 'last_calendar', summaryReferenceDate);
                     }
                 });
@@ -2225,6 +2332,19 @@
             const labels = uniqueDates.map(t => new Date(t));
             const dateMap = new Map();
             labels.forEach((d, i) => dateMap.set(d.getTime(), i));
+            
+            // Year Indices for Secondary X-Axis
+            const yearIndices = {};
+            labels.forEach((d, i) => {
+                const y = d.getFullYear();
+                if(!yearIndices[y]) yearIndices[y] = [];
+                yearIndices[y].push(i);
+            });
+            const yearMidpoints = {};
+            Object.keys(yearIndices).forEach(y => {
+                const arr = yearIndices[y];
+                yearMidpoints[y] = arr[Math.floor(arr.length / 2)];
+            });
 
             const datasets = tickers.map((ticker) => {
                 const tickerData = rangeData.filter(d => d.ticker === ticker).sort((a,b) => a.date - b.date);
@@ -2268,74 +2388,85 @@
                 data: { labels: labels, datasets },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { right: 50, bottom: 30 } },
+                    layout: { padding: { right: 50, bottom: 20 } },
                     scales: {
                         x: {
                             type: 'category', 
                             ticks: { 
                                 color: textColor, 
                                 maxRotation: 0, 
-                                autoSkip: false, // Turn off autoSkip to manually control ticks
+                                autoSkip: false, // Use callback for density
                                 font: { size: 16 },
                                 callback: function(val, index) {
-                                    const date = this.getLabelForValue(val);
-                                    if(!(date instanceof Date)) return date;
-                                    
-                                    const period = timeConfig.period;
-                                    
-                                    // 1W & WTD: Show all
-                                    if(period === '1w' || period === 'wtd') {
-                                        return formatDateMMDD(date);
-                                    }
-                                    
-                                    const prevDate = index > 0 ? this.getLabelForValue(index-1) : null;
-                                    
-                                    // 1M: First trading day of week (Roughly: check if week number changed or simple interval)
-                                    // Simplest robust check for "New Week" without moment.js: 
-                                    // If current day (0-6) < previous day, it's a new week (e.g. Mon < Fri).
-                                    // Also cover case where previous was Sunday(0).
-                                    // Standard trading week: Mon(1) ... Fri(5). 
-                                    if(period === '1m') {
-                                        if (index === 0) return formatDateMMDD(date);
-                                        // If day drops (e.g. 5->1) or large gap
-                                        const day = date.getDay();
-                                        const prevDay = prevDate.getDay();
-                                        // Standard week wrap (Fri -> Mon)
-                                        if (day < prevDay) return formatDateMMDD(date); 
-                                        // Edge case: Gap > 4 days means new week
-                                        if ((date - prevDate) > 4 * 24 * 60 * 60 * 1000) return formatDateMMDD(date);
-                                        return null;
-                                    }
+                                     const date = this.getLabelForValue(val);
+                                     if(!(date instanceof Date)) return date;
 
-                                    // 3M: Every 10 trading days
-                                    if(period === '3m') {
-                                        if (index % 10 === 0) return formatDateMMDD(date);
-                                        return null;
-                                    }
+                                     const currentPeriod = timeConfig.period;
+                                     
+                                     // Dense view only for 1w and wtd
+                                     if (currentPeriod === '1w' || currentPeriod === 'wtd') {
+                                         return formatDateDDMMM(date);
+                                     }
+                                     
+                                     const prevDate = index > 0 ? labels[index-1] : null;
 
-                                    // YTD: First trading day of month
-                                    if(period === 'ytd') {
-                                        if (index === 0 || date.getMonth() !== prevDate.getMonth()) return formatDateMMDD(date);
-                                        return null;
-                                    }
+                                     // 1-month & 3-month: Weekly (First trading day of week)
+                                     if (currentPeriod === '1m' || currentPeriod === '3m') {
+                                         if (index === 0) return formatDateDDMMM(date);
+                                         
+                                         // If day number decreases (e.g., Fri 5 -> Mon 1) or large gap
+                                         if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
+                                             // For 3-month, avoid bunching near start
+                                             if (currentPeriod === '3m' && index < 3) return null;
+                                             
+                                             return formatDateDDMMM(date);
+                                         }
+                                         return null; // hide
+                                     }
+                                     
+                                     // YTD: Monthly (First trading day of month)
+                                     if (currentPeriod === 'ytd') {
+                                         if (index === 0) return formatDateDDMMM(date);
+                                         if (prevDate && date.getMonth() !== prevDate.getMonth()) return formatDateDDMMM(date);
+                                         return null;
+                                     }
 
-                                    // Since Last Year / 5Y: First trading day of quarter
-                                    if(period === 'last_calendar' || period === '5y') {
-                                        const currentQ = Math.floor(date.getMonth() / 3);
-                                        const prevQ = prevDate ? Math.floor(prevDate.getMonth() / 3) : -1;
-                                        if (index === 0 || currentQ !== prevQ || date.getFullYear() !== prevDate.getFullYear()) {
-                                             return formatDateMMDD(date); 
-                                        }
-                                        return null;
-                                    }
-                                    
-                                    // Default/Custom: Auto logic handled by ChartJS if we weren't returning null above, 
-                                    // but since we are overriding, fallback to simple sparse
-                                    if (index % Math.ceil(labels.length / 10) === 0) return formatDateMMDD(date);
-                                    return null;
+                                     // Long periods: Quarterly (First trading day of quarter)
+                                     // Since Last Year, 5y, Custom (assume long)
+                                     if (index === 0) return formatDateDDMMM(date);
+                                     if (prevDate) {
+                                         const qCurrent = Math.floor(date.getMonth() / 3);
+                                         const qPrev = Math.floor(prevDate.getMonth() / 3);
+                                         if (qCurrent !== qPrev || date.getFullYear() !== prevDate.getFullYear()) {
+                                             return formatDateDDMMM(date);
+                                         }
+                                     }
+                                     return null;
                                 }
                             },
-                            grid: { color: gridColor, display: false } 
+                            grid: { color: gridColor, display: true } 
+                        },
+                        xYear: { // Secondary X Axis for Years
+                            type: 'category',
+                            labels: labels,
+                            position: 'bottom',
+                            grid: { display: false, drawTicks: false },
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0,
+                                color: textColor,
+                                font: { size: 16, weight: 'bold' },
+                                padding: 5,
+                                callback: function(val, index) {
+                                    const d = this.getLabelForValue(val);
+                                    if(d instanceof Date) {
+                                        const y = d.getFullYear();
+                                        if (index === yearMidpoints[y]) return y;
+                                    }
+                                    return '';
+                                }
+                            }
                         },
                         yPerf: {
                             display: true, position: 'left',
@@ -2374,11 +2505,11 @@
                         type: 'line',
                         scaleID: 'x',
                         value: index - 0.5, 
-                        borderColor: 'rgba(100, 100, 100, 0.5)',
-                        borderWidth: 1,
+                        borderColor: 'rgba(100, 100, 100, 0.8)',
+                        borderWidth: 2,
                         borderDash: [5, 5],
                         label: {
-                            enabled: false // Removed label as requested
+                            enabled: false 
                         }
                     };
                 }
@@ -2395,13 +2526,14 @@
             const data = tickers.map(t => allPerformanceData.get(t)).filter(Boolean);
             if (data.length === 0) { container.innerHTML = 'No data to display.'; return; }
 
-            const asOfDateStr = `As of: ${formatDateDDMMMYYYY(effectiveEndDate)}`;
+            const asOfDateStr = formatDateByPattern(effectiveEndDate, CHART_TABLE_DATE_FORMATS[chartTableDateFormatIndex]);
             const endYear = effectiveEndDate.getFullYear();
             const ytdStartDate = new Date(endYear, 0, 1);
             const sinceStartDate = new Date(endYear - 1, 0, 1);
             const sinceHeader = `Since ${endYear - 1}`;
 
-            let tableHTML = `<table id="perf-table-${chartId}"><thead><tr><th>${asOfDateStr}</th>`;
+            let tableHTML = `<table id="perf-table-${chartId}"><thead><tr>
+                <th class="clickable-text" onclick="openChartTableDateFormatModal('${chartId}')">As of: ${asOfDateStr}</th>`;
             data.forEach(item => { tableHTML += `<th title="${item.ticker}">${item.name}</th>`; });
             tableHTML += '</tr></thead><tbody>';
 
@@ -2471,6 +2603,12 @@
             const dateMap = new Map();
             labels.forEach((d, i) => dateMap.set(d.getTime(), i));
 
+             // Year Indices
+            const yearIndices = {};
+            labels.forEach((d, i) => { const y = d.getFullYear(); if(!yearIndices[y]) yearIndices[y] = []; yearIndices[y].push(i); });
+            const yearMidpoints = {};
+            Object.keys(yearIndices).forEach(y => { const arr = yearIndices[y]; yearMidpoints[y] = arr[Math.floor(arr.length / 2)]; });
+
             for (let i = 0; i < 4; i++) {
                 const canvasId = `canvas-chart-${chartId}-${i}`;
                 const ctx = document.getElementById(canvasId);
@@ -2526,7 +2664,7 @@
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        layout: { padding: { right: 40, bottom: 30 } },
+                        layout: { padding: { right: 40, bottom: 20 } },
                         plugins: {
                             annotation: { annotations: getYearLinesForCategoryAxis(labels) },
                             legend: { display: true, labels: { color: textColor, usePointStyle: false, font: { size: 16 } } },
@@ -2544,10 +2682,22 @@
                                     maxRotation: 0, autoSkip: true, font: { size: 16 },
                                     callback: function(val) {
                                          const date = this.getLabelForValue(val);
-                                         return date instanceof Date ? formatDateMMDD(date) : date;
+                                         return date instanceof Date ? formatDateDDMMM(date) : date; // Default Chart View Format
                                     }
                                 }, 
-                                grid: { display: false } 
+                                grid: { display: true, color: gridColor } 
+                            },
+                            xYear: { // Secondary X Axis
+                                type: 'category', labels: labels, position: 'bottom',
+                                grid: { display: false, drawTicks: false },
+                                ticks: {
+                                    autoSkip: false, maxRotation: 0, minRotation: 0, color: textColor, font: { size: 16, weight: 'bold' }, padding: 5,
+                                    callback: function(val, index) {
+                                        const d = this.getLabelForValue(val);
+                                        if(d instanceof Date && index === yearMidpoints[d.getFullYear()]) return d.getFullYear();
+                                        return '';
+                                    }
+                                }
                             },
                             yPrice: {
                                 type: 'linear', position: 'right', 
@@ -2583,9 +2733,9 @@
             
             const effectiveEndDate = new Date(endDate);
             const threeMonthStartDate = new Date(new Date(effectiveEndDate).setMonth(effectiveEndDate.getMonth() - 3));
-            const asOfDateStr = `As of: ${formatDateDDMMMYYYY(effectiveEndDate)}`;
+            const asOfDateStr = formatDateByPattern(effectiveEndDate, CHART_TABLE_DATE_FORMATS[chartTableDateFormatIndex]);
 
-            let tableHTML = `<table id="perf-table-${chartId}"><thead><tr><th>${asOfDateStr}</th>`;
+            let tableHTML = `<table id="perf-table-${chartId}"><thead><tr><th class="clickable-text" onclick="openChartTableDateFormatModal('${chartId}')">As of: ${asOfDateStr}</th>`;
             tickers.forEach(ticker => {
                 const perfData = allPerformanceData.get(ticker);
                 tableHTML += `<th>${perfData ? perfData.name : ticker}</th>`;
@@ -2697,6 +2847,19 @@
             const isDarkMode = document.body.classList.contains('dark-mode');
             const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
             const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            
+            // Year Indices for Secondary X-Axis
+            const yearIndices = {};
+            labels.forEach((d, i) => {
+                const y = d.getFullYear();
+                if(!yearIndices[y]) yearIndices[y] = [];
+                yearIndices[y].push(i);
+            });
+            const yearMidpoints = {};
+            Object.keys(yearIndices).forEach(y => {
+                const arr = yearIndices[y];
+                yearMidpoints[y] = arr[Math.floor(arr.length / 2)];
+            });
 
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line',
@@ -2716,18 +2879,46 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { right: 50, bottom: 20 } },
                     scales: {
                         x: { 
                             type: 'category', 
                             ticks: { 
                                 color: textColor, 
-                                maxRotation: 0, autoSkip: true, font: { size: 16 },
-                                callback: function(val) {
+                                maxRotation: 0, autoSkip: false, font: { size: 16 },
+                                callback: function(val, index) {
                                      const date = this.getLabelForValue(val);
-                                     return date instanceof Date ? formatDateMMDD(date) : date;
+                                     if(!(date instanceof Date)) return date;
+                                     const prevDate = index > 0 ? labels[index-1] : null;
+                                     // Default Logic: Monthly (similar to YTD logic or default sparse)
+                                     if (index === 0) return formatDateDDMMM(date);
+                                     
+                                     // For individual chart, adapt to period duration roughly
+                                     const durationDays = (labels[labels.length-1] - labels[0]) / 86400000;
+                                     
+                                     if (durationDays < 40) return formatDateDDMMM(date); // Short duration: dense
+                                     
+                                     // > 1 month, show weekly-ish
+                                     if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
+                                         if (durationDays > 100 && index < 3) return null; // Avoid bunching start of longer periods
+                                         return formatDateDDMMM(date);
+                                     }
+                                     return null;
                                 }
                             },
-                            grid: { display: false } 
+                            grid: { display: true, color: gridColor } 
+                        },
+                        xYear: { // Secondary X Axis
+                            type: 'category', labels: labels, position: 'bottom',
+                            grid: { display: false, drawTicks: false },
+                            ticks: {
+                                autoSkip: false, maxRotation: 0, minRotation: 0, color: textColor, font: { size: 16, weight: 'bold' }, padding: 5,
+                                callback: function(val, index) {
+                                    const d = this.getLabelForValue(val);
+                                    if(d instanceof Date && index === yearMidpoints[d.getFullYear()]) return d.getFullYear();
+                                    return '';
+                                }
+                            }
                         },
                         y: { 
                             position: 'right', 
@@ -2746,7 +2937,7 @@
             openModal('tickerModal');
         }
 
-        // --- Data Tab Functions --- (Unchanged, kept for completeness)
+        // --- Data Tab Functions --- 
         function pivotDataForDownload() {
             try {
                 const uniqueDates = [...new Set(allData.map(d => d.originalDateStr.split(' ')[0]))].sort();
@@ -2766,27 +2957,32 @@
                 });
                 
                 let lastKnownPrices = {};
-                uniqueTickers.forEach(t => lastKnownPrices[t] = null);
+                let lastKnownVolumes = {}; // Forward fill logic
+                uniqueTickers.forEach(t => { lastKnownPrices[t] = null; lastKnownVolumes[t] = null; });
                 
                 uniqueDates.forEach(date => {
                      const pMap = priceDataMap.get(date);
-                     const rowData = [];
+                     const vMap = volumeDataMap.get(date);
+                     
+                     const rowP = [];
+                     const rowV = [];
                      
                      uniqueTickers.forEach(ticker => {
-                         let val = pMap.get(ticker);
-                         if (val !== undefined && val !== null) {
-                             lastKnownPrices[ticker] = val;
-                         } else {
-                             val = lastKnownPrices[ticker]; // Forward fill
-                         }
-                         rowData.push(val);
-                     });
-                     pivotedPriceData.set(date, rowData);
-                });
+                         // Price
+                         let pVal = pMap.get(ticker);
+                         if (pVal !== undefined && pVal !== null) { lastKnownPrices[ticker] = pVal; } 
+                         else { pVal = lastKnownPrices[ticker]; }
+                         rowP.push(pVal);
 
-                uniqueDates.forEach(date => {
-                    const vMap = volumeDataMap.get(date);
-                    pivotedVolumeData.set(date, uniqueTickers.map(ticker => vMap.get(ticker) || null));
+                         // Volume
+                         let vVal = vMap.get(ticker);
+                         if (vVal !== undefined && vVal !== null) { lastKnownVolumes[ticker] = vVal; } 
+                         else { vVal = lastKnownVolumes[ticker]; }
+                         rowV.push(vVal);
+                     });
+                     
+                     pivotedPriceData.set(date, rowP);
+                     pivotedVolumeData.set(date, rowV);
                 });
 
                 isDataPivoted = true;
@@ -2809,10 +3005,25 @@
             const container = document.getElementById('data-table-container');
             container.innerHTML = ''; 
             
-            const startDateVal = document.getElementById('data-start-date').value;
-            const endDateVal = document.getElementById('data-end-date').value;
-            const startDate = startDateVal ? new Date(startDateVal) : null;
-            const endDate = endDateVal ? new Date(endDateVal) : null;
+            // Set Default Dates if empty (3 months ago to Today)
+            const today = new Date();
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(today.getMonth() - 3);
+
+            let startDateVal = document.getElementById('data-start-date').value;
+            let endDateVal = document.getElementById('data-end-date').value;
+            
+            if (!startDateVal) {
+                startDateVal = formatDateYYYYMMDD(threeMonthsAgo);
+                document.getElementById('data-start-date').value = startDateVal;
+            }
+            if (!endDateVal) {
+                endDateVal = formatDateYYYYMMDD(today);
+                document.getElementById('data-end-date').value = endDateVal;
+            }
+
+            const startDate = new Date(startDateVal);
+            const endDate = new Date(endDateVal);
 
             const summaryTickers = [
                 '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO','3034.TW','2303.TW','3035.TW','3661.TW','0981.HK','6723.T','688981.SS','603005.SS','QCOM.O', 'GFS'
@@ -2831,7 +3042,6 @@
             const volumeColumns = finalHeaders.map((header, index) => ({
                 title: header,
                 width: index === 0 ? 120 : 100,
-                readOnly: true,
                 type: index === 0 ? 'text' : 'numeric',
                 mask: index > 0 ? '#,##' : null,
             }));
@@ -2843,9 +3053,7 @@
 
                 const allValues = pivotedPriceData.get(date);
                 const filteredValues = tickerIndicesToKeep.map(i => allValues[i]);
-                if(filteredValues.some(v => v !== null)) {
-                    priceSheetData.push([date, ...filteredValues]);
-                }
+                priceSheetData.push([date, ...filteredValues]);
             });
 
             const volumeSheetData = [];
@@ -2855,9 +3063,7 @@
 
                 const allValues = pivotedVolumeData.get(date);
                 const filteredValues = tickerIndicesToKeep.map(i => allValues[i]);
-                 if(filteredValues.some(v => v !== null)) {
-                    volumeSheetData.push([date, ...filteredValues]);
-                }
+                volumeSheetData.push([date, ...filteredValues]);
             });
 
             jspreadsheetInstance = jspreadsheet(container, {
@@ -2935,8 +3141,6 @@
 
 
         // --- News Tab Functions ---
-        // (Kept standard logic, omitted full repeat for brevity unless requested, 
-        // assumes `fetchAndDisplayNews` and `filterAndDisplayNews` are same as V5 but functional)
         function setupNewsTab() {
             const companyFilter = document.getElementById('news-filter-company');
             if (!companyFilter) return;
@@ -2969,8 +3173,6 @@
             newsAvailableDates = [];
             newsSelectedRange = { start: null, end: null };
 
-            // ... (News fetching logic same as V5) ...
-            // Simplified here for code limit, assuming identical robust logic as previous version
              if (ticker === 'all') {
                 statusEl.textContent = 'Loading news for All Companies...';
                 let allNewsItems = [];
@@ -3067,8 +3269,6 @@
         function filterAndDisplayNews() {
             const contentContainer = document.getElementById('news-content');
             if (!currentNewsData || !currentNewsData.news) return;
-            // ... (Filter logic same as V5) ...
-            // Re-rendering HTML ...
             const selectedSource = document.getElementById('news-filter-source').value;
             const filteredNews = currentNewsData.news.filter(item => {
                 const sourceMatch = (selectedSource === 'all' || item.Source === selectedSource);
@@ -3097,7 +3297,6 @@
                 newsHTML += `<div class="news-item" id="news-item-${originalIndex}" onclick="showNewsDetail(${originalIndex})"><div class="news-meta-top"><span>${displayDate} ${item.Time}</span><span class="ticker-name">${item.tickerName || tickerName}</span><span>${item.Source}</span></div><h4 class="news-title">${item.Title}</h4></div>`;
             });
             contentContainer.innerHTML = newsHTML;
-            // ... (Handle empty state) ...
         }
 
         function setActiveNewsItem(selectedId) { document.querySelectorAll('#news-content .news-item').forEach(item => { item.classList.toggle('active', item.id === selectedId); }); }
@@ -3153,7 +3352,9 @@
                 headers.forEach((th, index) => {
                     const align = (index === 0) ? 'left' : 'right';
                     const width = (index === 0) ? '35%' : `${65/(headers.length-1)}%`;
-                    html += `<th width="${width}" style="background-color:#000000; color:#ffffff; padding:6px 5px; border:1px solid #e0e0e0; text-align:${align}; white-space:nowrap; font-weight:600; font-size:12px; line-height:1.2; vertical-align:middle;">${th.textContent.trim().replace(' ▲','').replace(' ▼','')}</th>`;
+                    // Remove As of clickability for report
+                    const text = th.textContent.trim().replace('As of: ', 'As of ').replace(/\(.*\)/, '').replace(' ▲','').replace(' ▼','');
+                    html += `<th width="${width}" style="background-color:#000000; color:#ffffff; padding:6px 5px; border:1px solid #e0e0e0; text-align:${align}; white-space:nowrap; font-weight:600; font-size:12px; line-height:1.2; vertical-align:middle;">${text}</th>`;
                 });
                 html += '</tr></thead>';
             }
@@ -3281,14 +3482,22 @@
                     }
                     
                     if (bestMatch) {
-                        const content = bestMatch.Content || 'No summary content.';
+                        const content = bestMatch.Content || '';
+                        // Filter logic: Only keep lines starting with bullets
                         const bulletPoints = content.split('\n')
                                                     .map(line => line.trim())
-                                                    .filter(line => line.length > 0)
-                                                    .map(line => line.replace(/^•\s*/, '').replace(/^&bull;\s*/, ''))
+                                                    .filter(line => line.match(/^[•\-\*]/)) // Regex for bullet points
+                                                    .slice(0, 2) // Take only first two bullets
+                                                    .map(line => line.replace(/^[•\-\*]\s*/, ''))
                                                     .map(line => `&bull; ${line}`)
                                                     .join('<br>');
-                        reportBodyHTML += `<p style="margin-left: 20px; font-family: Arial, sans-serif; font-size: 0.9rem; line-height: 1.6; color: #333;">${bulletPoints}</p>`;
+                        
+                        if (bulletPoints) {
+                            // Added white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; to fix overflow
+                            reportBodyHTML += `<p style="margin-left: 20px; font-family: Arial, sans-serif; font-size: 0.9rem; line-height: 1.6; color: #333; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">${bulletPoints}</p>`;
+                        } else {
+                             reportBodyHTML += `<p style="margin-left: 20px; color: #888; font-style: italic;">- No bullet points found in summary.</p>`;
+                        }
                     } else {
                         reportBodyHTML += `<p style="margin-left: 20px; color: #888; font-style: italic;">- No summary available near this date.</p>`;
                     }
