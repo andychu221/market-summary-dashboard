@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watchlist Dashboard V26 (Final Polish)</title>
+    <title>Watchlist Dashboard V31 (Refined Borders)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
@@ -121,7 +121,6 @@
             margin-right: 10px;
         }
         
-        /* Folder Tabs Styling (Global for Main and Sub Tabs) */
         .tabs, .chart-sub-tabs {
             display: flex;
             margin-bottom: -1px; /* Overlap border */
@@ -159,7 +158,6 @@
             padding-top: 12px; /* Slight pop up visual */
             margin-top: -2px;
         }
-        /* Sub Tab specific tweaks to reset button styles from previous CSS */
         .chart-sub-tab-link {
             font-size: 0.95rem;
             padding: 8px 20px;
@@ -239,7 +237,6 @@
             display: block;
         }
 
-
         .view-content { display: none; }
         .view-content.active { display: block; }
 
@@ -280,7 +277,6 @@
         .text-positive { color: var(--positive-color) !important; font-weight: 500; }
         .text-negative { color: var(--negative-color) !important; font-weight: 500; }
         
-        /* Clickable text for headers in chart */
         .clickable-text {
             cursor: pointer;
             text-decoration: underline;
@@ -304,7 +300,6 @@
             background-color: var(--bg-color); color: var(--text-primary);
         }
         
-        /* Cursor Fixes for Buttons/Inputs */
         .controls-input[type="button"], 
         .controls-input[type="submit"], 
         .controls-input[onclick], 
@@ -336,7 +331,7 @@
             position: relative;
             transform: translateY(-50px); transition: transform 0.3s ease-out;
         }
-        .modal-sm { max-width: 400px; margin-top: 15%; } /* Small modal for date/settings */
+        .modal-sm { max-width: 400px; margin-top: 15%; } 
         
         #report-modal-content-area {
             max-height: 70vh;
@@ -446,6 +441,38 @@
         }
         .modal-header { text-align: center; margin-bottom: 10px; color: var(--text-primary); }
         .modal-chart-container { position: relative; height: 500px; width: 100%; }
+        
+        /* New style for chart overlay popup */
+        #chart-news-overlay {
+            display: none;
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            width: 300px;
+            max-height: 400px;
+            background-color: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-strong);
+            border-radius: 8px;
+            padding: 15px;
+            z-index: 20;
+            overflow-y: auto;
+        }
+        #chart-news-overlay h4 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .chart-news-item { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+        .chart-news-item:last-child { border-bottom: none; }
+        .chart-news-item a { color: var(--primary-color); text-decoration: none; font-weight: 600; display: block; margin-bottom: 4px; }
+        .chart-news-item .meta { font-size: 0.8rem; color: var(--text-secondary); }
+        
+        .chart-options-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        .chart-options-bar input[type="checkbox"] {
+            margin-right: 8px;
+        }
 
         #summary { padding: 10px 0; }
         .summary-header {
@@ -548,7 +575,6 @@
         .summary-card td:first-child, .summary-card th:first-child { width: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .summary-card .clickable-row:hover { background-color: var(--hover-bg); }
         
-        /* Interactive header for Summary */
         .summary-clickable-header {
             cursor: pointer;
             text-decoration: underline;
@@ -940,14 +966,23 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal('tickerModal')">&times;</span>
             <h2 id="modalTickerName" class="modal-header"></h2>
+            
+            <div class="chart-options-bar">
+                <input type="checkbox" id="show-news-markers" checked onchange="toggleNewsMarkers()">
+                <label for="show-news-markers">Show News Markers</label>
+            </div>
+            
             <div class="chart-time-controls" id="modal-time-controls" style="justify-content: flex-start; padding-bottom: 0; border-bottom: none;">
                  <button data-period="3m">3-Month</button>
                  <button data-period="6m">6-Month</button>
                  <button data-period="ytd">YTD</button>
-                 <button class="active" data-period="last_calendar">Since Last Year</button>
+                 <button data-period="last_calendar">Since Last Year</button>
                  <button data-period="5y">5-Year</button>
             </div>
-            <div class="modal-chart-container"><canvas id="individualTickerChart"></canvas></div>
+            <div class="modal-chart-container">
+                <canvas id="individualTickerChart"></canvas>
+                <div id="chart-news-overlay"></div>
+            </div>
         </div>
     </div>
     
@@ -1075,11 +1110,11 @@
         const CHART_TABLE_DATE_FORMATS = ['dd/mmm/yyyy', 'mm/dd/yyyy', 'dd/mm/yyyy', 'yyyy/mm/dd'];
         let chartTableDateFormatIndex = 0; // Default dd/mmm/yyyy
 
-        // Summary Ticker Groups (Editable)
+        // Summary Ticker Groups (Editable) - SORTED PEERS
         let summaryTickersConfig = {
             'equity-index': { 
                 title: 'Benchmark',
-                tickers: ['.TWII', '.SOX'] 
+                tickers: ['.TWII', '.SOX', '.IXIC', '.NYA', '.SPX'] 
             },
             'tw-stocks': { 
                 title: 'Watchlist',
@@ -1087,7 +1122,21 @@
             },
             'us-stocks': { 
                 title: 'Peers',
-                tickers: ['2303.TW', '3034.TW','3035.TW','3661.TW', '0981.HK','688981.SS','603005.SS', '6723.T','QCOM.O','GFS'] 
+                // USD (Sorted by Market Cap) -> TWD -> JPY -> CNY -> HKD -> (EUR)
+                tickers: [
+                    // USD
+                    'NVDA.O', 'TSM.N', 'AMD.O', 'QCOM.O', 'ARM.O', 'INTC.O', 'MRVL.O', 'NXPI.O', 'GFS', 'SWKS.O', 'QRVO.O', 'TSEM.O',
+                    // TWD
+                    '2330.TW', '2454.TW', '3034.TW', '3661.TW', '3035.TW',
+                    // JPY
+                    '6723.T', '6526.T',
+                    // CNY
+                    '688981.SS', '603005.SS',
+                    // HKD
+                    '0981.HK',
+                    // EUR (Extra)
+                    'IFXGn.DE'
+                ] 
             }
         };
 
@@ -1097,7 +1146,7 @@
             { id: 'Ticker', label: 'Ticker', visible: true },
             { id: 'Date', label: 'Date', visible: true },
             { id: 'Time', label: 'Time', visible: false },
-            { id: 'Local Ccy', label: 'Local Ccy', visible: true },
+            { id: 'Local Ccy', label: 'Ccy', visible: true },
             { id: 'Price', label: 'Price', visible: true },
             { id: '1-Day', label: '1-Day', visible: true },
             { id: '1-Week', label: '1-Week', visible: true },
@@ -1143,23 +1192,33 @@
         let chartAxisUnits = { 'Chart-0': 'auto','Chart-1': 'auto', 'Chart-2': 'auto', 'Chart-3': 'auto', 'Chart-4': 'auto', 'Chart-5': 'auto', 'Chart-6': 'auto', 'Chart-7': 'auto'};
 
         const TICKER_COLORS = {
-            '3443.TW': '#1f77b4', // Muted Blue
-            '6789.TW': '#ff7f0e', // Safety Orange
-            '5347.TWO': '#2ca02c', // Cooked Asparagus Green
-            '3374.TWO': '#d62728', // Brick Red
-            '.TWII': '#000000',//'#9467bd', // Muted Purple
-            '2303.TW': '#8c564b', // Chestnut Brown
-            '0981.HK': '#e377c2', // Raspberry Sorbet Pink
-            '688981.SS': '#7f7f7f', // Middle Gray
-            'GFS': '#bcbd22', // Curry Yello
-            '3034.TW': '#17becf', // Blue-Teal
-            'QCOM.O': '#aec7e8', // Light Blue
-            '6723.T': '#ffbb78', // Light Orange
-            '3661.TW': '#98df8a', // Light Green
-            '3035.TW': '#ff9896', // Light Red
-            '603005.SS': '#c5b0d5', // Light Purple
-            '.SOX': '#17becf', // Blue-Teal (duplicate, but ok)
-            'default': '#bab0ac' // Default gray
+            '3443.TW': '#1f77b4', 
+            '6789.TW': '#ff7f0e', 
+            '5347.TWO': '#2ca02c', 
+            '3374.TWO': '#d62728', 
+            '.TWII': '#000000',
+            '2303.TW': '#8c564b', 
+            '0981.HK': '#e377c2', 
+            '688981.SS': '#7f7f7f', 
+            'GFS': '#bcbd22', 
+            '3034.TW': '#17becf', 
+            'QCOM.O': '#aec7e8', 
+            '6723.T': '#ffbb78', 
+            '3661.TW': '#98df8a', 
+            '3035.TW': '#ff9896', 
+            '603005.SS': '#c5b0d5', 
+            '.SOX': '#17becf',
+            // New Colors for Major Peers
+            'NVDA.O': '#76b900', // Nvidia Green
+            'AMD.O': '#ED1C24', // AMD Red
+            'INTC.O': '#0071c5', // Intel Blue
+            'ARM.O': '#0091bd', // Arm Blue
+            '2330.TW': '#8b0000', // TSMC Dark Red
+            'TSM.N': '#8b0000',
+            'NXPI.O': '#f5a623',
+            'IFXGn.DE': '#800080',
+            'MRVL.O': '#4a4a4a',
+            'default': '#bab0ac' 
         };
 
         // --- Utility Functions ---
@@ -1286,6 +1345,14 @@
                if (!e.target.closest('.date-range-dropdown')) {
                    const menu = document.getElementById('news-date-range-content');
                    if(menu) menu.classList.remove('show');
+               }
+               // Close chart overlay if clicking outside
+               const overlay = document.getElementById('chart-news-overlay');
+               if (overlay && overlay.style.display === 'block' && !overlay.contains(e.target) && e.target.tagName !== 'CANVAS') {
+                   // Only close if we aren't clicking the close button which has its own handler
+                   if (!e.target.closest('span[onclick]')) {
+                       overlay.style.display = 'none';
+                   }
                }
             });
             loadAllDataFromGitHub();
@@ -1425,7 +1492,9 @@
             else if (ticker.endsWith('.HK')) currency = 'HKD';
             else if (ticker.endsWith('.SS')) currency = 'CNY';
             else if (ticker.endsWith('.T')) currency = 'JPY';
-            else if (ticker === '.SOX' || ticker.endsWith('.O') || market === 'US Stocks') currency = 'USD';
+            else if (ticker.endsWith('.DE')) currency = 'EUR'; // Added Infineon
+            // Force US Indices and TSM to USD
+            else if (['.SOX', '.IXIC', '.NYA', '.SPX', 'TSM', 'GFS'].includes(ticker) || ticker.endsWith('.O') || market === 'US Stocks') currency = 'USD';
 
             const findDataPointOnOrBefore = (date, data = tickerData) => {
                 if (!date || isNaN(date.getTime())) return null;
@@ -1936,8 +2005,9 @@
                 headerHTML += '</tr></thead>';
 
                 let bodyHTML = '<tbody>';
+                let previousCurrency = null; // Track currency for separator
 
-                data.forEach(item => {
+                data.forEach((item, index) => {
                     const isRate = false;
                     const inverted = false;
                     const dataPointOnRefDate = item.findDataPointOnOrBefore(refDate);
@@ -1950,6 +2020,13 @@
                         bodyHTML += '</tr>';
                         return;
                     }
+
+                    // Check for currency change to add separator line
+                    let rowStyle = "";
+                    if (index > 0 && item.currency !== previousCurrency) {
+                        rowStyle = 'style="border-top:  1.5px solid #bbb;"'; // Changed to dark grey
+                    }
+                    previousCurrency = item.currency;
 
                     const priceOnRefDate = dataPointOnRefDate.price;
                     const dateOnRefDate = formatDateByPattern(dataPointOnRefDate.date, DATE_FORMATS[currentDateFormatIndex]);
@@ -1975,7 +2052,7 @@
 
                     const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
                     
-                    bodyHTML += `<tr data-ticker="${item.ticker}" class="clickable-row">`;
+                    bodyHTML += `<tr data-ticker="${item.ticker}" class="clickable-row" ${rowStyle}>`;
                     
                     summaryColumnsState.forEach(col => {
                         let cellContent = '';
@@ -2037,7 +2114,8 @@
                     const row = event.target.closest('tr');
                     // Ensure click is on a body row and not header
                     if (row && row.parentNode.tagName === 'TBODY' && row.dataset.ticker) {
-                        showIndividualTickerChart(row.dataset.ticker, 'last_calendar', summaryReferenceDate);
+                        // Changed default to 3m
+                        showIndividualTickerChart(row.dataset.ticker, '3m', summaryReferenceDate);
                     }
                 });
             });
@@ -2369,7 +2447,7 @@
                     data: dataArray, 
                     borderColor: color, 
                     backgroundColor: color + '33', 
-                    borderWidth: 2.5,
+                    borderWidth: 2.5, 
                     pointRadius: 0, 
                     pointHoverRadius: 6, pointHoverBorderWidth: 3,
                     pointHoverBackgroundColor: 'transparent', pointHoverBorderColor: color,
@@ -2410,18 +2488,29 @@
                                      
                                      const prevDate = index > 0 ? labels[index-1] : null;
 
-                                     // 1-month & 3-month: Weekly (First trading day of week)
-                                     if (currentPeriod === '1m' || currentPeriod === '3m') {
+                                     // 1-month: Weekly (First trading day of week)
+                                     if (currentPeriod === '1m') {
                                          if (index === 0) return formatDateDDMMM(date);
-                                         
-                                         // If day number decreases (e.g., Fri 5 -> Mon 1) or large gap
                                          if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
-                                             // For 3-month, avoid bunching near start
-                                             if (currentPeriod === '3m' && index < 3) return null;
-                                             
                                              return formatDateDDMMM(date);
                                          }
                                          return null; // hide
+                                     }
+                                     
+                                     // 3-month: Bi-Weekly
+                                     if (currentPeriod === '3m') {
+                                          const getWeekNum = d => {
+                                              const onejan = new Date(d.getFullYear(),0,1);
+                                              return Math.ceil((((d - onejan) / 86400000) + onejan.getDay()+1)/7);
+                                          };
+                                          if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
+                                               if (getWeekNum(date) % 2 === 0) {
+                                                   if (index < 5) return null; // prevent bunching at start
+                                                   return formatDateDDMMM(date);
+                                               }
+                                          }
+                                          if (index === 0) return formatDateDDMMM(date);
+                                          return null;
                                      }
                                      
                                      // YTD: Monthly (First trading day of month)
@@ -2456,7 +2545,7 @@
                                 maxRotation: 0,
                                 minRotation: 0,
                                 color: textColor,
-                                font: { size: 16, weight: 'bold' },
+                                font: { size: 16, weight: 'normal' }, // Removed bold
                                 padding: 5,
                                 callback: function(val, index) {
                                     const d = this.getLabelForValue(val);
@@ -2679,7 +2768,7 @@
                                 type: 'category', 
                                 ticks: { 
                                     color: textColor, 
-                                    maxRotation: 0, autoSkip: true, font: { size: 16 },
+                                    maxRotation: 0, autoSkip: true, font: { size: 10 }, // Small Font
                                     callback: function(val) {
                                          const date = this.getLabelForValue(val);
                                          return date instanceof Date ? formatDateDDMMM(date) : date; // Default Chart View Format
@@ -2691,7 +2780,7 @@
                                 type: 'category', labels: labels, position: 'bottom',
                                 grid: { display: false, drawTicks: false },
                                 ticks: {
-                                    autoSkip: false, maxRotation: 0, minRotation: 0, color: textColor, font: { size: 16, weight: 'bold' }, padding: 5,
+                                    autoSkip: false, maxRotation: 0, minRotation: 0, color: textColor, font: { size: 10, weight: 'normal' }, padding: 5,
                                     callback: function(val, index) {
                                         const d = this.getLabelForValue(val);
                                         if(d instanceof Date && index === yearMidpoints[d.getFullYear()]) return d.getFullYear();
@@ -2701,17 +2790,17 @@
                             },
                             yPrice: {
                                 type: 'linear', position: 'right', 
-                                title: { display: true, text: 'Price', color: textColor, font: { size: 18 } },
-                                ticks: { color: textColor, font: { size: 16 } }, 
+                                title: { display: true, text: 'Price', color: textColor, font: { size: 14 } },
+                                ticks: { color: textColor, font: { size: 10 } }, // Small Font
                                 grid: { color: gridColor },
                                 min: suggestedMin, max: suggestedMax
                             },
                             yVolume: {
                                 type: 'linear', position: 'left', 
-                                title: { display: true, text: 'Volume', color: textColor, font: { size: 18 } },
+                                title: { display: true, text: 'Volume', color: textColor, font: { size: 14 } },
                                 ticks: {
                                     color: textColor,
-                                    font: { size: 16 },
+                                    font: { size: 10 }, // Small Font
                                     callback: (value) => {
                                         if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B';
                                         if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
@@ -2804,13 +2893,17 @@
         }
 
         // --- Individual Ticker Chart Modal (Trading Days) ---
-        function showIndividualTickerChart(ticker, period = 'last_calendar', referenceDate = latestDataDate) {
+        async function showIndividualTickerChart(ticker, period = 'last_calendar', referenceDate = latestDataDate) {
             const modal = document.getElementById('tickerModal');
             const tickerData = allData.filter(d => d.ticker === ticker);
             if (tickerData.length === 0) return;
 
             const name = tickerData[0].name;
             document.getElementById('modalTickerName').textContent = `${name} (${ticker})`;
+            
+            // Sync checkbox state if needed or let it be. 
+            // We assume the checkbox keeps its state unless reset.
+            const showMarkers = document.getElementById('show-news-markers').checked;
 
             const timeControls = document.getElementById('modal-time-controls');
             timeControls.querySelectorAll('button').forEach(btn => {
@@ -2825,7 +2918,7 @@
                 case '6m': startDate = new Date(new Date(tempDate).setMonth(tempDate.getMonth() - 6)); break;
                 case 'ytd': startDate = new Date(tempDate.getFullYear(), 0, 1); break;
                 case '5y': startDate = new Date(new Date(tempDate).setFullYear(tempDate.getFullYear() - 5)); break;
-                default: startDate = new Date(tempDate.getFullYear() - 1, 0, 1); break;
+                case 'last_calendar': default: startDate = new Date(tempDate.getFullYear() - 1, 0, 1); break;
             }
 
             const rangeData = tickerData
@@ -2835,6 +2928,40 @@
             // Create Labels (Category Axis)
             const labels = rangeData.map(d => d.date);
             const dataValues = rangeData.map(d => d.price);
+
+            // Fetch News for this ticker
+            let newsMap = new Map();
+            if (newsTickers[ticker]) {
+                const url = `https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${ticker}.json`;
+                try {
+                    const data = await fetchJsonWithRetry(url);
+                    if (data && data.news) {
+                        data.news.forEach(item => {
+                            const dateKey = item.Date; // "YYYY-MM-DD"
+                            if (!newsMap.has(dateKey)) newsMap.set(dateKey, []);
+                            newsMap.get(dateKey).push(item);
+                        });
+                    }
+                } catch (e) { console.log('No news found or error fetching for chart: ' + ticker); }
+            }
+
+            // Create Point Style Arrays for Datasets
+            const pointRadiuses = [];
+            const pointBackgroundColors = [];
+            const pointBorderColors = [];
+
+            labels.forEach(date => {
+                const dateStr = formatDateYYYYMMDD(date);
+                if (showMarkers && newsMap.has(dateStr)) {
+                    pointRadiuses.push(6); // Larger radius for news
+                    pointBackgroundColors.push('#FFFF00'); // Yellow
+                    pointBorderColors.push('#000000');
+                } else {
+                    pointRadiuses.push(0); // Standard invisible point
+                    pointBackgroundColors.push('rgba(74, 144, 226, 0.2)');
+                    pointBorderColors.push('rgba(74, 144, 226, 1)');
+                }
+            });
 
             const canvasId = 'individualTickerChart';
             const ctx = document.getElementById(canvasId).getContext('2d');
@@ -2871,8 +2998,10 @@
                         borderColor: 'rgba(74, 144, 226, 1)',
                         backgroundColor: 'rgba(74, 144, 226, 0.2)', borderWidth: 2,
                         fill: true, 
-                        pointRadius: 0,
-                        pointHoverRadius: 6,
+                        pointRadius: pointRadiuses, // Dynamic
+                        pointBackgroundColor: pointBackgroundColors, // Dynamic
+                        pointBorderColor: pointBorderColors,
+                        pointHoverRadius: 8,
                         tension: 0.1, 
                         spanGaps: true
                     }] 
@@ -2890,18 +3019,39 @@
                                      const date = this.getLabelForValue(val);
                                      if(!(date instanceof Date)) return date;
                                      const prevDate = index > 0 ? labels[index-1] : null;
-                                     // Default Logic: Monthly (similar to YTD logic or default sparse)
+
+                                     // Logic matching createComparisonChart
+                                     // 3-month: Bi-Weekly
+                                     if (period === '3m') {
+                                         const getWeekNum = d => {
+                                              const onejan = new Date(d.getFullYear(),0,1);
+                                              return Math.ceil((((d - onejan) / 86400000) + onejan.getDay()+1)/7);
+                                         };
+                                         if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
+                                               if (getWeekNum(date) % 2 === 0) {
+                                                   if (index < 5) return null; // prevent bunching at start
+                                                   return formatDateDDMMM(date);
+                                               }
+                                         }
+                                         if (index === 0) return formatDateDDMMM(date);
+                                         return null;
+                                     }
+                                     
+                                     // 6m: Monthly
+                                     if (period === '6m' || period === 'ytd') {
+                                         if (index === 0) return formatDateDDMMM(date);
+                                         if (prevDate && date.getMonth() !== prevDate.getMonth()) return formatDateDDMMM(date);
+                                         return null;
+                                     }
+
+                                     // Long periods: Quarterly
                                      if (index === 0) return formatDateDDMMM(date);
-                                     
-                                     // For individual chart, adapt to period duration roughly
-                                     const durationDays = (labels[labels.length-1] - labels[0]) / 86400000;
-                                     
-                                     if (durationDays < 40) return formatDateDDMMM(date); // Short duration: dense
-                                     
-                                     // > 1 month, show weekly-ish
-                                     if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
-                                         if (durationDays > 100 && index < 3) return null; // Avoid bunching start of longer periods
-                                         return formatDateDDMMM(date);
+                                     if (prevDate) {
+                                         const qCurrent = Math.floor(date.getMonth() / 3);
+                                         const qPrev = Math.floor(prevDate.getMonth() / 3);
+                                         if (qCurrent !== qPrev || date.getFullYear() !== prevDate.getFullYear()) {
+                                             return formatDateDDMMM(date);
+                                         }
                                      }
                                      return null;
                                 }
@@ -2912,7 +3062,7 @@
                             type: 'category', labels: labels, position: 'bottom',
                             grid: { display: false, drawTicks: false },
                             ticks: {
-                                autoSkip: false, maxRotation: 0, minRotation: 0, color: textColor, font: { size: 16, weight: 'bold' }, padding: 5,
+                                autoSkip: false, maxRotation: 0, minRotation: 0, color: textColor, font: { size: 16, weight: 'normal' }, padding: 5,
                                 callback: function(val, index) {
                                     const d = this.getLabelForValue(val);
                                     if(d instanceof Date && index === yearMidpoints[d.getFullYear()]) return d.getFullYear();
@@ -2931,6 +3081,42 @@
                         legend: { display: false },
                         tooltip: { mode: 'index', intersect: false, callbacks: { title: (t) => formatDateDDMMMYYYY(t[0].label) } },
                         annotation: { annotations: getYearLinesForCategoryAxis(labels) }
+                    },
+                    onClick: (e) => {
+                        const points = activeCharts[canvasId].getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                        if (points.length) {
+                            const index = points[0].index;
+                            const date = labels[index];
+                            const dateStr = formatDateYYYYMMDD(date);
+                            const newsItems = newsMap.get(dateStr);
+                            
+                            const overlay = document.getElementById('chart-news-overlay');
+                            if (newsItems && newsItems.length > 0) {
+                                // Filter AI Summary
+                                const filteredItems = newsItems.filter(item => !item.Title.includes("AI Summary"));
+                                
+                                if (filteredItems.length > 0) {
+                                    let html = `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); margin-bottom:10px; padding-bottom:5px;">
+                                        <h4 style="margin:0;">News for ${formatDateDDMMM(date)}</h4>
+                                        <span onclick="this.closest('#chart-news-overlay').style.display='none'" style="cursor:pointer; font-weight:bold; font-size:1.2rem;">&times;</span>
+                                    </div>`;
+                                    filteredItems.forEach(item => {
+                                        html += `<div class="chart-news-item">
+                                            <a href="${item.URL || '#'}" target="_blank">${item.Title}</a>
+                                            <div class="meta">${item.Source} - ${item.Time}</div>
+                                        </div>`;
+                                    });
+                                    overlay.innerHTML = html;
+                                    overlay.style.display = 'block';
+                                    overlay.style.left = '100px';
+                                    overlay.style.top = '100px'; 
+                                } else {
+                                    overlay.style.display = 'none';
+                                }
+                            } else {
+                                overlay.style.display = 'none';
+                            }
+                        }
                     }
                 }
             });
@@ -3025,8 +3211,15 @@
             const startDate = new Date(startDateVal);
             const endDate = new Date(endDateVal);
 
+            // UPDATED LIST for Data Tab
             const summaryTickers = [
-                '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO','3034.TW','2303.TW','3035.TW','3661.TW','0981.HK','6723.T','688981.SS','603005.SS','QCOM.O', 'GFS'
+                '.SOX', '.TWII', '.IXIC', '.NYA', '.SPX',
+                '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO',
+                'NVDA.O', '2330.TW', 'TSM.N', 'AMD.O', 'QCOM.O', 'ARM.O', 
+                'INTC.O', 'MRVL.O', 'NXPI.O', 'IFXGn.DE', '2454.TW', 
+                'GFS', '2303.TW', 'SWKS.O', 'QRVO.O', '3034.TW', 
+                '6723.T', '3661.TW', '3035.TW', '6526.T', 'TSEM.O', 
+                '0981.HK', '688981.SS', '603005.SS'
             ];
 
             const finalHeaders = ['Date', ...summaryTickers];
@@ -3106,7 +3299,13 @@
              const endDate = endDateVal ? new Date(endDateVal) : null;
 
              const summaryTickers = [
-                '.SOX', '.TWII', '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO','3034.TW','2303.TW','3035.TW','3661.TW','0981.HK','6723.T','688981.SS','603005.SS','QCOM.O', 'GFS'
+                '.SOX', '.TWII', '.IXIC', '.NYA', '.SPX',
+                '3443.TW', '6789.TW', '5347.TWO' ,'3374.TWO',
+                'NVDA.O', '2330.TW', 'TSM.N', 'AMD.O', 'QCOM.O', 'ARM.O', 
+                'INTC.O', 'MRVL.O', 'NXPI.O', 'IFX.DE', '2454.TW', 
+                'GFS', '2303.TW', 'SWKS.O', 'QRVO.O', '3034.TW', 
+                '6723.T', '3661.TW', '3035.TW', '6526.T', 'TSEM.O', 
+                '0981.HK', '688981.SS', '603005.SS'
              ];
              const headerRow = ['Date', ...summaryTickers];
              const tickerIndicesToKeep = summaryTickers.map(ticker => pivotedDataHeaders.indexOf(ticker) -1);
@@ -3508,7 +3707,8 @@
                     reportBodyHTML += `<hr><h2 style="font-family: Arial, sans-serif; text-align: center; margin-top: 20px; color: #2c3e50;">${item.name}</h2>`;
 
                     if (item.chartId === 'Chart-7') {
-                        let chart7ImagesHTML = '<table role="presentation" border="0" cellpadding="10" cellspacing="0" width="100%" align="center" style="max-width:1000px; margin: 10px auto;"><tr>';
+                        // Fix for Mac: Add explicit widths to TD and image container logic
+                        let chart7ImagesHTML = '<table role="presentation" border="0" cellpadding="5" cellspacing="0" width="100%" align="center" style="max-width:1000px; margin: 10px auto; table-layout: fixed;"><tr>';
                         for (let i = 0; i < 4; i++) {
                             const chartInstance = activeCharts[`canvas-chart-${item.chartId}-${i}`];
                             const img = getImageFromChart(chartInstance, 800, 400);
@@ -3517,9 +3717,10 @@
                                 chart7ImagesHTML += '</tr><tr>';
                             }
 
-                            chart7ImagesHTML += '<td width="50%" valign="top">';
+                            chart7ImagesHTML += '<td width="50%" valign="top" style="width: 50%; padding: 10px;">';
                             if (img) {
-                                chart7ImagesHTML += `<img src="${img}" alt="${item.chartId}-${i}" width="480" style="width:100%; max-width:480px; height:auto; display:block; border:1px solid #cccccc; background:#ffffff;">`;
+                                // Important: width:100%; height:auto; for the image. Remove fixed px width attribute if using style.
+                                chart7ImagesHTML += `<img src="${img}" alt="${item.chartId}-${i}" style="width:100%; max-width:600px; height:auto; display:block; border:1px solid #cccccc; background:#ffffff;">`;
                             } else {
                                 chart7ImagesHTML += `<i>[Chart image ${i} not available]</i>`;
                             }
