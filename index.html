@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watchlist Dashboard V31 (Refined Borders)</title>
+    <title>Watchlist Dashboard V32 (Scrollable Tables & Yearly Ticks)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
@@ -569,7 +568,13 @@
         }
         #summary-equity-index .market-tag { display: none; }
 
-        .table-content-wrapper { overflow: auto; }
+        /* MODIFIED: Added max-height to allow scrolling within the table area */
+        .table-content-wrapper { 
+            overflow: auto; 
+            max-height: 60vh; /* Set a reasonable max height for the scrollable area */
+            border-bottom: 1px solid var(--border-color);
+        }
+        
         .summary-card table { font-size: 0.9rem; table-layout: auto; width: 100%; }
         .summary-card th, .summary-card td { padding: 8px 10px; }
         .summary-card td:first-child, .summary-card th:first-child { width: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2479,6 +2484,19 @@
                                      const date = this.getLabelForValue(val);
                                      if(!(date instanceof Date)) return date;
 
+                                     // MODIFIED: Check total duration for yearly ticks
+                                     const durationMs = endDate.getTime() - startDate.getTime();
+                                     const twoYearsMs = 2 * 365 * 24 * 60 * 60 * 1000;
+                                     const prevDate = index > 0 ? labels[index-1] : null;
+
+                                     if (durationMs > twoYearsMs) {
+                                         if (index === 0) return formatDateDDMMM(date);
+                                         if (prevDate && date.getFullYear() !== prevDate.getFullYear()) {
+                                             return formatDateDDMMM(date);
+                                         }
+                                         return null;
+                                     }
+
                                      const currentPeriod = timeConfig.period;
                                      
                                      // Dense view only for 1w and wtd
@@ -2486,8 +2504,6 @@
                                          return formatDateDDMMM(date);
                                      }
                                      
-                                     const prevDate = index > 0 ? labels[index-1] : null;
-
                                      // 1-month: Weekly (First trading day of week)
                                      if (currentPeriod === '1m') {
                                          if (index === 0) return formatDateDDMMM(date);
@@ -3020,21 +3036,32 @@
                                      if(!(date instanceof Date)) return date;
                                      const prevDate = index > 0 ? labels[index-1] : null;
 
+                                     // MODIFIED: Check total duration for yearly ticks
+                                     const durationMs = tempDate.getTime() - startDate.getTime();
+                                     const twoYearsMs = 2 * 365 * 24 * 60 * 60 * 1000;
+                                     if (durationMs > twoYearsMs) {
+                                         if (index === 0) return formatDateDDMMM(date);
+                                         if (prevDate && date.getFullYear() !== prevDate.getFullYear()) {
+                                             return formatDateDDMMM(date);
+                                         }
+                                         return null;
+                                     }
+
                                      // Logic matching createComparisonChart
                                      // 3-month: Bi-Weekly
                                      if (period === '3m') {
                                          const getWeekNum = d => {
                                               const onejan = new Date(d.getFullYear(),0,1);
                                               return Math.ceil((((d - onejan) / 86400000) + onejan.getDay()+1)/7);
-                                         };
-                                         if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
+                                          };
+                                          if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
                                                if (getWeekNum(date) % 2 === 0) {
                                                    if (index < 5) return null; // prevent bunching at start
                                                    return formatDateDDMMM(date);
                                                }
-                                         }
-                                         if (index === 0) return formatDateDDMMM(date);
-                                         return null;
+                                          }
+                                          if (index === 0) return formatDateDDMMM(date);
+                                          return null;
                                      }
                                      
                                      // 6m: Monthly
