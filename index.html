@@ -2023,8 +2023,8 @@
 
                     // Check for currency change to add separator line
                     let rowStyle = "";
-                    if (index > 0 && item.currency !== previousCurrency) {
-                        rowStyle = 'style="border-top:  1.5px solid #bbb;"'; // Changed to dark grey
+                    if (index > 1 && item.currency !== previousCurrency) {
+                        rowStyle = 'style="border-top:  1px solid #bbb;"'; // Changed to dark grey
                     }
                     previousCurrency = item.currency;
 
