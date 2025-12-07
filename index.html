@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,15 +121,15 @@
             margin-right: 10px;
         }
         
-        .tabs, .chart-sub-tabs {
+        .tabs, .chart-sub-tabs, .sop-sub-tabs {
             display: flex;
             margin-bottom: -1px; /* Overlap border */
             padding-left: 10px;
             border-bottom: 1px solid var(--border-color);
         }
 
-        .tab-link, .chart-sub-tab-link {
-            padding: 10px 25px; 
+        .tab-link, .chart-sub-tab-link, .sop-sub-tab-link {
+            padding: 10px 20px; 
             cursor: pointer; 
             font-size: 1.05rem; 
             font-weight: 500; 
@@ -141,12 +142,20 @@
             margin-right: 4px;
             position: relative;
             top: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .tab-link:hover, .chart-sub-tab-link:hover { 
+        /* Icon adjustment in tabs */
+        .tab-link i {
+            font-size: 18px;
+        }
+
+        .tab-link:hover, .chart-sub-tab-link:hover, .sop-sub-tab-link:hover { 
             background-color: var(--hover-bg); 
             color: var(--primary-color); 
         }
-        .tab-link.active, .chart-sub-tab-link.active {
+        .tab-link.active, .chart-sub-tab-link.active, .sop-sub-tab-link.active {
             color: var(--primary-color); 
             background-color: var(--bg-color);
             font-weight: 600;
@@ -164,6 +173,9 @@
         
         .tab-content { display: none; animation: fadeIn 0.5s; padding-top: 15px;}
         .tab-content.active { display: block; }
+        
+        .sop-sub-tab-content { display: none; padding: 20px; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; }
+        .sop-sub-tab-content.active { display: block; animation: fadeIn 0.3s; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -297,6 +309,9 @@
             border: 1px solid var(--border-color); padding: 8px;
             border-radius: 6px; font-size: 0.95rem;
             background-color: var(--bg-color); color: var(--text-primary);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
         
         .controls-input[type="button"], 
@@ -308,6 +323,7 @@
         
         .chart-controls button.update-btn {
              background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer;
+             display: flex; align-items: center; gap: 5px;
         }
         .custom-date-inputs { display: none; gap: 10px; align-items: center; }
         .custom-date-inputs.active { display: flex; }
@@ -427,6 +443,9 @@
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .download-eml-btn:hover {
             background-color: #218838;
@@ -497,6 +516,9 @@
             cursor: pointer;
             transition: background-color 0.3s ease, opacity 0.3s ease;
             font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .email-report-btn:hover {
             background-color: #005a9e;
@@ -568,11 +590,36 @@
         }
         #summary-equity-index .market-tag { display: none; }
 
-        /* MODIFIED: Added max-height to allow scrolling within the table area */
+        /* MODIFIED: Scroll bar styling to hide until hover */
         .table-content-wrapper { 
             overflow: auto; 
-            max-height: 60vh; /* Set a reasonable max height for the scrollable area */
+            max-height: 60vh;
             border-bottom: 1px solid var(--border-color);
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: transparent transparent; /* Firefox: hide by default */
+        }
+        
+        .table-content-wrapper:hover {
+            scrollbar-color: rgba(0,0,0,0.2) transparent; /* Firefox: show on hover */
+        }
+
+        /* Webkit (Chrome/Safari/Edge) Scrollbar Styling */
+        .table-content-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .table-content-wrapper::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .table-content-wrapper::-webkit-scrollbar-thumb {
+            background-color: transparent; /* Hide by default */
+            border-radius: 4px;
+        }
+        .table-content-wrapper:hover::-webkit-scrollbar-thumb {
+            background-color: rgba(0,0,0,0.2); /* Show on hover */
+        }
+        body.dark-mode .table-content-wrapper:hover::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.2);
         }
         
         .summary-card table { font-size: 0.9rem; table-layout: auto; width: 100%; }
@@ -843,6 +890,56 @@
         }
         .date-format-list button:hover { background: var(--hover-bg); color: var(--primary-color); }
 
+        /* SOP Styles */
+        .sop-section {
+            margin-bottom: 30px;
+        }
+        .sop-section h2 {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sop-section h3 {
+            font-size: 1.15rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sop-section p {
+            line-height: 1.6;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        .sop-section ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+        .sop-section li {
+            margin-bottom: 5px;
+        }
+        .sop-section code {
+            background: var(--button-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        .sop-section strong {
+            font-weight: 600;
+        }
+
     </style>
 </head>
 <body>
@@ -866,14 +963,17 @@
         <div class="main-content">
             <div class="header-bar">
                 <div class="tabs">
-                    <div class="tab-link active" onclick="openTab(event, 'summary')">Summary</div>
-                    <div class="tab-link" onclick="openTab(event, 'chart-main')">Chart</div>
-                    <div class="tab-link" onclick="openTab(event, 'news')">News</div>
-                    <div class="tab-link" onclick="openTab(event, 'data')">Data</div>
+                    <div class="tab-link active" onclick="openTab(event, 'summary')"><i class="material-icons">dashboard</i> Summary</div>
+                    <div class="tab-link" onclick="openTab(event, 'chart-main')"><i class="material-icons">show_chart</i> Chart</div>
+                    <div class="tab-link" onclick="openTab(event, 'news')"><i class="material-icons">article</i> News</div>
+                    <div class="tab-link" onclick="openTab(event, 'data')"><i class="material-icons">table_view</i> Data</div>
+                    <div class="tab-link" onclick="openTab(event, 'sop')"><i class="material-icons">help_outline</i> SOP</div>
                 </div>
                 <div class="header-bar-right">
                     <span id="email-report-status"></span>
-                    <button id="generate-report-btn" class="email-report-btn" onclick="generateReport()">Generate Report</button>
+                    <button id="generate-report-btn" class="email-report-btn" onclick="generateReport()" title="Generate a weekly report to email">
+                        <i class="material-icons">email</i> Generate Report
+                    </button>
                 </div>
             </div>
 
@@ -881,20 +981,24 @@
                 <div class="summary-header">
                     <div class="summary-header-left">
                         <label for="summary-as-of-date">As of:</label>
-                        <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)">
+                        <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)" title="Select reference date for all data">
                         
                         <!-- Hidden Input for Custom Since Date Interaction -->
                         <input type="date" id="summary-since-date" style="display:none;">
 
-                        <input type="text" id="summary-ticker-search" class="controls-input" placeholder="Filter Ticker/Name..." oninput="filterSummaryTable(this.value)">
+                        <input type="text" id="summary-ticker-search" class="controls-input" placeholder="Filter Ticker/Name..." oninput="filterSummaryTable(this.value)" title="Search for tickers or company names in the tables below">
 
-                        <button class="controls-input" onclick="openColumnModal()">Customize Columns</button>
-                        <button class="controls-input" onclick="openManageTickersModal()">Manage Tickers</button>
+                        <button class="controls-input" onclick="openColumnModal()" title="Hide, show or reorder table columns">
+                            <i class="material-icons">view_column</i> Customize Columns
+                        </button>
+                        <button class="controls-input" onclick="openManageTickersModal()" title="Add or remove tickers from the watchlist sections">
+                            <i class="material-icons">list_alt</i> Manage Tickers
+                        </button>
 
                         <span id="chart-update-status" style="font-size: 0.9rem; font-weight: 500;"></span>
                     </div>
                     <div>
-                         <button class="export-excel-btn" onclick="exportSummaryToExcel()">
+                         <button class="export-excel-btn" onclick="exportSummaryToExcel()" title="Download the current summary view as an Excel file">
                             <i class="material-icons" style="font-size: 18px;">download</i> Export to Excel (.xlsx)
                         </button>
                     </div>
@@ -928,21 +1032,23 @@
                 <div id="news-container">
                     <div id="news-left-pane">
                         <div id="news-filters">
-                            <select id="news-filter-company" class="controls-input" onchange="handleCompanyFilterChange(this.value)">
+                            <select id="news-filter-company" class="controls-input" onchange="handleCompanyFilterChange(this.value)" title="Filter news by company">
                             </select>
                             
-                            <select id="news-filter-source" class="controls-input" onchange="filterAndDisplayNews()">
+                            <select id="news-filter-source" class="controls-input" onchange="filterAndDisplayNews()" title="Filter news by source">
                                 <option value="all">Source (All)</option>
                             </select>
 
                             <div class="date-range-dropdown">
-                                <button id="news-date-range-btn" class="controls-input" onclick="toggleDateRangeMenu()">Date Range (All) &#9662;</button>
+                                <button id="news-date-range-btn" class="controls-input" onclick="toggleDateRangeMenu()" title="Select a date range for news">Date Range (All) &#9662;</button>
                                 <div id="news-date-range-content" class="date-range-content">
                                     <!-- Date list populated by JS -->
                                 </div>
                             </div>
                             
-                            <button id="news-filter-reset" class="data-btn" style="padding: 8px 12px; font-size: 0.9rem;" onclick="resetNewsFilters()">Reset</button>
+                            <button id="news-filter-reset" class="data-btn" style="padding: 8px 12px; font-size: 0.9rem;" onclick="resetNewsFilters()" title="Clear all filters">
+                                <i class="material-icons" style="font-size: 16px;">restart_alt</i> Reset
+                            </button>
                         </div>
                         <p id="news-status">Please select a stock to view news.</p>
                         <div id="news-content"></div>
@@ -954,14 +1060,163 @@
 
             <div id="data" class="tab-content">
                 <div class="header-controls" style="margin-bottom: 10px; justify-content: flex-start; gap: 10px;">
-                    <label>Start:</label><input type="date" id="data-start-date" class="controls-input">
-                    <label>End:</label><input type="date" id="data-end-date" class="controls-input">
-                    <button class="controls-input" onclick="renderDataTab()">Filter</button>
-                    <button class="export-excel-btn" onclick="exportDataToExcel()">
+                    <label>Start:</label><input type="date" id="data-start-date" class="controls-input" title="Filter data start date">
+                    <label>End:</label><input type="date" id="data-end-date" class="controls-input" title="Filter data end date">
+                    <button class="controls-input" onclick="renderDataTab()" title="Apply date filters">
+                        <i class="material-icons" style="font-size: 16px;">filter_list</i> Filter
+                    </button>
+                    <button class="export-excel-btn" onclick="exportDataToExcel()" title="Download raw data as Excel">
                         <i class="material-icons" style="font-size: 18px;">download</i> Export to Excel (.xlsx)
                     </button>
                 </div>
                 <div id="data-table-container"><p>Loading data...</p></div>
+            </div>
+
+            <div id="sop" class="tab-content">
+                <div class="sop-sub-tabs">
+                    <div class="sop-sub-tab-link active" onclick="openSopTab('sop-en')">English</div>
+                    <div class="sop-sub-tab-link" onclick="openSopTab('sop-zh')">中文</div>
+                </div>
+                
+                <div id="sop-en" class="sop-sub-tab-content active">
+                    <div class="sop-section">
+                        <h2><i class="material-icons">dashboard</i> Summary Tab</h2>
+                        <p>The Summary tab is the landing page of the dashboard. It provides a snapshot of market performance across different sectors (Benchmark, Watchlist, Peers).</p>
+                        <h3>Key Features:</h3>
+                        <ul>
+                            <li><strong>As of Date:</strong> Change this date to view historical snapshots of the table. Note: Charts will update to reflect the selected end date.</li>
+                            <li><strong>Search:</strong> Use the text box to filter the table rows by Ticker symbol or Company Name.</li>
+                            <li><strong>Customize Columns:</strong> Click to toggle visibility or reorder columns via drag-and-drop. You can also rename column headers.</li>
+                            <li><strong>Manage Tickers:</strong> Add or remove tickers from the three main sections. You can also rename the section titles.</li>
+                            <li><strong>Interactive Headers:</strong> Click on column headers to sort. Click on the <strong>Date</strong> header to change the date display format. Click on <strong>Since...</strong> header to change the reference start date for that column.</li>
+                            <li><strong>Row Click:</strong> Clicking on any row will open a detailed chart for that specific ticker.</li>
+                        </ul>
+                    </div>
+
+                    <div class="sop-section">
+                        <h2><i class="material-icons">show_chart</i> Chart Tab</h2>
+                        <p>This tab allows for detailed comparative analysis of stock performance over time.</p>
+                        <h3>Navigation:</h3>
+                        <ul>
+                            <li><strong>Sub-tabs:</strong> Use the buttons at the top (e.g., 1-Week View, Main, Peers) to switch between different preset chart views. <strong>Double-click</strong> a tab to rename it.</li>
+                        </ul>
+                        <h3>Controls:</h3>
+                        <ul>
+                            <li><strong>Tickers Input:</strong> Edit the comma-separated list of tickers to change which stocks are displayed on the chart.</li>
+                            <li><strong>Time Controls:</strong> Select preset ranges (1w, 1m, 3m, YTD, etc.) or choose 'Custom' to define specific start and end dates.</li>
+                            <li><strong>Update Button:</strong> Must be clicked after changing tickers or dates to refresh the chart.</li>
+                        </ul>
+                        <h3>Chart Types:</h3>
+                        <ul>
+                            <li><strong>Indexed Price:</strong> Most tabs show rebased performance (starting at 0%) for easy comparison.</li>
+                            <li><strong>Trading Volume (Chart-7):</strong> A specialized grid view showing Price vs Volume for up to 4 tickers.</li>
+                        </ul>
+                    </div>
+
+                    <div class="sop-section">
+                        <h2><i class="material-icons">article</i> News Tab</h2>
+                        <p>Access the latest news and AI-generated summaries for watchlist companies.</p>
+                        <h3>How to use:</h3>
+                        <ul>
+                            <li><strong>Select Company:</strong> Use the dropdown to choose a specific company. Selecting 'All' aggregates news from all sources.</li>
+                            <li><strong>Filter Source:</strong> Narrow down news by provider (e.g., Reuters, Bloomberg).</li>
+                            <li><strong>Date Range:</strong> Click to select a start and end date to filter news items.</li>
+                            <li><strong>AI Summary:</strong> If available, the first item in the list will be an AI-generated summary of recent events.</li>
+                            <li><strong>Reading:</strong> Click a news item on the left to read the full content on the right pane.</li>
+                        </ul>
+                    </div>
+
+                    <div class="sop-section">
+                        <h2><i class="material-icons">table_view</i> Data Tab</h2>
+                        <p>View and export the raw data underlying the dashboard.</p>
+                        <ul>
+                            <li><strong>Filtering:</strong> Set Start and End dates to limit the data range.</li>
+                            <li><strong>Pivot View:</strong> Data is pivoted with Dates as rows and Tickers as columns for easy analysis.</li>
+                            <li><strong>Export:</strong> Use the "Export to Excel" button to download the full dataset including Price and Volume sheets.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="sop-section">
+                        <h2><i class="material-icons">email</i> Reporting</h2>
+                        <p>Generate a weekly report suitable for email distribution.</p>
+                        <ul>
+                            <li>Click <strong>Generate Report</strong> in the top header.</li>
+                            <li>The system captures current chart states and compiles AI summaries.</li>
+                            <li><strong>Download Draft:</strong> You can download the report as an Outlook <code>.eml</code> file to send later.</li>
+                            <li><strong>Edit Fields:</strong> You can pre-fill To, Cc, and Subject lines before downloading.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="sop-zh" class="sop-sub-tab-content">
+                    <div class="sop-section">
+                        <h2><i class="material-icons">dashboard</i> 總覽 (Summary Tab)</h2>
+                        <p>此頁面是儀表板的首頁，提供不同板塊（基準、觀察名單、同業）的市場表現快照。</p>
+                        <h3>主要功能：</h3>
+                        <ul>
+                            <li><strong>日期選擇 (As of):</strong> 更改此日期可查看歷史數據快照。注意：圖表也會隨之更新以反映所選的結束日期。</li>
+                            <li><strong>搜尋 (Search):</strong> 使用文字框過濾表格中的代碼或公司名稱。</li>
+                            <li><strong>自定義欄位 (Customize Columns):</strong> 點擊可切換顯示或通過拖放重新排序欄位。您也可以重命名欄位標題。</li>
+                            <li><strong>管理代碼 (Manage Tickers):</strong> 新增或移除主要區塊中的代碼。您也可以重命名區塊標題。</li>
+                            <li><strong>互動標題:</strong> 點擊欄位標題可進行排序。點擊 <strong>Date</strong> 標題可更改日期顯示格式。點擊 <strong>Since...</strong> 標題可更改該欄位的參考起始日期。</li>
+                            <li><strong>點擊行:</strong> 點擊任意行將打開該特定代碼的詳細圖表。</li>
+                        </ul>
+                    </div>
+
+                    <div class="sop-section">
+                        <h2><i class="material-icons">show_chart</i> 圖表 (Chart Tab)</h2>
+                        <p>此頁面允許對股票表現進行詳細的時間比較分析。</p>
+                        <h3>導航：</h3>
+                        <ul>
+                            <li><strong>子分頁:</strong> 使用頂部的按鈕（如 1-Week View, Main, Peers）切換不同的預設圖表視圖。<strong>雙擊</strong>分頁可重命名。</li>
+                        </ul>
+                        <h3>控制項：</h3>
+                        <ul>
+                            <li><strong>代碼輸入:</strong> 編輯以逗號分隔的代碼列表，以更改圖表上顯示的股票。</li>
+                            <li><strong>時間控制:</strong> 選擇預設範圍（1週、1月、3月、年初至今等）或選擇「自定義 (Custom)」以定義特定開始和結束日期。</li>
+                            <li><strong>更新按鈕:</strong> 更改代碼或日期後必須點擊此按鈕以刷新圖表。</li>
+                        </ul>
+                        <h3>圖表類型：</h3>
+                        <ul>
+                            <li><strong>指數化價格:</strong> 大多數分頁顯示重定基數的表現（從 0% 開始），便於比較。</li>
+                            <li><strong>交易量 (Chart-7):</strong> 一個專門的網格視圖，顯示最多 4 個代碼的價格與成交量。</li>
+                        </ul>
+                    </div>
+
+                    <div class="sop-section">
+                        <h2><i class="material-icons">article</i> 新聞 (News Tab)</h2>
+                        <p>訪問觀察名單公司的最新新聞和 AI 生成摘要。</p>
+                        <h3>如何使用：</h3>
+                        <ul>
+                            <li><strong>選擇公司:</strong> 使用下拉選單選擇特定公司。選擇「全部 (All)」將匯總所有來源的新聞。</li>
+                            <li><strong>過濾來源:</strong> 按提供商（如 Reuters, Bloomberg）縮小新聞範圍。</li>
+                            <li><strong>日期範圍:</strong> 點擊以選擇開始和結束日期來過濾新聞項目。</li>
+                            <li><strong>AI 摘要:</strong> 如果可用，列表中的第一項將是近期事件的 AI 生成摘要。</li>
+                            <li><strong>閱讀:</strong> 點擊左側的新聞項目，在右側窗格閱讀完整內容。</li>
+                        </ul>
+                    </div>
+
+                    <div class="sop-section">
+                        <h2><i class="material-icons">table_view</i> 數據 (Data Tab)</h2>
+                        <p>查看並導出儀表板背後的原始數據。</p>
+                        <ul>
+                            <li><strong>過濾:</strong> 設定開始和結束日期以限制數據範圍。</li>
+                            <li><strong>樞紐視圖:</strong> 數據以日期為列、代碼為欄進行樞紐分析，便於分析。</li>
+                            <li><strong>導出:</strong> 使用「導出 Excel」按鈕下載包含價格和成交量工作表的完整數據集。</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="sop-section">
+                        <h2><i class="material-icons">email</i> 報告生成 (Reporting)</h2>
+                        <p>生成適合電子郵件發送的每週報告。</p>
+                        <ul>
+                            <li>點擊頂部標題中的 <strong>Generate Report</strong>。</li>
+                            <li>系統將捕捉當前圖表狀態並編譯 AI 摘要。</li>
+                            <li><strong>下載草稿:</strong> 您可以將報告下載為 Outlook <code>.eml</code> 文件以便稍後發送。</li>
+                            <li><strong>編輯欄位:</strong> 下載前您可以預先填寫收件人、副本和主旨行。</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -973,16 +1228,16 @@
             <h2 id="modalTickerName" class="modal-header"></h2>
             
             <div class="chart-options-bar">
-                <input type="checkbox" id="show-news-markers" checked onchange="toggleNewsMarkers()">
+                <input type="checkbox" id="show-news-markers" checked onchange="toggleNewsMarkers()" title="Toggle visual markers on chart for news events">
                 <label for="show-news-markers">Show News Markers</label>
             </div>
             
             <div class="chart-time-controls" id="modal-time-controls" style="justify-content: flex-start; padding-bottom: 0; border-bottom: none;">
-                 <button data-period="3m">3-Month</button>
-                 <button data-period="6m">6-Month</button>
-                 <button data-period="ytd">YTD</button>
-                 <button data-period="last_calendar">Since Last Year</button>
-                 <button data-period="5y">5-Year</button>
+                 <button data-period="3m" title="Show last 3 months">3-Month</button>
+                 <button data-period="6m" title="Show last 6 months">6-Month</button>
+                 <button data-period="ytd" title="Show Year-to-Date">YTD</button>
+                 <button data-period="last_calendar" title="Show since start of last year">Since Last Year</button>
+                 <button data-period="5y" title="Show last 5 years">5-Year</button>
             </div>
             <div class="modal-chart-container">
                 <canvas id="individualTickerChart"></canvas>
@@ -994,22 +1249,24 @@
     <div id="reportModal" class="modal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px;">
-                <button class="download-eml-btn" onclick="downloadEmlFile()">Download Outlook Draft (.eml)</button>
+                <button class="download-eml-btn" onclick="downloadEmlFile()" title="Download as .eml file for Outlook">
+                    <i class="material-icons" style="font-size: 18px;">download</i> Download Outlook Draft (.eml)
+                </button>
                 <span class="close" onclick="closeModal('reportModal')" style="font-size: 32px; font-weight: bold; cursor: pointer; color: var(--text-secondary); line-height: 1;">&times;</span>
             </div>
             
             <div id="email-headers" style="margin-bottom: 15px;">
                 <div class="email-header-field">
                     <label for="email-to">To:</label>
-                    <input type="text" id="email-to" placeholder="Leave empty for draft">
+                    <input type="text" id="email-to" placeholder="Leave empty for draft" title="Enter recipient email addresses">
                 </div>
                 <div class="email-header-field">
                     <label for="email-cc">Cc:</label>
-                    <input type="text" id="email-cc" placeholder="Leave empty for draft">
+                    <input type="text" id="email-cc" placeholder="Leave empty for draft" title="Enter CC email addresses">
                 </div>
                 <div class="email-header-field">
                     <label for="email-subject">Subject:</label>
-                    <input type="text" id="email-subject">
+                    <input type="text" id="email-subject" title="Subject line of the email">
                 </div>
             </div>
 
@@ -1026,7 +1283,9 @@
             <div class="column-modal-body">
                 <p style="font-size: 0.9rem; color: var(--text-secondary);">Drag to reorder. Uncheck to hide. Rename labels.</p>
                 <div id="column-list" class="column-list-container"></div>
-                <button class="email-report-btn" onclick="applyColumnChanges()" style="width: 100%;">Apply</button>
+                <button class="email-report-btn" onclick="applyColumnChanges()" style="width: 100%; justify-content: center;">
+                    <i class="material-icons">check</i> Apply
+                </button>
             </div>
         </div>
     </div>
@@ -1039,20 +1298,22 @@
             <div class="column-modal-body">
                 <div>
                     <label style="font-weight:600;">Benchmark Section:</label>
-                    <input type="text" id="manage-benchmark-title" class="manage-tickers-title-input">
-                    <textarea id="manage-benchmark" class="manage-tickers-textarea"></textarea>
+                    <input type="text" id="manage-benchmark-title" class="manage-tickers-title-input" title="Rename this section">
+                    <textarea id="manage-benchmark" class="manage-tickers-textarea" title="Comma separated list of tickers"></textarea>
                 </div>
                 <div>
                     <label style="font-weight:600;">Watchlist Section:</label>
-                    <input type="text" id="manage-watchlist-title" class="manage-tickers-title-input">
-                    <textarea id="manage-watchlist" class="manage-tickers-textarea"></textarea>
+                    <input type="text" id="manage-watchlist-title" class="manage-tickers-title-input" title="Rename this section">
+                    <textarea id="manage-watchlist" class="manage-tickers-textarea" title="Comma separated list of tickers"></textarea>
                 </div>
                 <div>
                     <label style="font-weight:600;">Peers Section:</label>
-                    <input type="text" id="manage-peers-title" class="manage-tickers-title-input">
-                    <textarea id="manage-peers" class="manage-tickers-textarea"></textarea>
+                    <input type="text" id="manage-peers-title" class="manage-tickers-title-input" title="Rename this section">
+                    <textarea id="manage-peers" class="manage-tickers-textarea" title="Comma separated list of tickers"></textarea>
                 </div>
-                <button class="email-report-btn" onclick="applyTickerChanges()" style="width: 100%;">Save Changes</button>
+                <button class="email-report-btn" onclick="applyTickerChanges()" style="width: 100%; justify-content: center;">
+                    <i class="material-icons">save</i> Save Changes
+                </button>
             </div>
         </div>
     </div>
@@ -1063,8 +1324,10 @@
             <span class="close" onclick="closeModal('sinceDateModal')">&times;</span>
             <h2 class="modal-header">Select 'Since' Date</h2>
             <div class="column-modal-body">
-                <input type="date" id="modal-since-date-input" class="controls-input" style="width:100%;">
-                <button class="email-report-btn" onclick="applySinceDate()" style="width:100%;">Update Table</button>
+                <input type="date" id="modal-since-date-input" class="controls-input" style="width:100%;" title="Pick a start date for calculation">
+                <button class="email-report-btn" onclick="applySinceDate()" style="width:100%; justify-content: center;">
+                    <i class="material-icons">update</i> Update Table
+                </button>
             </div>
         </div>
     </div>
@@ -1114,6 +1377,47 @@
         // Chart Table Date Format State
         const CHART_TABLE_DATE_FORMATS = ['dd/mmm/yyyy', 'mm/dd/yyyy', 'dd/mm/yyyy', 'yyyy/mm/dd'];
         let chartTableDateFormatIndex = 0; // Default dd/mmm/yyyy
+
+        // Domain mapping for Logos
+        const TICKER_DOMAINS = {
+            '2330.TW': 'tsmc.com', 'TSM.N': 'tsmc.com',
+            '3443.TW': 'guc-asic.com',
+            '6789.TW': 'visera.com.tw',
+            '5347.TWO': 'vic.com.tw',
+            '3374.TWO': 'xintec.com.tw',
+            'NVDA.O': 'nvidia.com',
+            'AMD.O': 'amd.com',
+            'INTC.O': 'intel.com',
+            'QCOM.O': 'qualcomm.com',
+            'ARM.O': 'arm.com',
+            'MRVL.O': 'marvell.com',
+            'NXPI.O': 'nxp.com',
+            'GFS': 'gf.com',
+            'SWKS.O': 'skyworksinc.com',
+            'QRVO.O': 'qorvo.com',
+            'TSEM.O': 'towersemi.com',
+            'IFXGn.DE': 'infineon.com',
+            '2454.TW': 'mediatek.com',
+            '3034.TW': 'novatek.com.tw',
+            '3661.TW': 'alchip.com',
+            '3035.TW': 'realtek.com',
+            '6723.T': 'renesas.com',
+            '6526.T': 'socionext.com',
+            '688981.SS': 'smics.com', '0981.HK': 'smics.com',
+            '603005.SS': 'jcetglobal.com',
+            '.TWII': 'twse.com.tw',
+            '.SOX': 'phlx.com', // Nasdaq
+            '.IXIC': 'nasdaq.com',
+            '.SPX': 'spglobal.com',
+            '.NYA': 'nyse.com'
+        };
+
+        function getLogoHtml(ticker) {
+            const domain = TICKER_DOMAINS[ticker];
+            if (!domain) return '';
+            // Use Clearbit Logo API
+            return `<img src="https://logo.clearbit.com/${domain}" style="width:20px; height:20px; vertical-align:middle; margin-right:8px; border-radius:50%; object-fit:contain; background:white;" onerror="this.style.display='none'">`;
+        }
 
         // Summary Ticker Groups (Editable) - SORTED PEERS
         let summaryTickersConfig = {
@@ -1595,8 +1899,8 @@
                 item.innerHTML = `
                     <div style="display:flex; align-items:center; width:100%;">
                         <span class="material-icons column-drag-handle">drag_handle</span>
-                        <input type="checkbox" class="column-checkbox" ${col.visible ? 'checked' : ''} data-id="${col.id}">
-                        <input type="text" class="column-label-input" value="${col.label}" data-id="${col.id}">
+                        <input type="checkbox" class="column-checkbox" ${col.visible ? 'checked' : ''} data-id="${col.id}" title="Toggle column visibility">
+                        <input type="text" class="column-label-input" value="${col.label}" data-id="${col.id}" title="Rename column header">
                     </div>
                 `;
                 
@@ -1918,7 +2222,7 @@
             } finally {
                  if (reportBtn) {
                     reportBtn.disabled = false;
-                    reportBtn.textContent = 'Generate Report';
+                    reportBtn.innerHTML = '<i class="material-icons">email</i> Generate Report';
                 }
                 setTimeout(() => { statusEl.textContent = ''; }, 3000);
             }
@@ -1992,17 +2296,17 @@
                 summaryColumnsState.forEach((col, idx) => {
                     let thClass = col.visible ? '' : 'hidden-col';
                     let content = col.label; // Renamed label
-                    let extraAttr = `onclick="sortSummaryTable('${config.container}', ${idx})"`;
+                    let extraAttr = `onclick="sortSummaryTable('${config.container}', ${idx})" title="Click to sort"`;
                     
                     if (col.id === 'Date') {
                         content = "Date"; // Just "Date" per request
                         thClass += ' summary-clickable-header';
-                        extraAttr = 'onclick="openSummaryDateFormatModal()"';
+                        extraAttr = 'onclick="openSummaryDateFormatModal()" title="Click to change date format"';
                     }
                     else if (col.id === 'Since') {
                         content = sinceHeader;
                         thClass += ' summary-clickable-header';
-                        extraAttr = 'onclick="openSinceDateModal()"'; 
+                        extraAttr = 'onclick="openSinceDateModal()" title="Click to change Since date"'; 
                     }
                     
                     headerHTML += `<th class="${thClass}" ${extraAttr}>${content}</th>`;
@@ -2057,14 +2361,17 @@
 
                     const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
                     
-                    bodyHTML += `<tr data-ticker="${item.ticker}" class="clickable-row" ${rowStyle}>`;
+                    bodyHTML += `<tr data-ticker="${item.ticker}" class="clickable-row" ${rowStyle} title="Click to view chart for ${item.name}">`;
                     
                     summaryColumnsState.forEach(col => {
                         let cellContent = '';
                         let cellClass = col.visible ? '' : 'hidden-col';
                         
                         switch(col.id) {
-                            case 'Name': cellContent = item.name; break;
+                            case 'Name': 
+                                // Insert Logo if available
+                                cellContent = getLogoHtml(item.ticker) + item.name; 
+                                break;
                             case 'Ticker': cellContent = item.ticker; break;
                             case 'Date': 
                                 cellContent = dateOnRefDate; 
@@ -2226,7 +2533,7 @@
             const newName = prompt("Rename Tab:", currentName);
             if(newName && newName.trim() !== "") {
                 chartLabels[chartKey] = newName.trim();
-                element.textContent = newName.trim();
+                element.innerHTML = newName.trim();
             }
         }
 
@@ -2243,8 +2550,8 @@
             let tabsHTML = '';
             Object.keys(chartLabels).forEach((key, index) => {
                 const isActive = index === 1 ? 'active' : ''; // Default to Main (Chart-1)
-                // Added ondblclick for renaming
-                tabsHTML += `<button class="chart-sub-tab-link ${isActive}" onclick="openChartMainSubTab(event, '${key}')" ondblclick="renameChartTab(this, '${key}')">${chartLabels[key]}</button>`;
+                // Removed icons from here as requested
+                tabsHTML += `<button class="chart-sub-tab-link ${isActive}" onclick="openChartMainSubTab(event, '${key}')" ondblclick="renameChartTab(this, '${key}')" title="Double click to rename">${chartLabels[key]}</button>`;
             });
 
             tabsContainer.innerHTML = tabsHTML;
@@ -2311,22 +2618,24 @@
             container.innerHTML = `
                  <div class="chart-controls">
                     <label for="ticker-input-${chartId}">Tickers:</label>
-                    <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}">
+                    <input type="text" id="ticker-input-${chartId}" value="${defaultTickers}" title="Comma separated list of tickers to display">
                     <div class="custom-date-inputs" id="custom-date-${chartId}">
-                        <input type="date" id="chart-start-${chartId}" class="controls-input">
-                        <input type="date" id="chart-end-${chartId}" class="controls-input">
+                        <input type="date" id="chart-start-${chartId}" class="controls-input" title="Custom start date">
+                        <input type="date" id="chart-end-${chartId}" class="controls-input" title="Custom end date">
                     </div>
-                    <button class="update-btn" onclick="updateComparisonChartFromUI('${chartId}')">Update Chart</button>
+                    <button class="update-btn" onclick="updateComparisonChartFromUI('${chartId}')" title="Refresh chart with new inputs">
+                        <i class="material-icons" style="font-size: 16px;">refresh</i> Update Chart
+                    </button>
                 </div>
                 <div class="chart-time-controls" id="time-controls-${chartId}">
                     <div>
-                        <button class="${defaultButton1W}" data-period="1w" onclick="setComparisonChartPeriod('${chartId}', '1w', this)">1-Week</button>
-                        <button data-period="wtd" onclick="setComparisonChartPeriod('${chartId}', 'wtd', this)">WTD</button>
-                        <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)">1-Month</button>
-                        <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)">3-Month</button>
-                        <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)">YTD</button>
-                        <button class="${defaultButtonSinceLastYear}" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)">Since Last Year</button>
-                        <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)">Custom</button>
+                        <button class="${defaultButton1W}" data-period="1w" onclick="setComparisonChartPeriod('${chartId}', '1w', this)" title="Last 1 week">1-Week</button>
+                        <button data-period="wtd" onclick="setComparisonChartPeriod('${chartId}', 'wtd', this)" title="Week to Date">WTD</button>
+                        <button data-period="1m" onclick="setComparisonChartPeriod('${chartId}', '1m', this)" title="Last 1 month">1-Month</button>
+                        <button data-period="3m" onclick="setComparisonChartPeriod('${chartId}', '3m', this)" title="Last 3 months">3-Month</button>
+                        <button data-period="ytd" onclick="setComparisonChartPeriod('${chartId}', 'ytd', this)" title="Year to Date">YTD</button>
+                        <button class="${defaultButtonSinceLastYear}" data-period="last_calendar" onclick="setComparisonChartPeriod('${chartId}', 'last_calendar', this)" title="Since start of last year">Since Last Year</button>
+                        <button data-period="custom" onclick="setComparisonChartPeriod('${chartId}', 'custom', this)" title="Select custom dates">Custom</button>
                     </div>
                 </div>`;
 
@@ -2638,7 +2947,7 @@
             const sinceHeader = `Since ${endYear - 1}`;
 
             let tableHTML = `<table id="perf-table-${chartId}"><thead><tr>
-                <th class="clickable-text" onclick="openChartTableDateFormatModal('${chartId}')">As of: ${asOfDateStr}</th>`;
+                <th class="clickable-text" onclick="openChartTableDateFormatModal('${chartId}')" title="Click to change date format">As of: ${asOfDateStr}</th>`;
             data.forEach(item => { tableHTML += `<th title="${item.ticker}">${item.name}</th>`; });
             tableHTML += '</tr></thead><tbody>';
 
@@ -2840,7 +3149,7 @@
             const threeMonthStartDate = new Date(new Date(effectiveEndDate).setMonth(effectiveEndDate.getMonth() - 3));
             const asOfDateStr = formatDateByPattern(effectiveEndDate, CHART_TABLE_DATE_FORMATS[chartTableDateFormatIndex]);
 
-            let tableHTML = `<table id="perf-table-${chartId}"><thead><tr><th class="clickable-text" onclick="openChartTableDateFormatModal('${chartId}')">As of: ${asOfDateStr}</th>`;
+            let tableHTML = `<table id="perf-table-${chartId}"><thead><tr><th class="clickable-text" onclick="openChartTableDateFormatModal('${chartId}')" title="Click to change date format">As of: ${asOfDateStr}</th>`;
             tickers.forEach(ticker => {
                 const perfData = allPerformanceData.get(ticker);
                 tableHTML += `<th>${perfData ? perfData.name : ticker}</th>`;
@@ -3596,7 +3905,11 @@
                         if (td.classList.contains('text-positive')) styles += 'color:#28a745; font-weight:500;';
                         else if (td.classList.contains('text-negative')) styles += 'color:#dc3545; font-weight:500;';
                         else styles += 'color:#2c3e50;';
-                        html += `<td width="${width}" style="${styles}">${td.textContent.trim()}</td>`;
+                        // Clean up image tags for email (or keep them if desired, but here we strip them to avoid broken images in email clients)
+                        // Actually, users might want logos in report. Let's keep text content primarily to be safe, or just strip HTML tags except text.
+                        // For simplicity in this regex, we extract text content.
+                        const cellText = td.innerText.trim(); 
+                        html += `<td width="${width}" style="${styles}">${cellText}</td>`;
                     });
                     html += '</tr>';
                 });
@@ -3849,6 +4162,13 @@
             document.getElementById(tabName).classList.add("active");
             if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
             if (tabName === 'data' && isDataPivoted && !jspreadsheetInstance) renderDataTab();
+        }
+        function openSopTab(tabId) {
+            document.querySelectorAll(".sop-sub-tab-content, .sop-sub-tab-link").forEach(el => el.classList.remove("active"));
+            document.getElementById(tabId).classList.add("active");
+            // Highlight the clicked button
+            const clickedBtn = Array.from(document.querySelectorAll(".sop-sub-tab-link")).find(btn => btn.getAttribute('onclick').includes(tabId));
+            if(clickedBtn) clickedBtn.classList.add("active");
         }
         function initTheme() {
             const isDarkMode = localStorage.getItem('theme') === 'dark';
