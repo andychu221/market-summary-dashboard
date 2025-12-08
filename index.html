@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -355,6 +356,12 @@
             padding: 15px;
             border-radius: 8px;
             background: var(--hover-bg);
+            /* Editable styling */
+            cursor: text;
+        }
+        #report-modal-content-area:focus {
+             outline: 2px solid var(--primary-color);
+             outline-offset: -2px;
         }
         #report-modal-content-area h1 {
             font-size: 1.5rem;
@@ -766,6 +773,7 @@
             color: var(--text-secondary);
             margin-bottom: 5px;
             flex-wrap: wrap;
+            align-items: center; /* Align items vertically for logo */
         }
         .news-meta-top .ticker-name {
             font-weight: 600;
@@ -783,6 +791,10 @@
             line-height: 1.4;
         }
         .news-meta { font-size: 0.85rem; color: var(--text-secondary); }
+
+        .news-source-logo {
+            width: 16px; height: 16px; margin-right: 5px; vertical-align: middle; border-radius: 2px;
+        }
         
         .chart-grid-container {
             display: grid;
@@ -1142,6 +1154,7 @@
                         <ul>
                             <li>Click <strong>Generate Report</strong> in the top header.</li>
                             <li>The system captures current chart states and compiles AI summaries.</li>
+                            <li><strong>Editable Content:</strong> You can click inside the generated preview to edit text, delete sections, or add comments before downloading.</li>
                             <li><strong>Download Draft:</strong> You can download the report as an Outlook <code>.eml</code> file to send later.</li>
                             <li><strong>Edit Fields:</strong> You can pre-fill To, Cc, and Subject lines before downloading.</li>
                         </ul>
@@ -1212,6 +1225,7 @@
                         <ul>
                             <li>點擊頂部標題中的 <strong>Generate Report</strong>。</li>
                             <li>系統將捕捉當前圖表狀態並編譯 AI 摘要。</li>
+                            <li><strong>可編輯內容:</strong> 您可以點擊生成的預覽內容進行文字修改、刪除區塊或添加註釋，然後再下載。</li>
                             <li><strong>下載草稿:</strong> 您可以將報告下載為 Outlook <code>.eml</code> 文件以便稍後發送。</li>
                             <li><strong>編輯欄位:</strong> 下載前您可以預先填寫收件人、副本和主旨行。</li>
                         </ul>
@@ -1270,8 +1284,10 @@
                 </div>
             </div>
 
-            <div id="report-modal-content-area">
+            <!-- MODIFIED: Added contenteditable -->
+            <div id="report-modal-content-area" contenteditable="true" style="outline: none;">
             </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px; text-align: right;">* Content above is editable. Click to modify.</p>
         </div>
     </div>
 
@@ -1382,9 +1398,9 @@
         const TICKER_DOMAINS = {
             '2330.TW': 'tsmc.com', 'TSM.N': 'tsmc.com',
             '3443.TW': 'guc-asic.com',
-            '6789.TW': 'visera.com.tw',
-            '5347.TWO': 'vic.com.tw',
-            '3374.TWO': 'xintec.com.tw',
+            '6789.TW': 'viseratech.com',
+            '5347.TWO': 'vis.com.tw',
+            '3374.TWO': 'xintec.com',
             'NVDA.O': 'nvidia.com',
             'AMD.O': 'amd.com',
             'INTC.O': 'intel.com',
@@ -1398,7 +1414,7 @@
             'TSEM.O': 'towersemi.com',
             'IFXGn.DE': 'infineon.com',
             '2454.TW': 'mediatek.com',
-            '3034.TW': 'novatek.com.tw',
+            '3034.TW': 'novatek.com',
             '3661.TW': 'alchip.com',
             '3035.TW': 'realtek.com',
             '6723.T': 'renesas.com',
@@ -1412,11 +1428,37 @@
             '.NYA': 'nyse.com'
         };
 
+        // MODIFIED: News Source Domains for Logo
+        const NEWS_SOURCE_DOMAINS = {
+            'Reuters': 'reuters.com',
+            'Bloomberg': 'bloomberg.com',
+            'Anue': 'cnyes.com',
+            'MoneyDJ': 'moneydj.com',
+            'Taipei Times': 'taipeitimes.com',
+            'Digitimes': 'digitimes.com',
+            'Economic Daily News': 'udn.com',
+            'Commercial Times': 'ctee.com.tw',
+            'Yahoo Finance': 'finance.yahoo.com',
+            'Investing.com': 'investing.com'
+        };
+
         function getLogoHtml(ticker) {
             const domain = TICKER_DOMAINS[ticker];
             if (!domain) return '';
             // Use Clearbit Logo API
             return `<img src="https://logo.clearbit.com/${domain}" style="width:20px; height:20px; vertical-align:middle; margin-right:8px; border-radius:50%; object-fit:contain; background:white;" onerror="this.style.display='none'">`;
+        }
+        
+        // MODIFIED: Helper function for News Source Logo
+        function getSourceLogo(source) {
+            let domain = NEWS_SOURCE_DOMAINS[source];
+            if (!domain) {
+                // Partial matching if exact match fails
+                if(source.includes('Reuters')) domain = 'reuters.com';
+                else if(source.includes('Bloomberg')) domain = 'bloomberg.com';
+                else return '';
+            }
+            return `<img src="https://logo.clearbit.com/${domain}" class="news-source-logo" onerror="this.style.display='none'">`;
         }
 
         // Summary Ticker Groups (Editable) - SORTED PEERS
@@ -2550,7 +2592,7 @@
             let tabsHTML = '';
             Object.keys(chartLabels).forEach((key, index) => {
                 const isActive = index === 1 ? 'active' : ''; // Default to Main (Chart-1)
-                // Removed icons from here as requested
+                // MODIFIED: Ensure double-click rename is obvious and works
                 tabsHTML += `<button class="chart-sub-tab-link ${isActive}" onclick="openChartMainSubTab(event, '${key}')" ondblclick="renameChartTab(this, '${key}')" title="Double click to rename">${chartLabels[key]}</button>`;
             });
 
@@ -3829,7 +3871,9 @@
                 const originalIndex = currentNewsData.news.indexOf(item);
                 if (originalIndex === -1) return;
                 const displayDate = formatGlobalDate(new Date(item.Date));
-                newsHTML += `<div class="news-item" id="news-item-${originalIndex}" onclick="showNewsDetail(${originalIndex})"><div class="news-meta-top"><span>${displayDate} ${item.Time}</span><span class="ticker-name">${item.tickerName || tickerName}</span><span>${item.Source}</span></div><h4 class="news-title">${item.Title}</h4></div>`;
+                // MODIFIED: Inject Source Logo
+                const sourceLogo = getSourceLogo(item.Source);
+                newsHTML += `<div class="news-item" id="news-item-${originalIndex}" onclick="showNewsDetail(${originalIndex})"><div class="news-meta-top"><span>${displayDate} ${item.Time}</span><span class="ticker-name">${item.tickerName || tickerName}</span><span style="display:inline-flex; align-items:center;">${sourceLogo}${item.Source}</span></div><h4 class="news-title">${item.Title}</h4></div>`;
             });
             contentContainer.innerHTML = newsHTML;
         }
