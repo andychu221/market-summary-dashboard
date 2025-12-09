@@ -2930,7 +2930,18 @@
                         yPerf: {
                             display: true, position: 'left',
                             title: { display: true, text: 'Price Change (%)', font: { size: 18 } },
-                            ticks: { color: textColor, callback: (value) => `${value}%`, font: { size: 16 } },
+                            ticks: {
+                                color: function(context) {
+                                    return context.tick.value < 0 ? '#dc3545' : textColor;
+                                },
+                                callback: function(value, index, ticks) {
+                                     const scale = this.chart.scales.yPerf;
+                                     if (!scale) return `${value}%`;
+                                     const useDecimal = (scale.min >= -10 && scale.max <= 10);
+                                     return useDecimal ? `${value.toFixed(1)}%` : `${value.toFixed(0)}%`;
+                                },
+                                font: { size: 16 }
+                            },
                             grid: { color: gridColor }
                         }
                     },
