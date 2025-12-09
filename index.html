@@ -3160,30 +3160,106 @@
                             title: { display: true, text: `${perfData ? perfData.name : ticker} (${ticker})`, color: textColor, font: { size: 20 } }
                         },
                         scales: {
-                            x: { 
+                            x: {
                                 type: 'category', 
                                 ticks: { 
                                     color: textColor, 
-                                    maxRotation: 0, autoSkip: true, font: { size: 10 }, // Small Font
-                                    callback: function(val) {
-                                         const date = this.getLabelForValue(val);
-                                         return date instanceof Date ? formatDateDDMMM(date) : date; // Default Chart View Format
-                                    }
-                                }, 
-                                grid: { display: true, color: gridColor } 
-                            },
-                            xYear: { // Secondary X Axis
-                                type: 'category', labels: labels, position: 'bottom',
-                                grid: { display: false, drawTicks: false },
-                                ticks: {
-                                    autoSkip: false, maxRotation: 0, minRotation: 0, color: textColor, font: { size: 10, weight: 'normal' }, padding: 5,
+                                    maxRotation: 0,
+                                    autoSkip: false, // Use callback for density
+                                    font: { size: 16 },
                                     callback: function(val, index) {
-                                        const d = this.getLabelForValue(val);
-                                        if(d instanceof Date && index === yearMidpoints[d.getFullYear()]) return d.getFullYear();
-                                        return '';
-                                    }
+                                         const date = this.getLabelForValue(val);
+                                         if(!(date instanceof Date)) return date;
+
+                                         // MODIFIED: Check total duration for yearly ticks
+                                         const durationMs = endDate.getTime() - startDate.getTime();
+                                         const twoYearsMs = 2 * 365 * 24 * 60 * 60 * 1000;
+                                         const prevDate = index > 0 ? labels[index-1] : null;
+
+                                         if (durationMs > twoYearsMs) {
+                                             if (index === 0) return formatDateDDMMM(date);
+                                             if (prevDate && date.getFullYear() !== prevDate.getFullYear()) {
+                                                 return formatDateDDMMM(date);
+                                             }
+                                             return null;
+                                         }
+
+                                         const currentPeriod = timeConfig.period;
+
+                                         // Dense view only for 1w and wtd
+                                         if (currentPeriod === '1w' || currentPeriod === 'wtd') {
+                                             return formatDateDDMMM(date);
+                                         }
+
+                                         // 1-month: Weekly (First trading day of week)
+                                         if (currentPeriod === '1m') {
+                                             if (index === 0) return formatDateDDMMM(date);
+                                             if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
+                                                 return formatDateDDMMM(date);
+                                             }
+                                             return null; // hide
+                                         }
+
+                                         // 3-month: Bi-Weekly
+                                         if (currentPeriod === '3m') {
+                                              const getWeekNum = d => {
+                                                  const onejan = new Date(d.getFullYear(),0,1);
+                                                  return Math.ceil((((d - onejan) / 86400000) + onejan.getDay()+1)/7);
+                                              };
+                                              if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
+                                                   if (getWeekNum(date) % 2 === 0) {
+                                                       if (index < 5) return null; // prevent bunching at start
+                                                       return formatDateDDMMM(date);
+                                                   }
+                                              }
+                                              if (index === 0) return formatDateDDMMM(date);
+                                              return null;
+                                         }
+
+                                         // YTD: Monthly (First trading day of month)
+                                         if (currentPeriod === 'ytd') {
+                                             if (index === 0) return formatDateDDMMM(date);
+                                             if (prevDate && date.getMonth() !== prevDate.getMonth()) return formatDateDDMMM(date);
+                                             return null;
+                                     }
+
+                                     // Long periods: Quarterly (First trading day of quarter)
+                                     // Since Last Year, 5y, Custom (assume long)
+                                     if (index === 0) return formatDateDDMMM(date);
+                                     if (prevDate) {
+                                         const qCurrent = Math.floor(date.getMonth() / 3);
+                                         const qPrev = Math.floor(prevDate.getMonth() / 3);
+                                         if (qCurrent !== qPrev || date.getFullYear() !== prevDate.getFullYear()) {
+                                             return formatDateDDMMM(date);
+                                         }
+                                     }
+                                     return null;
                                 }
                             },
+                            grid: { display: true, color: gridColor }
+                        },
+                            xYear: { // Secondary X Axis for Years
+                            type: 'category',
+                            labels: labels,
+                            position: 'bottom',
+                            grid: { display: false, drawTicks: false },
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0,
+                                color: textColor,
+                                font: { size: 16, weight: 'normal' }, // Removed bold
+                                padding: 5,
+                                callback: function(val, index) {
+                                    const d = this.getLabelForValue(val);
+                                    if(d instanceof Date) {
+                                        const y = d.getFullYear();
+                                        if (index === yearMidpoints[y]) return y;
+                                    }
+                                    return '';
+                                }
+                            }
+                        },
                             yPrice: {
                                 type: 'linear', position: 'right', 
                                 title: { display: true, text: 'Price', color: textColor, font: { size: 14 } },
