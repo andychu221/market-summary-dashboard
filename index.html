@@ -2937,8 +2937,11 @@
                                 callback: function(value, index, ticks) {
                                      const scale = this.chart.scales.yPerf;
                                      if (!scale) return `${value}%`;
+                                         const isNegative = value < 0;
+                                         const absValue = Math.abs(value);
                                      const useDecimal = (scale.min >= -10 && scale.max <= 10);
-                                     return useDecimal ? `${value.toFixed(1)}%` : `${value.toFixed(0)}%`;
+                                         const formattedNumber = useDecimal ? absValue.toFixed(1) : absValue.toFixed(0);
+                                         return isNegative ? `(${formattedNumber}%)` : `${formattedNumber}%`;
                                 },
                                 font: { size: 16 }
                             },
