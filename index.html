@@ -3005,29 +3005,46 @@
             });
             tableHTML += '</tr>';
 
-            // YTD
-            tableHTML += '<tr><td>YTD</td>';
-            data.forEach(item => {
-                const priceOnEndDate = item.findPriceOnOrBefore(effectiveEndDate);
-                const priceOnYTDStart = item.findPriceOnOrBefore(ytdStartDate);
-                const rawPerf = item.calcPerf(priceOnYTDStart, priceOnEndDate, false, false);
-                const displayValue = formatValue(rawPerf, 'percent');
-                const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
-                tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
-            });
-            tableHTML += '</tr>';
+            if (chartId === 'Chart-0') {
+                 // 1-Week
+                 const oneWeekStartDate = new Date(effectiveEndDate.getTime());
+                 oneWeekStartDate.setDate(oneWeekStartDate.getDate() - 7);
 
-            // Since...
-            tableHTML += `<tr><td>${sinceHeader}</td>`;
-            data.forEach(item => {
-                const priceOnEndDate = item.findPriceOnOrBefore(effectiveEndDate);
-                const priceOnSinceStart = item.findPriceOnOrBefore(sinceStartDate);
-                const rawPerf = item.calcPerf(priceOnSinceStart, priceOnEndDate, false, false);
-                const displayValue = formatValue(rawPerf, 'percent');
-                const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
-                tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
-            });
-            tableHTML += '</tr>';
+                 tableHTML += '<tr><td>1-Week</td>';
+                 data.forEach(item => {
+                    const priceOnEndDate = item.findPriceOnOrBefore(effectiveEndDate);
+                    const priceOnStart = item.findPriceOnOrBefore(oneWeekStartDate);
+                    const rawPerf = item.calcPerf(priceOnStart, priceOnEndDate, false, false);
+                    const displayValue = formatValue(rawPerf, 'percent');
+                    const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
+                    tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
+                 });
+                 tableHTML += '</tr>';
+            } else {
+                // YTD
+                tableHTML += '<tr><td>YTD</td>';
+                data.forEach(item => {
+                    const priceOnEndDate = item.findPriceOnOrBefore(effectiveEndDate);
+                    const priceOnYTDStart = item.findPriceOnOrBefore(ytdStartDate);
+                    const rawPerf = item.calcPerf(priceOnYTDStart, priceOnEndDate, false, false);
+                    const displayValue = formatValue(rawPerf, 'percent');
+                    const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
+                    tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
+                });
+                tableHTML += '</tr>';
+
+                // Since...
+                tableHTML += `<tr><td>${sinceHeader}</td>`;
+                data.forEach(item => {
+                    const priceOnEndDate = item.findPriceOnOrBefore(effectiveEndDate);
+                    const priceOnSinceStart = item.findPriceOnOrBefore(sinceStartDate);
+                    const rawPerf = item.calcPerf(priceOnSinceStart, priceOnEndDate, false, false);
+                    const displayValue = formatValue(rawPerf, 'percent');
+                    const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
+                    tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
+                });
+                tableHTML += '</tr>';
+            }
 
             tableHTML += '</tbody></table>';
             container.innerHTML = tableHTML;
@@ -4124,9 +4141,7 @@
                         } else {
                             reportBodyHTML += `<p><i>[Chart ${item.chartId} not available]</i></p>`;
                         }
-                        if (item.chartId !== 'Chart-0') {
-                             reportBodyHTML += generateEmailSafeTableHTML(`perf-table-${item.chartId}`);
-                        }
+                        reportBodyHTML += generateEmailSafeTableHTML(`perf-table-${item.chartId}`);
                     }
                 }
                 
