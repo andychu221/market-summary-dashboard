@@ -2652,10 +2652,7 @@
             const isChart0 = chartId === 'Chart-0';
             const defaultButton1W = isChart0 ? 'active' : '';
             const defaultButtonSinceLastYear = !isChart0 ? 'active' : '';
-            const tableHTML = isChart0 ? `
-                <div class="table-container" id="perf-table-container-${chartId}">
-                    <table id="perf-table-${chartId}"></table>
-                </div>` : `
+            const tableHTML = `
                 <div class="table-container" id="perf-table-container-${chartId}">
                     <table id="perf-table-${chartId}"></table>
                 </div>`;
@@ -2938,8 +2935,11 @@
                                 callback: function(value, index, ticks) {
                                          const scale = this.chart.scales.yPerf;
                                          if (!scale) return `${value}%`;
+                                         const isNegative = value < 0;
+                                         const absValue = Math.abs(value);      
                                          const useDecimal = (scale.min >= -10 && scale.max <= 10);
-                                        return useDecimal ? `${value.toFixed(1)}%` : `${value.toFixed(0)}%`;
+                                         const formattedNumber = useDecimal ? absValue.toFixed(1) : absValue.toFixed(0);
+                                         return isNegative ? `(${formattedNumber}%)` : `${formattedNumber}%`;
                                 },
                                 font: { size: 16 }
                             },
@@ -3026,7 +3026,8 @@
                     const priceOnStart = item.findPriceOnOrBefore(oneWeekStartDate);
                     const rawPerf = item.calcPerf(priceOnStart, priceOnEndDate, false, false);
                     const displayValue = formatValue(rawPerf, 'percent');
-                    tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
+                    const colorClass = val => (val === 'N/A' || parseFloat(String(val).replace(/,/g, '')) === 0) ? '' : parseFloat(String(val).replace(/,/g, '')) > 0 ? 'text-positive' : 'text-negative';
+                     tableHTML += `<td class="${colorClass(displayValue)}">${displayValue}</td>`;
                  });
                  tableHTML += '</tr>';
             } else {
