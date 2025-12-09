@@ -4080,7 +4080,10 @@
                 console.error(`Failed to generate image for ${canvas.id}:`, e);
             } finally {
                 if (originalParent) originalParent.appendChild(canvas);
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
                 chartInstance.resize();
+                chartInstance.update('none');
                 if (chartContainer && !wasInitiallyActive) chartContainer.classList.remove('active');
             }
             return imgBase64;
