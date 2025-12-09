@@ -3164,10 +3164,76 @@
                                 type: 'category', 
                                 ticks: { 
                                     color: textColor, 
-                                    maxRotation: 0, autoSkip: true, font: { size: 10 }, // Small Font
-                                    callback: function(val) {
+                                    maxRotation: 0,
+                                    autoSkip: false, // Use callback for density
+                                    font: { size: 10 }, // Small Font
+                                    callback: function(val, index) {
                                          const date = this.getLabelForValue(val);
-                                         return date instanceof Date ? formatDateDDMMM(date) : date; // Default Chart View Format
+                                         if(!(date instanceof Date)) return date;
+
+                                         // Check total duration for yearly ticks
+                                         const durationMs = endDate.getTime() - startDate.getTime();
+                                         const twoYearsMs = 2 * 365 * 24 * 60 * 60 * 1000;
+                                         const prevDate = index > 0 ? labels[index-1] : null;
+
+                                         if (durationMs > twoYearsMs) {
+                                             if (index === 0) return formatDateDDMMM(date);
+                                             if (prevDate && date.getFullYear() !== prevDate.getFullYear()) {
+                                                 return formatDateDDMMM(date);
+                                             }
+                                             return null;
+                                         }
+
+                                         const currentPeriod = timeConfig.period;
+
+                                         // Dense view only for 1w and wtd
+                                         if (currentPeriod === '1w' || currentPeriod === 'wtd') {
+                                             return formatDateDDMMM(date);
+                                         }
+
+                                         // 1-month: Weekly (First trading day of week)
+                                         if (currentPeriod === '1m') {
+                                             if (index === 0) return formatDateDDMMM(date);
+                                             if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
+                                                 return formatDateDDMMM(date);
+                                             }
+                                             return null; // hide
+                                         }
+
+                                         // 3-month: Bi-Weekly
+                                         if (currentPeriod === '3m') {
+                                              const getWeekNum = d => {
+                                                  const onejan = new Date(d.getFullYear(),0,1);
+                                                  return Math.ceil((((d - onejan) / 86400000) + onejan.getDay()+1)/7);
+                                              };
+                                              if (prevDate && (date.getDay() < prevDate.getDay() || (date - prevDate > 5 * 86400000))) {
+                                                   if (getWeekNum(date) % 2 === 0) {
+                                                       if (index < 5) return null; // prevent bunching at start
+                                                       return formatDateDDMMM(date);
+                                                   }
+                                              }
+                                              if (index === 0) return formatDateDDMMM(date);
+                                              return null;
+                                         }
+
+                                         // YTD: Monthly (First trading day of month)
+                                         if (currentPeriod === 'ytd') {
+                                             if (index === 0) return formatDateDDMMM(date);
+                                             if (prevDate && date.getMonth() !== prevDate.getMonth()) return formatDateDDMMM(date);
+                                             return null;
+                                         }
+
+                                         // Long periods: Quarterly (First trading day of quarter)
+                                         // Since Last Year, 5y, Custom (assume long)
+                                         if (index === 0) return formatDateDDMMM(date);
+                                         if (prevDate) {
+                                             const qCurrent = Math.floor(date.getMonth() / 3);
+                                             const qPrev = Math.floor(prevDate.getMonth() / 3);
+                                             if (qCurrent !== qPrev || date.getFullYear() !== prevDate.getFullYear()) {
+                                                 return formatDateDDMMM(date);
+                                             }
+                                         }
+                                         return null;
                                     }
                                 }, 
                                 grid: { display: true, color: gridColor } 
@@ -4025,7 +4091,10 @@
                 console.error(`Failed to generate image for ${canvas.id}:`, e);
             } finally {
                 if (originalParent) originalParent.appendChild(canvas);
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
                 chartInstance.resize();
+                chartInstance.update('none');
                 if (chartContainer && !wasInitiallyActive) chartContainer.classList.remove('active');
             }
             return imgBase64;
