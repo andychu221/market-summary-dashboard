@@ -1446,7 +1446,7 @@
             const domain = TICKER_DOMAINS[ticker];
             if (!domain) return '';
             // Use Clearbit Logo API
-            return `<img src=https://getlogo.dev/logos/${domain}?token=pub_97e0e4df192f20dd2626307d2148f88d/" style="width:20px; height:20px; vertical-align:middle; margin-right:8px; border-radius:50%; object-fit:contain; background:white;" onerror="this.style.display='none'">`;
+            return `<img src="https://getlogo.dev/logos/${domain}?token=pub_97e0e4df192f20dd2626307d2148f88d" style="width:20px; height:20px; vertical-align:middle; margin-right:8px; border-radius:50%; object-fit:contain; background:white;" onerror="this.style.display='none'">`;
         }
         
         // MODIFIED: Helper function for News Source Logo
@@ -1458,7 +1458,7 @@
                 else if(source.includes('Bloomberg')) domain = 'bloomberg.com';
                 else return '';
             }
-            return `<img src="https://logo.clearbit.com/${domain}" class="news-source-logo" onerror="this.style.display='none'">`;
+            return `<img src="https://getlogo.dev/logos/${domain}?token=pub_97e0e4df192f20dd2626307d2148f88d" class="news-source-logo" onerror="this.style.display='none'">`;
         }
 
         // Summary Ticker Groups (Editable) - SORTED PEERS
