@@ -1388,7 +1388,7 @@
         
         // Date Format State
         const DATE_FORMATS = ['mm/dd', 'dd/mm', 'dd/mmm', 'yyyy/mm/dd', 'mm/dd/yyyy'];
-        let currentDateFormatIndex = 0; // Default mm/dd for summary
+        let currentDateFormatIndex = 2; // Default mm/dd for summary
         
         // Chart Table Date Format State
         const CHART_TABLE_DATE_FORMATS = ['dd/mmm/yyyy', 'mm/dd/yyyy', 'dd/mm/yyyy', 'yyyy/mm/dd'];
@@ -1531,11 +1531,11 @@
         // Editable Chart Labels
         let chartLabels = {
             'Chart-0': '1-Week View',
-            'Chart-1': 'Main',
-            'Chart-2': 'Vanguard Peers 1',
-            'Chart-3': 'Vanguard Peers 2',
-            'Chart-4': 'GUC Peers',
-            'Chart-5': 'Xintec Peers',
+            'Chart-1': 'Main View',
+            'Chart-2': 'Vanguard vs Competitors',
+            'Chart-3': 'Vanguard vs Customers',
+            'Chart-4': 'GUC vs Competitors',
+            'Chart-5': 'Xintec vs Competitors',
             'Chart-6': 'VisEra vs TWSE',
             'Chart-7': 'Trading Volume'
         };
@@ -2312,7 +2312,7 @@
                 sinceStartDate = new Date(refYear - 1, 0, 1);
                 if (sinceInput) sinceInput.value = formatDateYYYYMMDD(sinceStartDate);
             }
-            sinceHeader = `Since ${formatDateUS(sinceStartDate)}`;
+            sinceHeader = `Since ${formatDateDDMMMYYYY(sinceStartDate)}`;
 
             const weekAgoDate = new Date(refDate.getTime());
             weekAgoDate.setDate(weekAgoDate.getDate() - 7);
@@ -2649,7 +2649,7 @@
             const defaultTickers = DEFAULT_CHART_TICKERS[chartId] || '';
             const currentUnit = chartAxisUnits[chartId] || 'auto';
             
-            const isChart0 = chartId === 'Chart-0';
+            const isChart0 = chartId === 'Chart-9999';
             const defaultButton1W = isChart0 ? 'active' : '';
             const defaultButtonSinceLastYear = !isChart0 ? 'active' : '';
             const tableHTML = isChart0 ? '' : `
@@ -2926,7 +2926,7 @@
                         },
                         yPerf: {
                             display: true, position: 'left',
-                            title: { display: true, text: 'Indexed Share Price', font: { size: 18 } },
+                            title: { display: true, text: 'Price Change (%)', font: { size: 18 } },
                             ticks: { color: textColor, callback: (value) => `${value}%`, font: { size: 16 } },
                             grid: { color: gridColor }
                         }
@@ -3214,7 +3214,7 @@
 
             // Volume Data
             const avgVolumes = {}; 
-            tableHTML += '<tr><td>3m AVDT (M)</td>';
+            tableHTML += '<tr><td>3m ADTV (M)</td>';
             tickers.forEach(ticker => {
                 const dataSlice = allData.filter(d => d.ticker === ticker && d.date >= threeMonthStartDate && d.date <= effectiveEndDate);
                 if (dataSlice.length > 0) {
@@ -3794,7 +3794,7 @@
             newsAvailableDates.forEach(date => {
                 const div = document.createElement('div');
                 div.className = 'date-option';
-                div.textContent = formatGlobalDate(new Date(date));
+                div.textContent = formatDateDDMMMYYYY(new Date(date));
                 div.dataset.date = date;
                 div.onclick = (e) => handleDateClick(e, date);
                 div.onmouseover = (e) => handleDateHover(e, date);
@@ -3811,8 +3811,8 @@
             } else {
                 if(new Date(date) > new Date(newsSelectedRange.start)) { newsSelectedRange.end = newsSelectedRange.start; newsSelectedRange.start = date; } else { newsSelectedRange.end = date; }
                 isSelectingDateRange = false; updateDateVisuals();
-                const startStr = formatGlobalDate(new Date(newsSelectedRange.start));
-                const endStr = formatGlobalDate(new Date(newsSelectedRange.end));
+                const startStr = formatDateDDMMMYYYY(new Date(newsSelectedRange.start));
+                const endStr = formatDateDDMMMYYYY(new Date(newsSelectedRange.end));
                 document.getElementById('news-date-range-btn').textContent = `${endStr} - ${startStr} \u25BE`;
                 document.getElementById('news-date-range-content').classList.remove('show');
                 filterAndDisplayNews();
@@ -3870,7 +3870,7 @@
             filteredNews.forEach(item => {
                 const originalIndex = currentNewsData.news.indexOf(item);
                 if (originalIndex === -1) return;
-                const displayDate = formatGlobalDate(new Date(item.Date));
+                const displayDate = formatDateDDMMMYYYY(new Date(item.Date));
                 // MODIFIED: Inject Source Logo
                 const sourceLogo = getSourceLogo(item.Source);
                 newsHTML += `<div class="news-item" id="news-item-${originalIndex}" onclick="showNewsDetail(${originalIndex})"><div class="news-meta-top"><span>${displayDate} ${item.Time}</span><span class="ticker-name">${item.tickerName || tickerName}</span><span style="display:inline-flex; align-items:center;">${sourceLogo}${item.Source}</span></div><h4 class="news-title">${item.Title}</h4></div>`;
@@ -3885,7 +3885,7 @@
             const item = currentNewsData.news[index];
             const detailView = document.getElementById('news-right-pane');
             const linkHTML = item.URL ? `<div class="news-link-container"><a href="${item.URL}" target="_blank" rel="noopener noreferrer">Read Original Article</a></div>` : '';
-            detailView.innerHTML = `<div id="news-detail-content"><h3>${item.Title}</h3><div class="meta">Source: ${item.Source} | Date: ${formatGlobalDate(new Date(item.Date))} ${item.Time}</div>${linkHTML}<pre class="content">${item.Content || 'No content available.'}</pre></div>`;
+            detailView.innerHTML = `<div id="news-detail-content"><h3>${item.Title}</h3><div class="meta">Source: ${item.Source} | Date: ${formatDateDDMMMYYYY(new Date(item.Date))} ${item.Time}</div>${linkHTML}<pre class="content">${item.Content || 'No content available.'}</pre></div>`;
             detailView.style.display = 'block'; detailView.scrollTop = 0; setActiveNewsItem(`news-item-${index}`);
         }
 
@@ -4034,7 +4034,7 @@
                 ];
                 
                 const reportDate = new Date(summaryReferenceDate);
-                const reportDateString = formatGlobalDate(reportDate);
+                const reportDateString = formatDateDDMMMYYYY(reportDate);
                 const refTime = reportDate.getTime();
                 
                 let reportBodyHTML = '';
