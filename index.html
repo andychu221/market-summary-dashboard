@@ -2649,10 +2649,13 @@
             const defaultTickers = DEFAULT_CHART_TICKERS[chartId] || '';
             const currentUnit = chartAxisUnits[chartId] || 'auto';
             
-            const isChart0 = chartId === 'Chart-9999';
+            const isChart0 = chartId === 'Chart-0';
             const defaultButton1W = isChart0 ? 'active' : '';
             const defaultButtonSinceLastYear = !isChart0 ? 'active' : '';
-            const tableHTML = isChart0 ? '' : `
+            const tableHTML = isChart0 ? `
+                <div class="table-container" id="perf-table-container-${chartId}">
+                    <table id="perf-table-${chartId}"></table>
+                </div>` : `
                 <div class="table-container" id="perf-table-container-${chartId}">
                     <table id="perf-table-${chartId}"></table>
                 </div>`;
