@@ -4077,7 +4077,11 @@
             let wasInitiallyActive = true;
             if (chartContainer) {
                 wasInitiallyActive = chartContainer.classList.contains('active');
-                if (!wasInitiallyActive) chartContainer.classList.add('active'); 
+                if (!wasInitiallyActive) {
+                    chartContainer.classList.add('active');
+                    // Force reflow
+                    void chartContainer.offsetWidth;
+                }
             }
 
             const originalParent = canvas.parentNode;
@@ -4196,6 +4200,18 @@
                     reportBodyHTML += `<hr><h2 style="font-family: Arial, sans-serif; text-align: center; margin-top: 20px; color: #2c3e50;">${item.name}</h2>`;
 
                     if (item.chartId === 'Chart-7') {
+                        // Ensure container is active for the duration of the loop to prevent layout thrashing
+                        const chart7Container = document.getElementById('chart-content-Chart-7');
+                        let wasChart7Active = true;
+                        if (chart7Container) {
+                            wasChart7Active = chart7Container.classList.contains('active');
+                            if (!wasChart7Active) {
+                                chart7Container.classList.add('active');
+                                // Force reflow
+                                void chart7Container.offsetWidth;
+                            }
+                        }
+
                         // Fix for Mac: Add explicit widths to TD and image container logic
                         let chart7ImagesHTML = '<table role="presentation" border="0" cellpadding="5" cellspacing="0" width="100%" align="center" style="max-width:1000px; margin: 10px auto; table-layout: fixed;"><tr>';
                         for (let i = 0; i < 4; i++) {
@@ -4218,6 +4234,12 @@
                         chart7ImagesHTML += '</tr></table>';
                         reportBodyHTML += chart7ImagesHTML;
                         reportBodyHTML += generateEmailSafeTableHTML('perf-table-Chart-7');
+
+                        // Restore state
+                        if (chart7Container && !wasChart7Active) {
+                            chart7Container.classList.remove('active');
+                        }
+
                     } else {
                         const chartInstance = activeCharts[`canvas-chart-${item.chartId}`];
                         const img = getImageFromChart(chartInstance, 1200, 500);
