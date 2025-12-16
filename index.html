@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <!-- Flatpickr for Range Date Picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --border-color: #ddd;
+            --split-handler-size: 8px;
+            --primary-color: #007bff;
+            --hover-color: #f8f9fa;
+            --btn-bg: #e9ecef;
+            --btn-active-bg: #007bff;
+            --btn-active-text: #fff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); height: 100vh; overflow: hidden; display: flex; flex-direction: column; color: var(--text-primary); }
+
+        /* --- Layout --- */
+        .container { display: flex; flex: 1; height: 100%; overflow: hidden; }
+        
+        /* Split Panes */
+        .split-pane { display: flex; flex-direction: column; overflow: hidden; }
+        #left-pane { width: 65%; min-width: 400px; padding: 10px; background: var(--bg-color); position: relative; }
+        #right-pane { width: 35%; min-width: 300px; border-left: 1px solid var(--border-color); background: #fff; padding: 10px; display: flex; flex-direction: column; } /* Added padding to match left */
+
+        /* Vertical Splitter (Left vs Right) */
+        .v-gutter { width: var(--split-handler-size); background: #e0e0e0; cursor: col-resize; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .v-gutter:hover { background: #bbb; }
+        .v-gutter::after { content: "||"; color: #888; font-size: 10px; }
+
+        /* Horizontal Splitter (News List vs Content) */
+        .h-gutter { height: var(--split-handler-size); background: #e0e0e0; cursor: row-resize; display: flex; align-items: center; justify-content: center; z-index: 10; width: 100%; flex-shrink: 0; margin: 0 -10px; } /* Negative margin to span full width */
+        .h-gutter:hover { background: #bbb; }
+        .h-gutter::after { content: "="; color: #888; font-size: 12px; transform: rotate(90deg); margin-left: 0; }
+
+        /* --- Headers --- */
+        .pane-header-row {
+            padding: 8px 12px;
+            background: #fff;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            height: 46px; /* Fixed height for alignment */
+        }
+        
+        .header-left-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* News Filters */
+        .news-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .news-filter-select, .news-filter-date {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            color: var(--text-primary);
+            background: #fff;
+        }
+        /* Increased width for date range string */
+        .news-filter-date { width: 190px; cursor: pointer; } 
+
+        /* Toggle Switch Styles */
+        .toggle-wrapper {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            gap: 8px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 80px;
+            height: 24px;
+        }
+
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #e9ecef;
+            transition: .4s;
+            border-radius: 24px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+            font-size: 0.7rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 36px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 18px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+
+        input:checked + .slider { background-color: #e9ecef; }
+        input:checked + .slider:before { transform: translateX(38px); }
+        
+        .slider-label-left { z-index: 0; }
+        .slider-label-right { z-index: 0; }
+
+
+        .grid-2x2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            height: 100%;
+            min-height: 0;
+            position: relative; /* For expansion context */
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* Expansion Class */
+        .card.expanded {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 100;
+            margin: 0;
+            height: 100% !important;
+            width: 100% !important;
+        }
+        
+        .card-header {
+            padding: 6px 12px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 40px;
+            flex-shrink: 0;
+        }
+
+        .card-title { font-weight: 600; font-size: 0.9rem; white-space: nowrap; flex-grow: 1; }
+
+        .header-controls-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-controls { display: flex; gap: 4px; }
+        .time-btn {
+            border: none;
+            background: transparent;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .time-btn:hover { background: var(--btn-bg); }
+        .time-btn.active { background: var(--btn-active-bg); color: var(--btn-active-text); }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0 4px;
+            line-height: 1;
+        }
+        .expand-btn:hover { color: var(--primary-color); }
+
+        .card-body { flex: 1; padding: 8px; position: relative; min-height: 0; overflow: auto; }
+        .chart-container { position: relative; width: 100%; height: 100%; }
+        
+        /* Table View */
+        .table-container { width: 100%; height: 100%; overflow: auto; display: none; }
+        .table-container.active { display: block; }
+        .market-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .market-table th, .market-table td { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: right; }
+        .market-table th { text-align: left; background: #fafafa; position: sticky; top: 0; font-weight: 600; color: #555; }
+        .market-table td:first-child { text-align: left; font-weight: 500; }
+        .val-pos { color: #2ca02c; }
+        .val-neg { color: #d62728; }
+
+        /* --- Right Pane: News --- */
+        #news-list-pane { flex: 1 1 50%; overflow-y: auto; display: flex; flex-direction: column; min-height: 100px; margin-bottom: 5px; }
+        #news-content-pane { flex: 1 1 50%; overflow-y: auto; padding-top: 10px; min-height: 100px; background: #fff; }
+        
+        .news-list { list-style: none; }
+        .news-item {
+            padding: 10px 5px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .news-item:hover { background: var(--hover-color); }
+        .news-item.active { background: #e8f0fe; border-left: 4px solid var(--primary-color); }
+        
+        .news-title-text { 
+            font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; color: #222; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .news-meta { font-size: 0.75rem; color: #888; display: flex; justify-content: space-between; }
+        .news-tag { background: #eee; padding: 1px 6px; border-radius: 3px; font-size: 0.7rem; color: #555; }
+
+        /* Full News Content */
+        #full-news-body { font-size: 0.9rem; line-height: 1.6; color: #333; white-space: pre-wrap; }
+        .placeholder-text { color: #999; text-align: center; margin-top: 50px; }
+
+        /* Loading */
+        .loading-overlay {
+            position: absolute; top:0; left:0; right:0; bottom:0;
+            background: rgba(255,255,255,0.8);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 5; font-size: 0.85rem; color: #666;
+            pointer-events: none;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .loading-overlay.visible { opacity: 1; pointer-events: auto; }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            #left-pane, #right-pane { width: 100%; height: 50%; }
+            .v-gutter { width: 100%; height: 8px; cursor: row-resize; }
+            .v-gutter::after { content: "="; transform: rotate(90deg); }
+            .grid-2x2 { grid-template-columns: 1fr; grid-template-rows: repeat(4, 250px); display: block; overflow-y: auto; }
+            .card { margin-bottom: 10px; height: 250px; }
+            .pane-header-row { height: auto; flex-wrap: wrap; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-container">
+    <!-- Left Pane: Charts -->
+    <div id="left-pane" class="split-pane">
+        <div class="pane-header-row">
+            <span style="font-weight:600; color:var(--text-primary);">Market Overview</span>
+            <div class="header-left-controls">
+                
+                <!-- Region Toggle -->
+                <div class="toggle-wrapper">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="region-toggle-input" onchange="toggleRegion()">
+                        <span class="slider">
+                            <span class="slider-label-left">US</span>
+                            <span class="slider-label-right">Asia</span>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- View Toggle -->
+                <div class="toggle-wrapper">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="view-toggle-input" onchange="toggleView()">
+                        <span class="slider">
+                            <span class="slider-label-left">Chart</span>
+                            <span class="slider-label-right">Table</span>
+                        </span>
+                    </label>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="grid-2x2" id="charts-grid">
+            <!-- 1. Indices -->
+            <div class="card" id="card-indices">
+                <div class="card-header">
+                    <div class="card-title" id="title-indices">Indices</div>
+                    <div class="header-controls-group">
+                        <div class="time-controls" id="controls-indices"></div>
+                        <button class="expand-btn" onclick="toggleExpand('card-indices')">⤢</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="chart-container-indices"><canvas id="chart-indices"></canvas></div>
+                    <div class="table-container" id="table-indices"></div>
+                    <div id="loading-indices" class="loading-overlay visible">Loading...</div>
+                </div>
+            </div>
+            <!-- 2. FX -->
+            <div class="card" id="card-fx">
+                <div class="card-header">
+                    <div class="card-title" id="title-fx">FX</div>
+                    <div class="header-controls-group">
+                        <div class="time-controls" id="controls-fx"></div>
+                        <button class="expand-btn" onclick="toggleExpand('card-fx')">⤢</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="chart-container-fx"><canvas id="chart-fx"></canvas></div>
+                    <div class="table-container" id="table-fx"></div>
+                    <div id="loading-fx" class="loading-overlay visible">Loading...</div>
+                </div>
+            </div>
+            <!-- 3. Rates -->
+            <div class="card" id="card-rates">
+                <div class="card-header">
+                    <div class="card-title" id="title-rates">Rates</div>
+                    <div class="header-controls-group">
+                        <div class="time-controls" id="controls-rates"></div>
+                        <button class="expand-btn" onclick="toggleExpand('card-rates')">⤢</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="chart-container-rates"><canvas id="chart-rates"></canvas></div>
+                    <div class="table-container" id="table-rates"></div>
+                    <div id="loading-rates" class="loading-overlay visible">Loading...</div>
+                </div>
+            </div>
+            <!-- 4. Stocks -->
+            <div class="card" id="card-tech">
+                <div class="card-header">
+                    <div class="card-title" id="title-tech">Stocks</div>
+                    <div class="header-controls-group">
+                        <div class="time-controls" id="controls-tech"></div>
+                        <button class="expand-btn" onclick="toggleExpand('card-tech')">⤢</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="chart-container-tech"><canvas id="chart-tech"></canvas></div>
+                    <div class="table-container" id="table-tech"></div>
+                    <div id="loading-tech" class="loading-overlay visible">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vertical Splitter -->
+    <div class="v-gutter" id="v-gutter"></div>
+
+    <!-- Right Pane: News -->
+    <div id="right-pane" class="split-pane">
+        <!-- News Filters -->
+        <div class="pane-header-row">
+            <span style="font-weight:600; color:var(--text-primary); margin-right: 10px;">News</span>
+            <div class="news-filter-group">
+                <select id="news-filter-cat" class="news-filter-select" onchange="filterNews()">
+                    <option value="All">All Categories</option>
+                    <option value="Briefing">Briefing</option>
+                    <option value="FX">FX</option>
+                    <option value="Bonds">Bonds</option>
+                </select>
+                <!-- Changed to text input for Flatpickr -->
+                <input type="text" id="news-filter-date" class="news-filter-date" placeholder="Select Date Range" readonly>
+                <select id="news-filter-lang" class="news-filter-select" onchange="filterNews()">
+                    <option value="All">All Lang</option>
+                    <option value="EN">EN</option>
+                    <option value="ZH">ZH</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Top: News List -->
+        <div id="news-list-pane">
+            <ul class="news-list" id="news-list">
+                <!-- News items go here -->
+            </ul>
+        </div>
+        
+        <!-- Horizontal Splitter -->
+        <div class="h-gutter" id="h-gutter"></div>
+
+        <!-- Bottom: News Content -->
+        <div id="news-content-pane">
+            <div id="full-news-container">
+                <div id="full-news-body"><div class="placeholder-text">Select a news item to read...</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 0. Configuration & Colors ---
+    
+    const CHART_COLORS = [
+        '#1f77b4', '#d62728', '#2ca02c', '#9467bd', '#ff7f0e', 
+        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+    ];
+
+    const INVERTED_TICKERS = ['JPY=', 'KRW=', 'CNY=', 'TWD='];
+
+    const REGION_CONFIG = {
+        US: {
+            indices: {
+                tickers: ['.DJI', '.SPX', '.IXIC', '.SOX'],
+                names: { '.DJI': 'Dow Jones', '.SPX': 'S&P 500', '.IXIC': 'Nasdaq', '.SOX': 'SOX' },
+                colors: [CHART_COLORS[0], CHART_COLORS[1], CHART_COLORS[8], CHART_COLORS[3]] 
+            },
+            fx: {
+                tickers: ['EUR=', 'JPY=', 'TWD=', '.DXY'],
+                names: { 'EUR=': 'EUR/USD', 'JPY=': 'USD/JPY', 'TWD=': 'USD/TWD', '.DXY': 'DXY' },
+                colors: [CHART_COLORS[0], CHART_COLORS[1], CHART_COLORS[2], CHART_COLORS[4]],
+                decimals: { 'EUR=': 4, 'JPY=': 2, 'TWD=': 3, '.DXY': 2 }
+            },
+            rates: {
+                tickers: ['US3MT=RR', 'US5YT=RR', 'US10YT=RR', 'US30YT=RR'],
+                names: { 'US3MT=RR': 'UST 3M', 'US5YT=RR': 'UST 5Y', 'US10YT=RR': 'UST 10Y', 'US30YT=RR': 'UST 30Y' },
+                colors: [CHART_COLORS[3], CHART_COLORS[4], CHART_COLORS[2], CHART_COLORS[5]],
+                isRate: true
+            },
+            tech: {
+                tickers: ['NVDA.O', 'AAPL.O', 'GOOG.O', 'TSM.N', 'AVGO.O', 'AMD.O', 'INTC.O'],
+                names: { 'NVDA.O':'NVDA', 'AAPL.O':'AAPL', 'TSM.N':'TSM', 'GOOG.O':'GOOG', 'AVGO.O':'AVGO', 'AMD.O':'AMD', 'INTC.O':'INTC' },
+                colors: CHART_COLORS
+            }
+        },
+        Asia: {
+            indices: {
+                tickers: ['.TWII', '.SSEC', '.HSI', '.KS11', '.N225', '.CSI300'],
+                names: { '.TWII': 'TWSE', '.SSEC': 'SSE', '.HSI': 'HSI', '.KS11': 'KOSPI', '.N225': 'Nikkei', '.CSI300': 'CSI300' },
+                colors: CHART_COLORS
+            },
+            fx: {
+                tickers: ['TWD=', 'JPY=', 'KRW=', 'CNY='],
+                names: { 'TWD=': 'USD/TWD', 'JPY=': 'USD/JPY', 'KRW=': 'USD/KRW', 'CNY=': 'USD/CNY' },
+                colors: [CHART_COLORS[2], CHART_COLORS[1], CHART_COLORS[3], CHART_COLORS[0]],
+                decimals: { 'TWD=': 3, 'JPY=': 2, 'KRW=': 2, 'CNY=': 4 }
+            },
+            rates: {
+                tickers: ['US3MT=RR', 'US5YT=RR', 'US10YT=RR', 'US30YT=RR'],
+                names: { 'US3MT=RR': 'UST 3M', 'US5YT=RR': 'UST 5Y', 'US10YT=RR': 'UST 10Y', 'US30YT=RR': 'UST 30Y' },
+                colors: [CHART_COLORS[3], CHART_COLORS[4], CHART_COLORS[2], CHART_COLORS[5]],
+                isRate: true
+            },
+            tech: {
+                tickers: ['2330.TW', '2317.TW', '2454.TW', '2308.TW', '3443.TW', '6789.TW'],
+                names: { '2330.TW': '2330', '2317.TW': '2317', '2454.TW': '2454', '2308.TW': '2308', '3443.TW': '3443', '6789.TW': '6789' },
+                colors: CHART_COLORS
+            }
+        }
+    };
+
+    const FILES_MAP = {
+        indices: { intraday: 'Equity_Index', history: 'Equity_Index' },
+        fx: { intraday: 'FX', history: 'FX' },
+        rates: { intraday: 'US_Rates', history: 'US_Rates' },
+        tech: { intraday: 'US_Stocks', history: 'US_Stocks' }, 
+    };
+
+    const timeframes = ['1D', '5D', '1M', '3M', 'YTD', '1Y', '2Y'];
+
+    // State
+    let currentRegion = 'US';
+    const chartInstances = {};
+    const intradayCache = {};
+    const historyCache = {};
+    const currentSettings = { indices: '1D', fx: '1D', rates: '1D', tech: '1D' };
+    let currentViewMode = 'chart'; 
+    const cachedDatasets = {}; 
+    let expandedCardId = null;
+
+    // --- 1. Splitter Logic ---
+    function initSplitter(gutterId, prevId, nextId, direction) {
+        const gutter = document.getElementById(gutterId);
+        const prevEl = document.getElementById(prevId);
+        const nextEl = document.getElementById(nextId);
+        const container = gutter.parentElement;
+        let isDragging = false;
+
+        gutter.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            e.preventDefault();
+            document.body.style.cursor = direction === 'H' ? 'col-resize' : 'row-resize';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const rect = container.getBoundingClientRect();
+            
+            if (direction === 'H') {
+                const total = rect.width;
+                let pos = e.clientX - rect.left;
+                if (pos < 300) pos = 300;
+                if (pos > total - 300) pos = total - 300;
+                const pct = (pos / total) * 100;
+                prevEl.style.width = `${pct}%`;
+                nextEl.style.width = `${100 - pct}%`;
+                Object.values(chartInstances).forEach(c => c.resize());
+            } else {
+                const total = rect.height;
+                let pos = e.clientY - rect.top;
+                if (pos < 100) pos = 100;
+                if (pos > total - 100) pos = total - 100;
+                const pct = (pos / total) * 100;
+                prevEl.style.flex = `0 0 ${pct}%`;
+                nextEl.style.flex = `0 0 ${100 - pct}%`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if(isDragging) {
+                isDragging = false;
+                document.body.style.cursor = 'default';
+            }
+        });
+    }
+
+    // --- 2. Initialization Logic ---
+
+    function initRegion() {
+        // Taipei is UTC+8. Logic: 10:00 to 22:00 Taipei time is Asia.
+        const now = new Date();
+        const hour = parseInt(now.toLocaleString("en-US", {timeZone: "Asia/Taipei", hour: 'numeric', hour12: false}));
+        
+        const regionToggle = document.getElementById('region-toggle-input');
+        
+        if (hour >= 10 && hour < 22) {
+            currentRegion = 'Asia';
+            regionToggle.checked = true; // Checked = Asia
+        } else {
+            currentRegion = 'US';
+            regionToggle.checked = false; // Unchecked = US
+        }
+        updateRegionUI();
+    }
+
+    function toggleRegion() {
+        const regionToggle = document.getElementById('region-toggle-input');
+        currentRegion = regionToggle.checked ? 'Asia' : 'US';
+        updateRegionUI();
+        refreshAllCharts();
+    }
+
+    function updateRegionUI() {
+        // Update Titles
+        document.getElementById('title-indices').textContent = currentRegion === 'Asia' ? 'Asia Indices' : 'US Indices';
+        document.getElementById('title-tech').textContent = currentRegion === 'Asia' ? 'TW Tech' : 'US Tech';
+    }
+
+    function toggleView() {
+        const viewToggle = document.getElementById('view-toggle-input');
+        currentViewMode = viewToggle.checked ? 'table' : 'chart';
+        
+        refreshAllCharts();
+    }
+
+    function toggleExpand(cardId) {
+        const card = document.getElementById(cardId);
+        const btn = card.querySelector('.expand-btn');
+        
+        if (expandedCardId === cardId) {
+            // Collapse
+            card.classList.remove('expanded');
+            btn.textContent = '⤢';
+            expandedCardId = null;
+        } else {
+            // Expand
+            // Collapse others if any (though only one can be expanded)
+            if (expandedCardId) {
+                const prev = document.getElementById(expandedCardId);
+                prev.classList.remove('expanded');
+                prev.querySelector('.expand-btn').textContent = '⤢';
+            }
+            
+            card.classList.add('expanded');
+            btn.textContent = '✕';
+            expandedCardId = cardId;
+        }
+        
+        // Resize charts after transition
+        setTimeout(() => {
+            Object.values(chartInstances).forEach(c => c.resize());
+        }, 350); 
+    }
+
+    function refreshAllCharts() {
+        ['indices', 'fx', 'rates', 'tech'].forEach(key => {
+            // Update visibility
+            document.getElementById(`chart-container-${key}`).style.display = currentViewMode === 'chart' ? 'block' : 'none';
+            document.getElementById(`table-${key}`).classList.toggle('active', currentViewMode === 'table');
+            
+            // Reload data
+            updateChart(key, currentSettings[key], null, true);
+        });
+    }
+
+    // --- 3. Chart/Table Logic ---
+
+    async function fetchJson(url) {
+        try {
+            const res = await fetch(`${url}?v=${Date.now()}`); 
+            if (!res.ok) throw new Error(res.status);
+            return await res.json();
+        } catch (e) {
+            console.error("Fetch error:", url, e);
+            return null;
+        }
+    }
+
+    function initControls() {
+        ['indices', 'fx', 'rates', 'tech'].forEach(key => {
+            const container = document.getElementById(`controls-${key}`);
+            container.innerHTML = ''; // Clear existing
+            timeframes.forEach(tf => {
+                const btn = document.createElement('button');
+                btn.className = `time-btn ${tf === '1D' ? 'active' : ''}`;
+                btn.textContent = tf;
+                btn.dataset.tf = tf; // Store tf for easier lookup
+                btn.onclick = () => updateChart(key, tf, btn);
+                container.appendChild(btn);
+            });
+        });
+    }
+
+    async function updateChart(key, timeframe, btnElement, isRefresh = false) {
+        currentSettings[key] = timeframe;
+        const container = document.getElementById(`controls-${key}`);
+        
+        // Update active class
+        if (btnElement) {
+            Array.from(container.children).forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+        } else if (!isRefresh) {
+            // If called without element (e.g. init), manually set 1D active
+            Array.from(container.children).forEach(b => {
+                if (b.dataset.tf === timeframe) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+        }
+
+        const loader = document.getElementById(`loading-${key}`);
+        loader.classList.add('visible');
+
+        // Determine Config based on Region
+        const config = REGION_CONFIG[currentRegion][key];
+        // Determine File
+        let fileKey = FILES_MAP[key].intraday; // Default
+        if (timeframe !== '1D') fileKey = FILES_MAP[key].history;
+        
+        // Special case: Asia Tech uses TW_Stocks
+        if (currentRegion === 'Asia' && key === 'tech') {
+            fileKey = 'TW_Stocks'; 
+        }
+
+        // Get Data
+        const datasets = await getChartData(config, timeframe, fileKey);
+        cachedDatasets[key] = datasets;
+
+        // Render
+        if (currentViewMode === 'chart') {
+            renderChart(config, `chart-${key}`, datasets, config.isRate, timeframe);
+        } else {
+            renderTable(key, datasets, config, timeframe);
+        }
+        
+        loader.classList.remove('visible');
+    }
+
+    async function getChartData(config, timeframe, fileName) {
+        const isIntraday = timeframe === '1D';
+        const folder = isIntraday ? 'intraday_market_data' : 'market_data';
+        const url = `https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/${folder}/${fileName}.json`;
+        
+        // Simple caching key
+        const cacheKey = `${fileName}_${isIntraday}`;
+        let data;
+        if (isIntraday) {
+            if (!intradayCache[cacheKey]) intradayCache[cacheKey] = await fetchJson(url);
+            data = intradayCache[cacheKey];
+        } else {
+            if (!historyCache[cacheKey]) historyCache[cacheKey] = await fetchJson(url);
+            data = historyCache[cacheKey];
+        }
+
+        if (!data) return [];
+        
+        const datasets = [];
+        const cutoffDate = !isIntraday ? getCutoffDate(timeframe) : null;
+
+        config.tickers.forEach((ticker, idx) => {
+            // Retrieve data with fallback logic for suffixes
+            let tData = data[ticker];
+            if (!tData) {
+                const root = ticker.split('.')[0];
+                tData = Object.values(data).find(d => d.name && d.name.includes(root)) || data[Object.keys(data).find(k => k.startsWith(root))];
+            }
+
+            // Inversion check
+            const invert = INVERTED_TICKERS.includes(ticker);
+
+            if (tData) {
+                const points = [];
+                let baseVal = null;
+                let lastVal = null;
+
+                if (isIntraday && tData.data) {
+                    const times = Object.keys(tData.data).sort();
+                    if (times.length > 0) {
+                        const lastDate = times[times.length - 1].split(' ')[0];
+                        times.forEach(ts => {
+                            if (ts.startsWith(lastDate)) {
+                                const val = parseFloat(tData.data[ts]);
+                                if (baseVal === null) baseVal = val;
+                                lastVal = val;
+                                let y = config.isRate ? (val - baseVal) * 100 : ((val - baseVal) / baseVal) * 100;
+                                if(invert) y = -y; // Invert for strength visualization
+                                points.push({ x: new Date(ts).getTime(), y });
+                            }
+                        });
+                    }
+                } else if (!isIntraday && tData.date && tData.close) {
+                    for (let i = 0; i < tData.date.length; i++) {
+                        const dObj = new Date(tData.date[i]);
+                        if (dObj >= cutoffDate) {
+                            const val = tData.close[i];
+                            if (val !== null) {
+                                if (baseVal === null) baseVal = val;
+                                lastVal = val;
+                                let y = config.isRate ? (val - baseVal) * 100 : ((val - baseVal) / baseVal) * 100;
+                                if(invert) y = -y; // Invert
+                                points.push({ x: dObj.getTime(), y });
+                            }
+                        }
+                    }
+                }
+
+                if (points.length > 0) {
+                    datasets.push({
+                        label: config.names[ticker] || ticker,
+                        data: points,
+                        borderColor: config.colors[idx % config.colors.length],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.1,
+                        lastPrice: lastVal,
+                        change: points[points.length - 1].y,
+                        tickerKey: ticker // Pass ticker key for specific formatting lookups
+                    });
+                }
+            }
+        });
+        return datasets;
+    }
+
+    function getCutoffDate(tf) {
+        const d = new Date();
+        switch(tf) {
+            case '5D': d.setDate(d.getDate() - 5); break;
+            case '1M': d.setMonth(d.getMonth() - 1); break;
+            case '3M': d.setMonth(d.getMonth() - 3); break;
+            case 'YTD': return new Date(d.getFullYear(), 0, 1);
+            case '1Y': d.setFullYear(d.getFullYear() - 1); break;
+            case '2Y': d.setFullYear(d.getFullYear() - 2); break;
+        }
+        return d;
+    }
+
+    function renderTable(key, datasets, config, timeframe) {
+        const container = document.getElementById(`table-${key}`);
+        let html = `<table class="market-table"><thead><tr>
+            <th>Name</th>
+            <th>Last</th>
+            <th>Chg</th>
+        </tr></thead><tbody>`;
+
+        datasets.forEach(d => {
+            const isRate = config.isRate;
+            let decimals = 2; // Default
+            
+            // Custom decimals check
+            if (config.decimals && config.decimals[d.tickerKey]) {
+                decimals = config.decimals[d.tickerKey];
+            } else if (isRate) {
+                decimals = 2; // Rate Last Price usually 2 (e.g. 4.35)
+            }
+
+            const lastFormatted = d.lastPrice !== null ? d.lastPrice.toFixed(decimals) : 'N/A';
+            const chgVal = d.change;
+            
+            let chgFormatted;
+            if (isRate) {
+                chgFormatted = (chgVal > 0 ? '+' : '') + chgVal.toFixed(0) + ' bps';
+            } else {
+                chgFormatted = (chgVal > 0 ? '+' : '') + chgVal.toFixed(1) + '%';
+            }
+            
+            const colorClass = chgVal > 0 ? 'val-pos' : (chgVal < 0 ? 'val-neg' : '');
+
+            html += `<tr>
+                <td>${d.label}</td>
+                <td>${lastFormatted}</td>
+                <td class="${colorClass}">${chgFormatted}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function renderChart(config, canvasId, datasets, isRate, timeframe) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+        const unit = timeframe === '1D' ? 'hour' : 'day';
+        const displayFormat = timeframe === '1D' ? 'HH:mm' : 'MMM dd';
+        
+        const yFormat = (val) => {
+            if (isRate) return val.toFixed(0);
+            return val.toFixed(1) + '%';
+        };
+
+        chartInstances[canvasId] = new Chart(ctx, {
+            type: 'line',
+            data: { datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { boxWidth: 10, padding: 8, font: { size: 10 }, color: '#333' }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255,255,255,0.95)',
+                        titleColor: '#333',
+                        bodyColor: '#333',
+                        borderColor: '#ddd',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: (ctx) => {
+                                let l = ctx.dataset.label || '';
+                                if(l) l += ': ';
+                                // Apply suffix here for tooltip
+                                let suffix = isRate ? ' bps' : '%';
+                                l += yFormat(ctx.parsed.y) + suffix;
+                                return l;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: { unit: unit, displayFormats: { [unit]: displayFormat } },
+                        grid: { display: true, color: '#f0f0f0' },
+                        ticks: { color: '#666', maxRotation: 0, autoSkip: true, maxTicksLimit: 6 }
+                    },
+                    y: {
+                        grid: { display: true, color: '#f0f0f0' },
+                        ticks: { color: '#666', callback: (val) => yFormat(val) },
+                        title: { display: isRate, text: isRate ? 'bps' : '', font: {size: 10} }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- 4. News Logic ---
+
+    let allNewsData = [];
+    let filteredNewsData = [];
+
+    async function loadNews() {
+        const url = 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/reuters_archive.json';
+        const data = await fetchJson(url);
+        
+        if (data && data.reports) {
+            allNewsData = data.reports.sort((a,b) => 
+                new Date(`${b.Date} ${b.Time}`) - new Date(`${a.Date} ${a.Time}`)
+            );
+            filterNews(); // Initial filter & render
+        }
+    }
+
+    function filterNews() {
+        const cat = document.getElementById('news-filter-cat').value;
+        // const dateStr = document.getElementById('news-filter-date').value; // Old logic
+        const lang = document.getElementById('news-filter-lang').value;
+        
+        // Date range from Flatpickr
+        const datePicker = document.getElementById('news-filter-date')._flatpickr;
+        const selectedDates = datePicker ? datePicker.selectedDates : [];
+
+        filteredNewsData = allNewsData.filter(news => {
+            // 1. Category
+            if (cat !== 'All') {
+                if (cat === 'Briefing' && !news.Title.includes('早報')) return false;
+                if (cat === 'FX' && !news.Title.includes('匯')) return false;
+                if (cat === 'Bonds' && !news.Title.includes('債')) return false;
+            }
+
+            // 2. Date Range
+            if (selectedDates.length > 0) {
+                // News date: "YYYY/MM/DD" or "YYYY-MM-DD"
+                const nDate = new Date(news.Date.replace(/\//g, '-')); 
+                nDate.setHours(0,0,0,0);
+                
+                const start = new Date(selectedDates[0]);
+                start.setHours(0,0,0,0);
+                
+                let end = start;
+                if (selectedDates.length > 1) {
+                    end = new Date(selectedDates[1]);
+                    end.setHours(0,0,0,0);
+                }
+                
+                if (nDate < start || nDate > end) return false;
+            }
+
+            // 3. Language (Simple heuristic: check for Chinese characters)
+            if (lang !== 'All') {
+                const hasChinese = /[\u4e00-\u9fa5]/.test(news.Title);
+                if (lang === 'ZH' && !hasChinese) return false;
+                if (lang === 'EN' && hasChinese) return false;
+            }
+
+            return true;
+        });
+
+        renderNewsList();
+        
+        // Auto-select first if available
+        if (filteredNewsData.length > 0) {
+            selectNews(0);
+        } else {
+            document.getElementById('news-list').innerHTML = '<li style="padding:10px; color:#999; text-align:center;">No news found.</li>';
+            document.getElementById('full-news-body').innerHTML = '';
+        }
+    }
+
+    function renderNewsList() {
+        const listEl = document.getElementById('news-list');
+        listEl.innerHTML = '';
+        
+        filteredNewsData.forEach((news, idx) => {
+            const li = document.createElement('li');
+            li.className = 'news-item';
+            li.id = `news-item-${idx}`;
+            
+            let tag = 'General';
+            if (news.Title.includes('早報')) tag = 'Briefing';
+            else if (news.Title.includes('匯')) tag = 'FX';
+            else if (news.Title.includes('債')) tag = 'Bonds';
+            
+            li.innerHTML = `
+                <div class="news-title-text" title="${news.Title}">${news.Title}</div>
+                <div class="news-meta">
+                    <span>${news.Date} ${news.Time}</span>
+                    <span class="news-tag">${tag}</span>
+                </div>
+            `;
+            li.onclick = () => selectNews(idx);
+            listEl.appendChild(li);
+        });
+    }
+
+    function selectNews(index) {
+        const news = filteredNewsData[index];
+        if (!news) return;
+        document.querySelectorAll('.news-item').forEach(el => el.classList.remove('active'));
+        const item = document.getElementById(`news-item-${index}`);
+        if(item) item.classList.add('active');
+        
+        // Only content
+        document.getElementById('full-news-body').textContent = news.Content;
+    }
+
+    // --- Initialization ---
+
+    window.onload = () => {
+        initSplitter('v-gutter', 'left-pane', 'right-pane', 'H');
+        initSplitter('h-gutter', 'news-list-pane', 'news-content-pane', 'V');
+        
+        // Init Flatpickr
+        flatpickr("#news-filter-date", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+                filterNews();
+            }
+        });
+
+        initRegion(); // Calculate Region
+        initControls(); // Build buttons
+
+        // Initial Load
+        refreshAllCharts();
+        
+        loadNews();
+    };
+
+    setInterval(() => {
+        if (!document.hidden) {
+            // Re-check intraday caches
+            for (let key in intradayCache) delete intradayCache[key];
+            
+            // Only refresh 1D charts to be efficient
+            ['indices', 'fx', 'rates', 'tech'].forEach(key => {
+                if (currentSettings[key] === '1D') updateChart(key, '1D', null, true);
+            });
+            loadNews();
+        }
+    }, 300000);
+
+</script>
+</body>
+</html>
