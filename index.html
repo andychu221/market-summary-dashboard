@@ -1042,24 +1042,44 @@
             const diffTime = endDate - startDate;
             const durationDays = diffTime / (1000 * 3600 * 24);
 
-            const shouldShowTick = (index) => {
+            const shouldShowLabel = (index) => {
                 if (index === 0) return true;
                 const date = labels[index];
                 const prevDate = labels[index - 1];
                 if (!date || !prevDate) return false;
 
-                // Dynamic logic based on duration
-                if (periodName === '1-Week' || durationDays <= 10) {
-                     return true; // Daily
-                } else if (durationDays <= 100) {
-                     // Weekly
-                     if (date.getDay() < prevDate.getDay() || (date - prevDate > 6 * 86400000)) return true;
-                     return false;
-                } else {
-                     // Monthly
+                if (periodName === '1-Week' || durationDays <= 10) return true; // Daily
+                if (durationDays <= 60) {
+                     // Weekly Labels for 1-Month
+                     return (date.getDay() < prevDate.getDay() || (date - prevDate > 6 * 86400000));
+                }
+                if (durationDays <= 370) {
+                     // Monthly Labels for 1-Year/YTD
                      return date.getMonth() !== prevDate.getMonth();
                 }
+                // Yearly Labels
+                return date.getFullYear() !== prevDate.getFullYear();
             };
+
+            const shouldShowGrid = (index) => {
+                 if (shouldShowLabel(index)) return true;
+                 const date = labels[index];
+                 const prevDate = labels[index - 1];
+                 if (!date || !prevDate) return false;
+
+                 if (durationDays <= 60) return true; // Daily Grid for 1-Month
+                 if (durationDays <= 370) {
+                     // Weekly Grid for 1-Year/YTD
+                     return (date.getDay() < prevDate.getDay() || (date - prevDate > 6 * 86400000));
+                 }
+                 if (durationDays > 370) {
+                     // Monthly Grid for Multi-Year
+                     return date.getMonth() !== prevDate.getMonth();
+                 }
+                 return false;
+            };
+
+            const getGridColor = () => document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
 
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line', data: { labels, datasets },
@@ -1073,16 +1093,15 @@
                             ticks: { 
                                 color: textColor, maxRotation: 0, autoSkip: false,
                                 callback: function(val, index) {
-                                     if (!shouldShowTick(index)) return null;
+                                     if (!shouldShowLabel(index)) return null;
 
-                                     // Format based on duration/logic
-                                     if (periodName === '1-Week' || durationDays <= 10) return formatDateDDMMM(labels[index]);
-                                     if (durationDays <= 100) return formatDateDDMMM(labels[index]); // Week: 12/Jan
-                                     return formatDateDDMMM(labels[index]).split('/')[1]; // Month: Jan
+                                     if (periodName === '1-Week' || durationDays <= 60) return formatDateDDMMM(labels[index]);
+                                     if (durationDays <= 370) return formatDateDDMMM(labels[index]).split('/')[1];
+                                     return labels[index].getFullYear();
                                 }
                             },
                             grid: { 
-                                color: (ctx) => shouldShowTick(ctx.index) ? gridColor : 'transparent',
+                                color: (ctx) => shouldShowGrid(ctx.index) ? getGridColor() : 'transparent',
                                 drawTicks: true,
                                 offset: false
                             }
