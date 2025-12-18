@@ -693,6 +693,7 @@
         }
 
         function saveMciConfig() {
+            if (document.activeElement) { document.activeElement.blur(); }
             const loading = document.getElementById('loading-overlay');
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Recalculating MCI...";
@@ -1035,21 +1036,29 @@
             }).filter(Boolean);
 
             const isDarkMode = document.body.classList.contains('dark-mode');
-            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)';
             const textColor = isDarkMode ? '#a0a0a0' : '#555';
+
+            const diffTime = endDate - startDate;
+            const durationDays = diffTime / (1000 * 3600 * 24);
 
             const shouldShowTick = (index) => {
                 if (index === 0) return true;
                 const date = labels[index];
                 const prevDate = labels[index - 1];
                 if (!date || !prevDate) return false;
-                if (periodName === '1-Week') return true;
-                if (periodName === '1-Month') {
-                    if (date.getDay() < prevDate.getDay() || (date - prevDate > 6 * 86400000)) return true;
-                    return false;
+
+                // Dynamic logic based on duration
+                if (periodName === '1-Week' || durationDays <= 10) {
+                     return true; // Daily
+                } else if (durationDays <= 100) {
+                     // Weekly
+                     if (date.getDay() < prevDate.getDay() || (date - prevDate > 6 * 86400000)) return true;
+                     return false;
+                } else {
+                     // Monthly
+                     return date.getMonth() !== prevDate.getMonth();
                 }
-                if (periodName === 'YTD' || periodName === '1-Year') return date.getMonth() !== prevDate.getMonth();
-                return false;
             };
 
             activeCharts[canvasId] = new Chart(ctx, {
@@ -1065,10 +1074,11 @@
                                 color: textColor, maxRotation: 0, autoSkip: false,
                                 callback: function(val, index) {
                                      if (!shouldShowTick(index)) return null;
-                                     if (periodName === '1-Week') return formatDateDDMMM(labels[index]);
-                                     if (periodName === '1-Month') return formatDateDDMMM(labels[index]);
-                                     if (periodName === 'YTD' || periodName === '1-Year') return formatDateDDMMM(labels[index]).split('/')[1];
-                                     return null;
+
+                                     // Format based on duration/logic
+                                     if (periodName === '1-Week' || durationDays <= 10) return formatDateDDMMM(labels[index]);
+                                     if (durationDays <= 100) return formatDateDDMMM(labels[index]); // Week: 12/Jan
+                                     return formatDateDDMMM(labels[index]).split('/')[1]; // Month: Jan
                                 }
                             },
                             grid: { 
