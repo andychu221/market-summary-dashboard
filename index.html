@@ -682,6 +682,9 @@
             const val = parseFloat(input.value) || 0;
             if(mciWeightHistory[rowIdx] && mciWeightHistory[rowIdx].weights) {
                 mciWeightHistory[rowIdx].weights[ticker] = val;
+                if (rowIdx === 0) {
+                    defaultWeights[ticker] = val;
+                }
             }
         }
 
@@ -696,6 +699,18 @@
             const loading = document.getElementById('loading-overlay');
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Recalculating MCI...";
+            let hasInvalidWeights = false;
+            mciWeightHistory.forEach(h => {
+                const sum = Object.values(h.weights).reduce((a, b) => a + b, 0);
+                if (sum <= 0) hasInvalidWeights = true;
+            });
+            
+            if (hasInvalidWeights) {
+                loading.style.display = 'none';
+                alert('Warning: Some periods have zero or negative total weights. Please check your weights.');
+                return;
+            }
+            
             setTimeout(() => {
                 dataByTicker['.MCI'] = [];
                 allData = allData.filter(d => d.ticker !== '.MCI');
