@@ -1048,7 +1048,7 @@
                 if (!date || !prevDate) return false;
                 if (periodName === '1-Week') return true;
                 if (periodName === '1-Month') {
-                    const daysDiff = (date - prevDate) / 86400000;ue;
+                    const daysDiff = (date - prevDate) / 86400000;
                     return daysDiff >= 5 || date.getDay() === 1; // 每週一或間隔5天以上
                 }
                 if (periodName === 'YTD' || periodName === '1-Year') return date.getMonth() !== prevDate.getMonth();
