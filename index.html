@@ -179,7 +179,7 @@
         #news-left-pane { flex: 0 0 40%; min-width: 350px; display: flex; flex-direction: column; background: var(--bg-color); border-right: 1px solid var(--border-color); }
         #news-resizer { width: 5px; cursor: col-resize; background: #ddd; transition: background 0.2s; }
         #news-resizer:hover { background: var(--primary-color); }
-        #news-right-pane { flex: 1; min-width: 300px; padding: 20px; background-color: var(--hover-bg); overflow-y: auto; }
+        #news-right-pane { flex: 1; min-width: 0px; padding: 20px; background-color: var(--hover-bg); overflow-y: auto; }
         
         .news-item { padding: 12px 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; }
         .news-item:hover { background-color: var(--hover-bg); }
@@ -356,7 +356,7 @@
                                 <div id="news-date-range-content" class="date-range-content">
                                     <div class="date-option" onclick="selectNewsDateRange('all')">All Dates</div>
                                     <div class="date-option" onclick="selectNewsDateRange('7d')">Last 7 Days</div>
-                                    <div class="date-option" onclick="selectNewsDateRange('30d')">Last 30 Days</div>
+                                    <div class="date-option" onclick="selectNewsDateRange('d')">Last  Days</div>
                                     <div class="date-option" onclick="toggleCustomDateRow()">Custom Range...</div>
                                     <div id="custom-date-row" class="custom-date-row">
                                         <input type="date" id="news-date-start" class="controls-input">
@@ -430,7 +430,7 @@
     <script>
         // --- Configuration ---
         const TICKER_NAMES = {
-            '2330.TW': 'TSMC', 'TSM': 'TSMC ADR', 'TSM.N': 'TSMC ADR',
+            '23.TW': 'TSMC', 'TSM': 'TSMC ADR', 'TSM.N': 'TSMC ADR',
             '.TWII': 'TWSE', '.SOX': 'SOX', '.SPX': 'S&P 500', '.MCI': 'MCI',
             'NVDA': 'Nvidia', 'NVDA.O': 'Nvidia', 
             'AAPL': 'Apple', 'AAPL.O': 'Apple', 
@@ -441,12 +441,12 @@
             '2454.TW': 'MediaTek',
             '6723.T': 'Renesas', 
             'INTC': 'Intel', 'INTC.O': 'Intel',
-            '005930.KS': 'Samsung',
-            '2303.TW': 'UMC', '0981.HK': 'SMIC-H', '688981.SS': 'SMIC-A', 'GFS': 'GlobalFoundries'
+            '0059.KS': 'Samsung',
+            '23.TW': 'UMC', '0981.HK': 'SMIC-H', '688981.SS': 'SMIC-A', 'GFS': 'GlobalFoundries'
         };
 
         const TICKER_DOMAINS = {
-            '2330.TW': 'tsmc.com', 'TSM': 'tsmc.com', 'TSM.N': 'tsmc.com',
+            '23.TW': 'tsmc.com', 'TSM': 'tsmc.com', 'TSM.N': 'tsmc.com',
             'NVDA': 'nvidia.com', 'NVDA.O': 'nvidia.com',
             'AAPL': 'apple.com', 'AAPL.O': 'apple.com',
             'AVGO': 'broadcom.com', 'AVGO.O': 'broadcom.com',
@@ -456,13 +456,13 @@
             '2454.TW': 'mediatek.com',
             '6723.T': 'renesas.com', 
             'INTC': 'intel.com', 'INTC.O': 'intel.com',
-            '005930.KS': 'samsung.com',
-            '2303.TW': 'umc.com', '0981.HK': 'smics.com', '688981.SS': 'smics.com', 'GFS': 'gf.com',
+            '0059.KS': 'samsung.com',
+            '23.TW': 'umc.com', '0981.HK': 'smics.com', '688981.SS': 'smics.com', 'GFS': 'gf.com',
             '.TWII': 'twse.com.tw', '.SOX': 'nasdaq.com', '.SPX': 'spglobal.com'
         };
 
         const TICKER_COLORS = {
-            '2330.TW': '#8b0000', 'TSM': '#a52a2a', 'TSM.N': '#a52a2a', '.MCI': '#ff9900',
+            '23.TW': '#8b0000', 'TSM': '#a52a2a', 'TSM.N': '#a52a2a', '.MCI': '#ff9900',
             '.TWII': '#000000', '.SOX': '#008080', '.SPX': '#555555',
             'NVDA': '#76b900', 'NVDA.O': '#76b900',
             'AAPL': '#A2AAAD', 'AAPL.O': '#A2AAAD',
@@ -472,18 +472,18 @@
             'ADI': '#212529', 'ADI.O': '#212529',
             '2454.TW': '#3366CC', '6723.T': '#005CAB', 
             'INTC': '#0071C5', 'INTC.O': '#0071C5',
-            '005930.KS': '#1428A0', '2303.TW': '#003366', '0981.HK': '#E31B23',
+            '0059.KS': '#1428A0', '23.TW': '#003366', '0981.HK': '#E31B23',
             '688981.SS': '#B22222', 'GFS': '#FF6A13'
         };
 
         let summaryTickersConfig = {
             'equity-index': ['.TWII', '.SOX', '.SPX', '.MCI'],
-            'tw-stocks': ['2330.TW', 'TSM'], 
-            'us-stocks': ['NVDA', 'AAPL', 'AVGO', 'QCOM', 'AMD', 'ADI', '2454.TW', '6723.T', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS']
+            'tw-stocks': ['23.TW', 'TSM'], 
+            'us-stocks': ['NVDA', 'AAPL', 'AVGO', 'QCOM', 'AMD', 'ADI', '2454.TW', '6723.T', 'INTC', '0059.KS', '23.TW', '0981.HK', '688981.SS', 'GFS']
         };
 
         let mciMembers = ['NVDA', 'QCOM', 'AMD', 'AAPL', 'ADI', '2454.TW', 'AVGO', '6723.T'];
-        let defaultWeights = { 'NVDA': 30, 'QCOM': 10, 'AMD': 15, 'AAPL': 15, 'ADI': 5, '2454.TW': 10, 'AVGO': 10, '6723.T': 5 };
+        let defaultWeights = { 'NVDA': 26, 'QCOM': 13, 'AMD': 14, 'AAPL': 26, 'ADI': 1, '2454.TW': 10, 'AVGO': 8, '6723.T': 2 };
         
         let mciWeightHistory = []; 
 
