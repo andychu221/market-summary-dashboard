@@ -569,7 +569,7 @@
                 renderMciTable();      
 
                 status.innerText = "Calculating Custom Index (MCI)...";
-                calculateMCI();
+                ();
 
                 let maxDate = 0;
                 Object.keys(dataByTicker).forEach(t => {
@@ -699,6 +699,9 @@
             setTimeout(() => {
                 dataByTicker['.MCI'] = [];
                 allData = allData.filter(d => d.ticker !== '.MCI');
+                if (mciWeightHistory.length > 0) {
+                    defaultWeights = { ...mciWeightHistory[0].weights };
+                }
                 calculateMCI();
                 if (dataByTicker['.MCI']) {
                     dataByTicker['.MCI'].sort((a,b) => a.date - b.date);
@@ -746,7 +749,7 @@
                 const date = new Date(dStr);
                 const currentPrices = priceMap[dStr];
                 
-                let applicableWeights = defaultWeights;
+               let applicableWeights = mciWeightHistory[0]?.weights || {}; 
                 for (let k = mciWeightHistory.length - 1; k >= 0; k--) {
                     if (mciWeightHistory[k].date <= dStr) {
                         applicableWeights = mciWeightHistory[k].weights;
@@ -1045,8 +1048,8 @@
                 if (!date || !prevDate) return false;
                 if (periodName === '1-Week') return true;
                 if (periodName === '1-Month') {
-                    if (date.getDay() < prevDate.getDay() || (date - prevDate > 6 * 86400000)) return true;
-                    return false;
+                    const daysDiff = (date - prevDate) / 86400000;ue;
+                    return daysDiff >= 5 || date.getDay() === 1; // 每週一或間隔5天以上
                 }
                 if (periodName === 'YTD' || periodName === '1-Year') return date.getMonth() !== prevDate.getMonth();
                 return false;
