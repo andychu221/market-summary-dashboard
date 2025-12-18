@@ -569,7 +569,7 @@
                 renderMciTable();      
 
                 status.innerText = "Calculating Custom Index (MCI)...";
-                ();
+                calculateMCI();
 
                 let maxDate = 0;
                 Object.keys(dataByTicker).forEach(t => {
@@ -693,6 +693,7 @@
         }
 
         function saveMciConfig() {
+            if (document.activeElement) document.activeElement.blur();
             const loading = document.getElementById('loading-overlay');
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Recalculating MCI...";
