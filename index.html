@@ -693,6 +693,7 @@
         }
 
         function saveMciConfig() {
+            if (document.activeElement) document.activeElement.blur();
             const loading = document.getElementById('loading-overlay');
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Recalculating MCI...";
