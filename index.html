@@ -437,12 +437,12 @@
             'AVGO': 'Broadcom', 'AVGO.O': 'Broadcom',
             'QCOM': 'Qualcomm', 'QCOM.O': 'Qualcomm',
             'AMD': 'AMD', 'AMD.O': 'AMD',
-            'ADI': 'Analog Devices', 'ADI.O': 'Analog Devices',
+            'ADI': 'ADI', 'ADI.O': 'ADI',
             '2454.TW': 'MediaTek',
             '6723.T': 'Renesas', 
             'INTC': 'Intel', 'INTC.O': 'Intel',
             '0059.KS': 'Samsung',
-            '2303.TW': 'UMC', '0981.HK': 'SMIC-H', '688981.SS': 'SMIC-A', 'GFS': 'GlobalFoundries'
+            '2303.TW': 'UMC', '0981.HK': 'SMIC-H', '688981.SS': 'SMIC-A', 'GFS': 'GFS'
         };
 
         const TICKER_DOMAINS = {
@@ -482,8 +482,8 @@
             'us-stocks': ['NVDA', 'AAPL', 'AVGO', 'QCOM', 'AMD', 'ADI', '2454.TW', '6723.T', 'INTC', '0059.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS']
         };
 
-        let mciMembers = ['NVDA', 'QCOM', 'AMD', 'AAPL', 'ADI', '2454.TW', 'AVGO', '6723.T'];
-        let defaultWeights = { 'NVDA': 26, 'QCOM': 13, 'AMD': 14, 'AAPL': 26, 'ADI': 1, '2454.TW': 10, 'AVGO': 8, '6723.T': 2 };
+        let mciMembers = ['NVDA', 'TSM', 'AAPL', 'AVGO', 'AMD'];
+        let defaultWeights = { 'NVDA': 40, 'TSM': 30, 'AAPL': 10 'AVGO': 10, 'AMD': 10};
         
         let mciWeightHistory = []; 
 
