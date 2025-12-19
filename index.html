@@ -865,7 +865,7 @@
             // Exclude Benchmark
             if (summaryTickersConfig['equity-index'].includes(ticker)) return '-';
             // Exclude SMIC-H explicitly as requested
-            if (ticker === '0981.HK') return '-';
+          //  if (ticker === '0981.HK') return '-';
             if (ticker === '2330.TW' || ticker === 'TSM') {
                 const blended = getBlendedMarketCap(date);
                 if (blended !== null) {
@@ -894,7 +894,7 @@
         
         function calculateMarketCapNumeric(ticker, price, date) {
              if (summaryTickersConfig['equity-index'].includes(ticker)) return -1;
-             if (ticker === '0981.HK') return -1;
+             //if (ticker === '0981.HK') return -1;
 
             if (ticker === '2330.TW' || ticker === 'TSM') {
                  const blended = getBlendedMarketCap(date);
