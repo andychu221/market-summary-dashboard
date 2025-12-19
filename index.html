@@ -837,13 +837,42 @@
             }
             return foundRate;
         }
+        function getBlendedMarketCap(date) {
+            const tsmcTwTicker = '2330.TW';
+            const tsmcAdrTicker = 'TSM';
+            
+            const getPrice = (t, d) => {
+                const perf = allPerformanceData.get(t);
+                if (perf) return perf.findPriceOnOrBefore(d);
+                return null;
+            };
 
+            const priceTw = getPrice(tsmcTwTicker, date);
+            const priceAdr = getPrice(tsmcAdrTicker, date);
+            const sharesTw = tickerMetadata[tsmcTwTicker]?.shares;
+            const sharesAdr = tickerMetadata[tsmcAdrTicker]?.shares;
+            const twdRate = getFxRate('TWD', date);
+
+            if (priceTw && priceAdr && sharesTw && sharesAdr && twdRate) {
+                const term1 = (priceTw / twdRate) * (sharesTw - sharesAdr / 5);
+                const term2 = priceAdr * (sharesAdr / 5);
+                return term1 + term2;
+            }
+            return null;
+        }
+        
         function calculateMarketCap(ticker, price, date) {
             // Exclude Benchmark
             if (summaryTickersConfig['equity-index'].includes(ticker)) return '-';
             // Exclude SMIC-H explicitly as requested
             if (ticker === '0981.HK') return '-';
-            
+            if (ticker === '2330.TW' || ticker === 'TSM') {
+                const blended = getBlendedMarketCap(date);
+                if (blended !== null) {
+                    const billions = blended / 1e9;
+                    return billions.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1}) + 'B';
+                }
+            }
             const meta = tickerMetadata[ticker];
             if (!meta || !meta.shares) return '-';
             
@@ -866,7 +895,12 @@
         function calculateMarketCapNumeric(ticker, price, date) {
              if (summaryTickersConfig['equity-index'].includes(ticker)) return -1;
              if (ticker === '0981.HK') return -1;
-             
+
+            if (ticker === '2330.TW' || ticker === 'TSM') {
+                 const blended = getBlendedMarketCap(date);
+                 if (blended !== null) return blended;
+             }
+            
              const meta = tickerMetadata[ticker];
              if (!meta || !meta.shares) return -1;
              
