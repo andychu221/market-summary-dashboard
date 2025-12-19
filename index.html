@@ -1559,8 +1559,17 @@
                         let turnover = '-';
                         const float = tickerMetadata[t]?.float;
                         if (currPoint && float) {
-                             const tVal = (currPoint.volume / float) * 100;
-                             turnover = tVal.toFixed(2) + '%';
+                            const threeMonthsAgo = new Date(currPoint.date);
+                            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+                            const recentData = dataByTicker[t].filter(pt => 
+                                pt.date >= threeMonthsAgo && pt.date <= currPoint.date
+                            );
+                            if (recentData.length > 0) {
+                                const totalVolume = recentData.reduce((sum, pt) => sum + (pt.volume || 0), 0);
+                                const avgVolume = totalVolume / recentData.length;
+                                const tVal = (avgVolume / float) * 250 * 100;
+                                turnover = tVal.toFixed(2) + '%';
+                            }
                         }
                         html += `<td>${turnover}</td>`;
                     } else {
