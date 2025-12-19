@@ -866,8 +866,6 @@
         function calculateMarketCap(ticker, price, date) {
             // Exclude Benchmark
             if (summaryTickersConfig['equity-index'].includes(ticker)) return '-';
-            // Exclude SMIC-H explicitly as requested
-            if (ticker === '0981.HK') return '-';
 
             // Custom Calculation for TSMC
             if (ticker === '2330.TW' || ticker === 'TSM') {
@@ -886,6 +884,7 @@
             else if (ticker.endsWith('.T')) currency = 'JPY';
             else if (ticker.endsWith('.KS')) currency = 'KRW';
             else if (ticker.endsWith('.SS')) currency = 'CNY';
+            else if (ticker.endsWith('.HK')) currency = 'HKD';
             
             const rate = getFxRate(currency, date);
             if (!rate || rate === 0) return '-';
@@ -899,8 +898,7 @@
         
         function calculateMarketCapNumeric(ticker, price, date) {
              if (summaryTickersConfig['equity-index'].includes(ticker)) return -1;
-             if (ticker === '0981.HK') return -1;
-             
+
              if (ticker === '2330.TW' || ticker === 'TSM') {
                  const blended = getBlendedMarketCap(date);
                  if (blended !== null) return blended;
@@ -914,6 +912,7 @@
              else if (ticker.endsWith('.T')) currency = 'JPY';
              else if (ticker.endsWith('.KS')) currency = 'KRW';
              else if (ticker.endsWith('.SS')) currency = 'CNY';
+             else if (ticker.endsWith('.HK')) currency = 'HKD';
              
              const rate = getFxRate(currency, date);
              if (!rate || rate === 0) return -1;
