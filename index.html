@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watchlist Dashboard V6</title>
+    <title>Watchlist Dashboard V7 (AI Enhanced)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
@@ -17,6 +17,9 @@
     <link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.css" type="text/css" />
     <link rel="stylesheet" href="https://jsuites.net/v5/jsuites.css" type="text/css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons" />
+    
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
         :root {
@@ -36,23 +39,15 @@
             --primary-color: #4a90e2;
             --positive-color: #28a745;
             --negative-color: #dc3545;
+            
+            /* AI & Volatility Colors */
+            --bg-pos-light: #e6f9e6;
+            --bg-neg-light: #ffe6e6;
+            --ai-btn-color: #4285F4; /* AI Blue */
+            --ai-gradient: linear-gradient(to right, #4285F4, #2ecc71);
         }
 
-        body.dark-mode {
-            --bg-color: #1a1a1a;
-            --bg-gradient: linear-gradient(135deg, #2c3e50 0%, #1a1a1a 100%);
-            --text-primary: #f0f0f0;
-            --text-secondary: #a0a0a0;
-            --border-color: #444;
-            --header-bg: #2c3e50;
-            --hover-bg: #3a4a5a;
-            --modal-bg: #282828;
-            --modal-overlay-bg: rgba(0,0,0,0.8);
-            --button-bg: #333;
-            --button-active-bg: #4a90e2;
-            --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.3);
-            --shadow-strong: 0 5px 20px rgba(0,0,0,0.5);
-        }
+        /* Removed Dark Mode Styles */
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -82,38 +77,70 @@
             background: var(--bg-color); border-radius: 12px;
             padding: 25px; box-shadow: var(--shadow-light);
             transition: background-color 0.3s;
+            margin-top: 10px;
         }
 
-        .header-controls {
-            display: flex; justify-content: flex-end; align-items: center;
-            margin-bottom: 10px; gap: 10px;
-        }
-        #theme-toggle {
-            cursor: pointer; background: none; border: none; padding: 5px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        #theme-toggle svg { width: 24px; height: 24px; fill: var(--text-primary); }
-
+        /* Combined Header in Tabs */
         .header-bar {
             display: flex; justify-content: space-between; align-items: flex-end;
             border-bottom: 1px solid var(--border-color); margin-bottom: 20px;
-            position: sticky; top: 0; background: var(--bg-color); z-index: 100; padding-top: 10px;
+            position: sticky; top: 0; background: var(--bg-color); z-index: 90; padding-top: 10px;
         }
         
-        .tabs, .chart-sub-tabs { display: flex; margin-bottom: -1px; padding-left: 10px; border-bottom: 1px solid var(--border-color); }
-        .tab-link, .chart-sub-tab-link {
+        .tabs { 
+            display: flex; 
+            width: 100%;
+            margin-bottom: -1px; 
+            padding-left: 10px; 
+            border-bottom: 1px solid var(--border-color); 
+            align-items: center;
+        }
+        
+        .tab-link {
             padding: 10px 20px; cursor: pointer; font-size: 1.05rem; font-weight: 500; 
             transition: all 0.2s ease; color: var(--text-secondary); background-color: var(--button-bg);
             border: 1px solid var(--border-color); border-bottom: none; border-radius: 8px 8px 0 0;
             margin-right: 4px; position: relative; top: 0; display: flex; align-items: center; gap: 6px;
         }
-        .tab-link:hover, .chart-sub-tab-link:hover { background-color: var(--hover-bg); color: var(--primary-color); }
-        .tab-link.active, .chart-sub-tab-link.active {
+        .tab-link:hover { background-color: var(--hover-bg); color: var(--primary-color); }
+        .tab-link.active {
             color: var(--primary-color); background-color: var(--bg-color); font-weight: 600;
             border-bottom: 1px solid var(--bg-color); z-index: 2; box-shadow: 0 -3px 6px rgba(0,0,0,0.05);
             top: 1px; padding-top: 12px; margin-top: -2px;
         }
-        .chart-sub-tab-link { font-size: 0.95rem; padding: 8px 20px; }
+
+        /* Right aligned controls in tab bar */
+        .tab-right-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-right: 10px;
+            height: 100%;
+        }
+
+        .icon-btn {
+            cursor: pointer; background: var(--button-bg); border: 1px solid var(--border-color); padding: 6px;
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-primary); transition: all 0.2s;
+            height: 38px; width: 38px; /* Match tab height roughly */
+        }
+        .icon-btn:hover { color: var(--primary-color); background: var(--hover-bg); }
+        
+        /* Sub Tabs */
+        .chart-sub-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        .chart-sub-tab-link {
+            padding: 8px 20px; cursor: pointer; font-size: 0.95rem; font-weight: 500; 
+            transition: all 0.2s ease; color: var(--text-secondary); background-color: var(--button-bg);
+            border: 1px solid var(--border-color); border-bottom: none; border-radius: 8px 8px 0 0;
+            margin-right: 4px; display: flex; align-items: center; gap: 6px;
+        }
+        .chart-sub-tab-link:hover { background-color: var(--hover-bg); color: var(--primary-color); }
+        .chart-sub-tab-link.active {
+            color: var(--primary-color); background-color: var(--bg-color); font-weight: 600;
+            border-bottom: 1px solid var(--bg-color); z-index: 2;
+        }
         
         .tab-content { display: none; animation: fadeIn 0.5s; padding-top: 15px;}
         .tab-content.active { display: block; }
@@ -123,22 +150,39 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Summary Tables */
-        .summary-card table { width: 100%; border-collapse: collapse; text-align: right; }
-        .summary-card th, .summary-card td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 0.95rem; border-right: none; }
+        .summary-card table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: right; }
+        .summary-card th, .summary-card td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 0.95rem; border-right: none; position: relative;}
         .summary-card td:first-child, .summary-card th:first-child { text-align: left; }
-        .summary-card th { cursor: pointer; user-select: none; }
+        
+        /* Drag and Drop Styles */
+        .summary-card th { cursor: grab; user-select: none; position: relative; }
+        .summary-card th:active { cursor: grabbing; }
         .summary-card th:hover { background-color: var(--button-active-bg); }
+        
+        .draggable-row { cursor: grab; }
+        .draggable-row:active { cursor: grabbing; }
+        
+        .dragging { opacity: 0.5; background-color: #f0f8ff; border: 2px dashed var(--primary-color); }
+        .drag-over { border-top: 2px solid var(--primary-color); }
+        
         tr:hover { background-color: var(--hover-bg); }
-        .clickable-row { cursor: pointer; }
+        .clickable-row { } /* Kept class for styling, but cursor handled by draggable */
         .text-positive { color: var(--positive-color) !important; font-weight: 500; }
         .text-negative { color: var(--negative-color) !important; font-weight: 500; }
         
-        .summary-clickable-header {
-            /* Now handled by JS for specific columns */
+        .summary-clickable-header:hover { color: var(--primary-color); }
+
+        /* AI Volatility Styles */
+        .cell-pos-light { background-color: var(--bg-pos-light) !important; }
+        .cell-neg-light { background-color: var(--bg-neg-light) !important; }
+        .volatility-icon {
+            position: absolute; top: 0; right: 0;
+            font-size: 12px; width: 14px; height: 14px;
+            background: rgba(0,0,0,0.1); color: var(--text-secondary);
+            border-radius: 0 0 0 4px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
-        .summary-clickable-header:hover {
-             color: var(--primary-color);
-        }
+        .volatility-icon:hover { background: var(--primary-color); color: white; }
 
         /* Chart 2x2 Grid */
         .chart-grid-2x2 {
@@ -162,12 +206,6 @@
             display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
         }
         
-        .export-excel-btn {
-            background-color: #217346; color: white; border: none; padding: 8px 15px; border-radius: 6px;
-            font-size: 0.95rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 5px;
-        }
-        .export-excel-btn:hover { background-color: #1a5c38; }
-
         .modal {
             position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto;
             background-color: var(--modal-overlay-bg); opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
@@ -191,28 +229,29 @@
             box-shadow: var(--shadow-light); overflow: auto; position: relative; padding-top: 35px; 
         }
         .summary-card-label { position: absolute; top: 10px; left: 15px; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
-        .summary-card th.hidden-col, .summary-card td.hidden-col { display: none; }
 
         /* News with Resizable Pane */
         #news-container { display: flex; height: 75vh; width: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: 8px; }
-        #news-left-pane { flex: 0 0 40%; min-width: 350px; display: flex; flex-direction: column; background: var(--bg-color); border-right: 1px solid var(--border-color); }
+        /* Adjusted split to 50/50 */
+        #news-left-pane { flex: 0 0 50%; min-width: 350px; display: flex; flex-direction: column; background: var(--bg-color); border-right: 1px solid var(--border-color); }
         #news-resizer { width: 5px; cursor: col-resize; background: #ddd; transition: background 0.2s; }
         #news-resizer:hover { background: var(--primary-color); }
         #news-right-pane { flex: 1; min-width: 0px; padding: 20px; background-color: var(--hover-bg); overflow-y: auto; }
         
-        .news-item { padding: 12px 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; }
+        .news-item { padding: 12px 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; position: relative; }
         .news-item:hover { background-color: var(--hover-bg); }
         .news-item.active { background-color: var(--button-active-bg); border-left: 4px solid var(--primary-color); }
+        .news-item.selected-for-ai { background-color: #e8eaf6; border-right: 4px solid var(--ai-btn-color); } 
         .news-meta { display: flex; gap: 8px; font-size: 0.8rem; color: #666; margin-bottom: 4px; flex-wrap: wrap; align-items: center; }
         .news-tag { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
         .news-title { font-weight: 600; font-size: 0.95rem; line-height: 1.4; }
         
+        /* Fixed News Filters */
         #news-filters {
             padding: 10px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
-            flex-wrap: nowrap; /* Prevent wrapping */
-            overflow-x: auto; /* Allow horizontal scroll if needed */
+            flex-wrap: wrap; 
             gap: 10px;
             background-color: var(--header-bg);
             align-items: center;
@@ -226,12 +265,13 @@
             display: none;
             position: absolute;
             background-color: var(--modal-bg);
-            min-width: 200px;
+            min-width: 250px;
             box-shadow: var(--shadow-strong);
             padding: 5px;
             z-index: 1000;
             border: 1px solid var(--border-color);
             border-radius: 6px;
+            top: 100%; left: 0;
         }
         .date-range-content.show { display: block; }
         .date-option {
@@ -264,15 +304,22 @@
         .mci-input { width: 70px; padding: 6px; border: 1px solid transparent; text-align: right; background: transparent; color: inherit; font-family: inherit; font-size: 0.95rem; }
         .mci-input:hover { border-color: #ccc; background: var(--bg-color); }
         .mci-input:focus { border-color: var(--primary-color); background: var(--bg-color); outline: none; border-radius: 4px; }
-        .mci-input::-webkit-outer-spin-button, .mci-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        /* Hide spin buttons */
+        .mci-input::-webkit-outer-spin-button,
+        .mci-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .mci-input[type=number] { -moz-appearance: textfield; }
-
-        .mci-header-input { width: 90px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-weight: bold; font-size: 0.95rem; }
         
         .weight-error { background-color: #ffcccc !important; color: #b71c1c; }
-        body.dark-mode .weight-error { background-color: #5c0000 !important; color: #ff9999; }
 
-        .column-list-container { max-height: 400px; overflow-y: auto; }
+        /* Reusing list container style for consistency */
+        .column-list-container { 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            max-height: 400px; 
+            overflow-y: auto; 
+            padding: 10px;
+        }
         
         /* Data Tab Styles */
         #data-table-container { min-height: 70vh; }
@@ -292,6 +339,26 @@
         .chart-period-btn:hover { background: var(--hover-bg); color: var(--primary-color); }
         .chart-period-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
+        /* Updated AI Buttons (Using Font Icon) */
+        .ai-action-btn {
+            cursor: pointer;
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            transition: transform 0.2s;
+            border: none;
+            background: transparent;
+            padding: 2px;
+            box-shadow: none;
+        }
+        .ai-action-btn:hover { transform: scale(1.1); }
+        
+        /* Replaced img style with generic style or icon style */
+        .ai-action-btn i {
+            font-size: 28px;
+            color: var(--ai-btn-color);
+        }
+
         /* Manage Tickers Modal */
         .manage-ticker-list {
             display: grid;
@@ -301,7 +368,7 @@
             overflow-y: auto;
             padding: 10px;
         }
-        .manage-ticker-item {
+        .manage-ticker-item, .column-item {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -309,10 +376,18 @@
             border: 1px solid var(--border-color);
             border-radius: 6px;
             cursor: pointer;
+            background: var(--bg-color);
         }
-        .manage-ticker-item:hover {
+        .manage-ticker-item:hover, .column-item:hover {
             background-color: var(--hover-bg);
         }
+        
+        /* Markdown Content */
+        .markdown-content { line-height: 1.6; font-size: 1rem; }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 { margin-top: 1em; margin-bottom: 0.5em; }
+        .markdown-content ul { margin-left: 20px; margin-bottom: 1em; }
+        .markdown-content p { margin-bottom: 1em; }
+        .markdown-content strong { color: var(--primary-color); }
 
     </style>
 </head>
@@ -323,12 +398,7 @@
     </div>
 
     <div class="container">
-        <div class="header-controls">
-            <button id="theme-toggle" title="Toggle color mode">
-                <span id="theme-icon-sun"><i class="material-icons">light_mode</i></span>
-                <span id="theme-icon-moon" style="display: none;"><i class="material-icons">dark_mode</i></span>
-            </button>
-        </div>
+        <!-- Moved header controls inside main content -->
 
         <div class="main-content">
             <div class="header-bar">
@@ -338,6 +408,14 @@
                     <div class="tab-link" onclick="openTab(event, 'news')"><i class="material-icons">article</i> News</div>
                     <div class="tab-link" onclick="openTab(event, 'data')"><i class="material-icons">table_view</i> Data</div>
                     <div class="tab-link" onclick="openTab(event, 'mci-settings')"><i class="material-icons">settings</i> MCI Config</div>
+                    
+                    <!-- Moved Controls Here -->
+                    <div class="tab-right-controls">
+                         <button class="icon-btn" onclick="openAiSettings()" title="AI Settings">
+                            <i class="material-icons">settings_suggest</i>
+                        </button>
+                        <!-- Theme Toggle Removed -->
+                    </div>
                 </div>
             </div>
 
@@ -348,7 +426,17 @@
                         <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)">
                         <button class="controls-input" onclick="openManageTickerModal()"><i class="material-icons">list</i> Manage Tickers</button>
                         <button class="controls-input" onclick="openColumnModal()"><i class="material-icons">view_column</i> Custom Column</button>
+                        
+                        <!-- AI Button for Summary (AutoAwesome Icon) -->
+                         <button class="ai-action-btn" title="AI Market Overview" onclick="analyzeSummaryTable()">
+                             <i class="material-icons">auto_awesome</i>
+                        </button>
                     </div>
+                    
+                    <!-- New Copy Button -->
+                    <button class="controls-input" onclick="copySummaryTables()" title="Copy all tables to clipboard for Excel">
+                        <i class="material-icons">content_copy</i> Copy All Tables
+                    </button>
                 </div>
                 <div id="summary-content-container">
                     <div id="summary-equity-index" class="summary-card">
@@ -364,6 +452,9 @@
                         <div class="table-content-wrapper"><table></table></div>
                     </div>
                 </div>
+                <p style="margin-top:10px; color:var(--text-secondary); font-size:0.9rem;">
+                    <i class="material-icons" style="font-size:14px; vertical-align:middle;">info</i> Tip: Drag rows to reorder tickers. Drag columns to reorder fields.
+                </p>
             </div>
 
             <div id="chart-main" class="tab-content">
@@ -374,6 +465,13 @@
                 </div>
 
                 <div id="chart-grid" class="view-content active" style="padding-top:20px;">
+                    <!-- AI Button for Performance Report (AutoAwesome Icon) -->
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                        <button class="ai-action-btn" title="AI Report Analysis" onclick="analyzePerformanceReport()">
+                            <i class="material-icons">auto_awesome</i>
+                        </button>
+                    </div>
+
                     <div class="chart-grid-2x2">
                         <div class="chart-grid-item">
                             <canvas id="canvas-1y"></canvas>
@@ -407,6 +505,11 @@
                         <input type="date" id="custom-chart-start" class="controls-input" onchange="setCustomChartPeriod('CUSTOM')">
                         <span>to</span>
                         <input type="date" id="custom-chart-end" class="controls-input" onchange="setCustomChartPeriod('CUSTOM')">
+                        
+                        <!-- AI Button (AutoAwesome Icon) -->
+                        <button class="ai-action-btn" title="AI Analysis" onclick="analyzeCustomChart()" style="margin-left:10px;">
+                            <i class="material-icons">auto_awesome</i>
+                        </button>
                     </div>
                     <div style="height: 500px; width: 100%; border:1px solid var(--border-color); padding:10px; border-radius:8px;">
                         <canvas id="canvas-custom"></canvas>
@@ -445,7 +548,7 @@
                                 <div id="news-date-range-content" class="date-range-content">
                                     <div class="date-option" onclick="selectNewsDateRange('all')">All Dates</div>
                                     <div class="date-option" onclick="selectNewsDateRange('7d')">Last 7 Days</div>
-                                    <div class="date-option" onclick="selectNewsDateRange('d')">Last  Days</div>
+                                    <div class="date-option" onclick="selectNewsDateRange('30d')">Last 30 Days</div>
                                     <div class="date-option" onclick="toggleCustomDateRow()">Custom Range...</div>
                                     <div id="custom-date-row" class="custom-date-row">
                                         <input type="date" id="news-date-start" class="controls-input">
@@ -455,8 +558,9 @@
                                 </div>
                             </div>
                             
-                            <button class="controls-input" onclick="resetNewsFilters()" title="Reset filters">
-                                <i class="material-icons">restart_alt</i>
+                            <!-- AI Button (AutoAwesome Icon) -->
+                            <button class="ai-action-btn" onclick="analyzeSelectedNews()" title="Analyze Selected News (Ctrl+Click)" style="margin-left:auto;">
+                                <i class="material-icons">auto_awesome</i>
                             </button>
                         </div>
                          
@@ -464,7 +568,9 @@
                     </div>
                     <div id="news-resizer"></div>
                     <div id="news-right-pane">
-                        <div style="text-align:center; color:#999; margin-top:50px;">Select a news item to read</div>
+                        <div style="text-align:center; color:#999; margin-top:50px;">
+                            Select news items (Ctrl+Click to multi-select) then click the AI icon to analyze.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -507,7 +613,7 @@
 
     <!-- Modals -->
     <div id="columnModal" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width: 600px;">
             <span class="close" onclick="closeModal('columnModal')">&times;</span>
             <h2 class="modal-header" style="margin-bottom:15px;">Customize Columns</h2>
             <div id="column-list" class="column-list-container"></div>
@@ -538,6 +644,10 @@
                     <button class="chart-period-btn" onclick="updateModalChart('1Y')">1Y</button>
                     <button class="chart-period-btn" onclick="updateModalChart('ALL')">All</button>
                 </div>
+                <!-- AI Icon for Ticker Chart (AutoAwesome Icon) -->
+                <button class="ai-action-btn" title="AI Technical Analysis" onclick="analyzeTickerChart()">
+                    <i class="material-icons">auto_awesome</i>
+                </button>
             </div>
             <div style="height: 400px; width: 100%; margin-top:15px;">
                 <canvas id="individualTickerChart"></canvas>
@@ -559,6 +669,45 @@
                     Update Table
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- AI Settings Modal -->
+    <div id="aiSettingsModal" class="modal">
+        <div class="modal-content modal-sm">
+            <span class="close" onclick="closeModal('aiSettingsModal')">&times;</span>
+            <h2>AI Settings</h2>
+            <div style="padding:15px 0; display:flex; flex-direction:column; gap:15px;">
+                <div>
+                    <label style="display:block; margin-bottom:5px;">API Key (Gemini):</label>
+                    <input type="password" id="ai-api-key" class="controls-input" style="width:100%;" placeholder="Enter Gemini API Key">
+                    <small style="color:#666;">Get key from Google AI Studio. Model: gemini-2.5-flash-lite</small>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px;">Output Language:</label>
+                    <select id="ai-language" class="controls-select" style="width:100%;">
+                        <option value="zh-TW">Traditional Chinese (繁體中文)</option>
+                        <option value="en-US">English</option>
+                    </select>
+                </div>
+                <button class="email-report-btn" onclick="saveAiSettings()" style="width:100%;">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Result Modal -->
+    <div id="aiResultModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('aiResultModal')">&times;</span>
+            <h2 style="display:flex; align-items:center; gap:10px;">
+                <i class="material-icons" style="color:var(--ai-btn-color);">auto_awesome</i>
+                AI Analysis
+            </h2>
+            <div id="ai-loading" style="display:none; text-align:center; padding:40px;">
+                <div class="spinner" style="margin:0 auto; border-left-color:var(--ai-btn-color);"></div>
+                <p style="margin-top:20px;">AI is thinking...</p>
+            </div>
+            <div id="ai-content" class="markdown-content" style="padding:20px 0; min-height:200px;"></div>
         </div>
     </div>
 
@@ -652,6 +801,11 @@
             { id: 'YTD', label: 'YTD', visible: true },
             { id: 'Custom', label: 'Custom', visible: true } 
         ];
+        
+        // Drag and Drop State
+        let dragSrcEl = null;
+        let dragType = null; // 'row' or 'col'
+        let dragGroup = null; // For rows: 'equity-index', etc.
 
         let allData = [];
         let dataByTicker = {}; 
@@ -667,6 +821,14 @@
         let newsSelectedRange = { start: null, end: null };
         let customPeriodState = { start: null, end: null };
         let currentModalTicker = null;
+        let selectedNewsIds = new Set(); // Store indices of selected news
+
+        // AI Config
+        let aiConfig = {
+            apiKey: '',
+            language: 'zh-TW',
+            modelUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent'
+        };
 
         // Data Tab Variables
         let pivotedPriceData = new Map();
@@ -676,7 +838,8 @@
         let jspreadsheetInstance = null;
         
         document.addEventListener('DOMContentLoaded', () => {
-            initTheme();
+            // Theme init removed
+            loadAiSettings();
             initNewsResizer();
             loadAllDataFromGitHub();
             document.addEventListener('click', (e) => {
@@ -686,6 +849,67 @@
                }
             });
         });
+
+        // --- AI Settings Functions ---
+        function loadAiSettings() {
+            const saved = localStorage.getItem('aiConfig');
+            if(saved) aiConfig = JSON.parse(saved);
+            document.getElementById('ai-api-key').value = aiConfig.apiKey;
+            document.getElementById('ai-language').value = aiConfig.language;
+        }
+
+        function saveAiSettings() {
+            aiConfig.apiKey = document.getElementById('ai-api-key').value.trim();
+            aiConfig.language = document.getElementById('ai-language').value;
+            localStorage.setItem('aiConfig', JSON.stringify(aiConfig));
+            closeModal('aiSettingsModal');
+            alert('AI Settings Saved!');
+        }
+
+        function openAiSettings() {
+            document.getElementById('ai-api-key').value = aiConfig.apiKey;
+            document.getElementById('ai-language').value = aiConfig.language;
+            const m = document.getElementById('aiSettingsModal');
+            m.style.display='block'; setTimeout(()=>m.classList.add('show'), 10);
+        }
+
+        // --- Core AI Service ---
+        async function callGemini(promptText) {
+            if (!aiConfig.apiKey) {
+                alert('Please enter your Google Gemini API Key in Settings first.');
+                openAiSettings();
+                return null;
+            }
+
+            const loading = document.getElementById('ai-loading');
+            const content = document.getElementById('ai-content');
+            const modal = document.getElementById('aiResultModal');
+            
+            modal.style.display='block'; setTimeout(()=>modal.classList.add('show'), 10);
+            loading.style.display = 'block';
+            content.innerHTML = '';
+
+            try {
+                const response = await fetch(`${aiConfig.modelUrl}?key=${aiConfig.apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptText }] }]
+                    })
+                });
+
+                if (!response.ok) throw new Error('API Request Failed');
+
+                const data = await response.json();
+                const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
+                
+                content.innerHTML = marked.parse(rawText);
+            } catch (error) {
+                content.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
 
         async function fetchJsonWithRetry(url) {
             try {
@@ -864,8 +1088,6 @@
         function calculateMarketCap(ticker, price, date) {
             // Exclude Benchmark
             if (summaryTickersConfig['equity-index'].includes(ticker)) return '-';
-            // Exclude SMIC-H explicitly as requested
-          //  if (ticker === '0981.HK') return '-';
             if (ticker === '2330.TW' || ticker === 'TSM') {
                 const blended = getBlendedMarketCap(date);
                 if (blended !== null) {
@@ -894,13 +1116,10 @@
         
         function calculateMarketCapNumeric(ticker, price, date) {
              if (summaryTickersConfig['equity-index'].includes(ticker)) return -1;
-             //if (ticker === '0981.HK') return -1;
-
-            if (ticker === '2330.TW' || ticker === 'TSM') {
+             if (ticker === '2330.TW' || ticker === 'TSM') {
                  const blended = getBlendedMarketCap(date);
                  if (blended !== null) return blended;
              }
-            
              const meta = tickerMetadata[ticker];
              if (!meta || !meta.shares) return -1;
              
@@ -920,7 +1139,6 @@
             mciWeightHistory = [];
             let curr = new Date('2020-01-01');
             const now = new Date();
-            
             while (curr <= now) {
                 const dStr = formatDateYYYYMMDD(curr);
                 mciWeightHistory.push({
@@ -994,33 +1212,23 @@
             const loading = document.getElementById('loading-overlay');
             loading.style.display = 'flex';
             document.getElementById('loading-text').innerText = "Recalculating MCI...";
-            
             setTimeout(() => {
                 dataByTicker['.MCI'] = [];
-                // Remove old MCI from allData
                 allData = allData.filter(d => d.ticker !== '.MCI');
-                
                 if (mciWeightHistory.length > 0) {
                     defaultWeights = { ...mciWeightHistory[0].weights };
                 }
                 calculateMCI();
-                
                 processPerformanceData();
                 renderSummaryTab();
                 renderChartTab();
-                
-                // Update Data Tab content
                 pivotDataForDownload();
-                
-                // Force reset jspreadsheet instance
                 jspreadsheetInstance = null;
                 const container = document.getElementById('data-table-container');
                 if(container) container.innerHTML = '<p>Processing...</p>';
-
                 if (document.getElementById('data').classList.contains('active')) {
                     renderDataTab();
                 }
-
                 loading.style.display = 'none';
             }, 100);
         }
@@ -1028,10 +1236,8 @@
         function calculateMCI() {
             const historyMap = {}; 
             mciWeightHistory.forEach(h => { historyMap[h.date] = h.weights; });
-
             const validMembers = mciMembers.filter(m => dataByTicker[m] && dataByTicker[m].length > 0);
             if (validMembers.length === 0) return;
-
             const priceMap = {}; 
             validMembers.forEach(t => {
                 dataByTicker[t].forEach(pt => {
@@ -1040,7 +1246,6 @@
                     priceMap[dStr][t] = pt.price;
                 });
             });
-
             const allDates = Object.keys(priceMap).sort();
             const settingsStartDateStr = mciWeightHistory.length > 0 ? mciWeightHistory[0].date : '2020-01-01';
             const startIndex = allDates.findIndex(d => d >= settingsStartDateStr);
@@ -1067,7 +1272,6 @@
                     }
                 });
             }
-
             let currentValue = 100; 
             if (historicalMciData && historicalMciData.MAG7_Index && historicalMciData.MAG7_Index.data) {
                 const histObj = historicalMciData.MAG7_Index.data;
@@ -1083,23 +1287,19 @@
                     currentValue = lastVal;
                 }
             }
-
             let prevPrices = {};
             const startDStr = allDates[startIndex];
             validMembers.forEach(t => { if (priceMap[startDStr][t]) prevPrices[t] = priceMap[startDStr][t]; });
-            
             const existingPoint = mciData.find(d => d.originalDateStr === startDStr);
             if (!existingPoint) {
                  mciData.push({ ticker: '.MCI', date: new Date(startDStr), price: currentValue, volume: 0, originalDateStr: startDStr, market: 'Equity Index' });
             } else {
                 currentValue = existingPoint.price;
             }
-
             for (let i = startIndex + 1; i < allDates.length; i++) {
                 const dStr = allDates[i];
                 const date = new Date(dStr);
                 const currentPrices = priceMap[dStr];
-                
                let applicableWeights = mciWeightHistory[0]?.weights || {}; 
                 for (let k = mciWeightHistory.length - 1; k >= 0; k--) {
                     if (mciWeightHistory[k].date <= dStr) {
@@ -1107,11 +1307,9 @@
                         break;
                     }
                 }
-
                 let totalW = 0;
                 validMembers.forEach(t => totalW += (applicableWeights[t] || 0));
                 if (totalW === 0) totalW = 1;
-
                 let compositeReturn = 0;
                 validMembers.forEach(t => {
                     const w = (applicableWeights[t] || 0) / totalW;
@@ -1122,12 +1320,10 @@
                     compositeReturn += w * dailyRet;
                     if (currP) prevPrices[t] = currP;
                 });
-
                 currentValue = currentValue * (1 + compositeReturn);
                 mciData.push({ ticker: '.MCI', date: date, price: currentValue, volume: 0, originalDateStr: dStr, market: 'Equity Index' });
             }
             dataByTicker['.MCI'] = mciData;
-            // Append new MCI Data to allData for Export
             allData = allData.concat(mciData);
         }
 
@@ -1192,8 +1388,9 @@
                             
                             if (list.length > 0) loadedNewsTickers.add(t);
 
-                            list.forEach(n => {
+                            list.forEach((n, idx) => {
                                 n.ticker = t;
+                                n.id = `${t}_${idx}_${Math.random().toString(36).substr(2,9)}`; // Unique ID
                                 n.jsDate = new Date(n.Date + ' ' + (n.Time || ''));
                                 if(n.Source) newsSources.add(n.Source);
                             });
@@ -1207,6 +1404,10 @@
             
             populateNewsFilters();
             filterNews();
+            
+            // Auto-select first news item
+            const firstNews = document.querySelector('.news-item');
+            if(firstNews) firstNews.click();
         }
 
         function populateNewsFilters() {
@@ -1262,17 +1463,8 @@
             }
         }
         
-        function resetNewsFilters() {
-            document.getElementById('news-filter-company').value = 'all';
-            document.getElementById('news-filter-source').value = 'all';
-            newsSelectedRange = { start: null, end: null };
-            updateDateRangeButtonLabel();
-            filterNews();
-        }
-
         function filterNews() {
             if (!fullNewsList) return;
-            // const text = document.getElementById('news-search').value.toLowerCase(); // Removed
             const tickerFilter = document.getElementById('news-filter-company').value;
             const sourceFilter = document.getElementById('news-filter-source').value;
 
@@ -1280,7 +1472,6 @@
             listEl.innerHTML = '';
 
             const filtered = fullNewsList.filter(n => {
-                // const matchesText = n.Title.toLowerCase().includes(text) || (TICKER_NAMES[n.ticker] || '').toLowerCase().includes(text);
                 const matchesTicker = tickerFilter === 'all' || n.ticker === tickerFilter;
                 const matchesSource = sourceFilter === 'all' || n.Source === sourceFilter;
                 
@@ -1289,7 +1480,6 @@
                     const itemDate = new Date(n.Date);
                     matchesDate = itemDate <= newsSelectedRange.start && itemDate >= newsSelectedRange.end;
                 }
-
                 return matchesTicker && matchesSource && matchesDate;
             });
 
@@ -1297,30 +1487,45 @@
                 listEl.innerHTML = '<p style="padding:10px; color:#666;">No news found matching filters.</p>';
             } else {
                 renderNewsList(filtered);
-                // Default select first item
-                showNewsContent(filtered[0]);
             }
         }
 
         function renderNewsList(items) {
             const listEl = document.getElementById('news-list'); 
+            // Only render first 100 for performance
             items.slice(0, 100).forEach((n, idx) => {
-                const div = document.createElement('div'); div.className = 'news-item';
-                if(idx === 0) div.classList.add('active'); // Highlight first
+                const div = document.createElement('div'); 
+                div.className = 'news-item';
+                div.dataset.id = n.id;
+                if(selectedNewsIds.has(n.id)) div.classList.add('selected-for-ai');
+                
                 const lang = (n.Title.match(/[\u4e00-\u9fa5]/)) ? 'CH' : 'EN';
+                // Modified: Added Time to display
                 div.innerHTML = `
                     <div class="news-meta">
                         <span class="news-tag" style="background:${TICKER_COLORS[n.ticker]||'#ccc'}; color:white;">${TICKER_NAMES[n.ticker] || n.ticker}</span>
                         <span class="news-tag">${lang}</span>
-                        <span>${n.Date}</span>
+                        <span>${n.Date} ${n.Time || ''}</span>
                         <span style="margin-left:auto;">${n.Source || 'Source'}</span>
                     </div>
                     <div class="news-title">${n.Title}</div>
                 `;
-                div.onclick = () => {
-                    document.querySelectorAll('.news-item').forEach(el=>el.classList.remove('active'));
-                    div.classList.add('active');
-                    showNewsContent(n);
+                
+                div.onclick = (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        // Multi-select Logic
+                        if (selectedNewsIds.has(n.id)) {
+                            selectedNewsIds.delete(n.id);
+                            div.classList.remove('selected-for-ai');
+                        } else {
+                            selectedNewsIds.add(n.id);
+                            div.classList.add('selected-for-ai');
+                        }
+                    } else {
+                        document.querySelectorAll('.news-item').forEach(el => el.classList.remove('active'));
+                        div.classList.add('active');
+                        showNewsContent(n);
+                    }
                 };
                 listEl.appendChild(div);
             });
@@ -1340,6 +1545,255 @@
                 <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold;">Read Original Article <i class="material-icons" style="font-size:12px;">open_in_new</i></a>
             `;
         }
+        
+        // --- AI Analysis Functions ---
+
+        // 2.1 News Tab Analysis
+        function analyzeSelectedNews() {
+            if (selectedNewsIds.size === 0) {
+                alert('Please Ctrl+Click to select news items first.');
+                return;
+            }
+
+            const selectedItems = fullNewsList.filter(n => selectedNewsIds.has(n.id));
+            const newsText = selectedItems.map(n => 
+                `Title: ${n.Title}\nDate: ${n.Date}\nSource: ${n.Source}\nContent: ${n.Content.substring(0, 500)}...`
+            ).join('\n---\n');
+
+            const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
+            
+            const prompt = `
+            Act as a professional stock market analyst. 
+            Analyze the following ${selectedItems.length} news items.
+            
+            Provide the output in ${lang}.
+            
+            Structure your response as follows:
+            1. **Summary**: 3-5 bullet points highlighting the key facts.
+            2. **Analysis**: A 100-200 word summary of the impact.
+            3. **Analyst Insight**: A 100-200 word comment on the implications for the stock price or industry trends.
+
+            News Data:
+            ${newsText}
+            `;
+            
+            callGemini(prompt);
+        }
+
+        // 2.2 Volatility Analysis (Summary Tab)
+        function explainVolatility(ticker, val, dateStr) {
+            const targetDate = new Date(dateStr);
+            const startDate = new Date(targetDate); startDate.setDate(targetDate.getDate() - 2);
+            const endDate = new Date(targetDate); endDate.setDate(targetDate.getDate() + 2);
+            
+            // Filter news around that date for that ticker
+            const relevantNews = fullNewsList.filter(n => {
+                const nDate = n.jsDate;
+                return n.ticker === ticker && nDate >= startDate && nDate <= endDate;
+            });
+
+            const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
+            let newsContext = "No specific news found in the database for this period.";
+            if (relevantNews.length > 0) {
+                newsContext = relevantNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+            }
+
+            const prompt = `
+            Act as a professional stock analyst.
+            The stock **${TICKER_NAMES[ticker] || ticker}** moved by **${val}%** around **${dateStr}**.
+            
+            Using the following news headlines from that period (if any) and your general knowledge, explain the primary drivers for this volatility.
+            
+            Provide the output in ${lang}.
+            Format as bullet points.
+            
+            News Context:
+            ${newsContext}
+            `;
+            
+            callGemini(prompt);
+        }
+
+        // 2.3 Ticker Chart Analysis
+        function analyzeTickerChart() {
+            if (!currentModalTicker) return;
+            const data = dataByTicker[currentModalTicker];
+            if (!data) return;
+            
+            const recentData = data.slice(-30).map(d => `${d.date.toISOString().split('T')[0]}: ${d.price}`).join('\n');
+            const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
+
+            const prompt = `
+            Act as a technical analyst.
+            Analyze the recent price trend for **${TICKER_NAMES[currentModalTicker] || currentModalTicker}**.
+            
+            Here is the raw price data for the last 30 trading days:
+            ${recentData}
+            
+            Provide a 200-300 word technical analysis including trends, potential support/resistance levels (estimated), and momentum.
+            Output in ${lang}.
+            `;
+            
+            callGemini(prompt);
+        }
+
+        // 2.4 Custom Period Comparison Analysis
+        function analyzeCustomChart() {
+            const startDate = customPeriodState.start;
+            const endDate = customPeriodState.end;
+            
+            let perfSummary = "Performance from " + formatDateYYYYMMDD(startDate) + " to " + formatDateYYYYMMDD(endDate) + ":\n";
+            const tickers = ['2330.TW', 'TSM', 'NVDA', 'INTC', 'AMD', '.TWII', '.SOX']; 
+            
+            tickers.forEach(t => {
+                if (!dataByTicker[t]) return;
+                const perf = allPerformanceData.get(t);
+                const p1 = perf.findPriceOnOrBefore(startDate);
+                const p2 = perf.findPriceOnOrBefore(endDate);
+                if(p1 && p2) {
+                    const chg = ((p2/p1)-1)*100;
+                    perfSummary += `${TICKER_NAMES[t]||t}: ${chg.toFixed(2)}%\n`;
+                }
+            });
+
+            const newsStart = new Date(endDate); newsStart.setDate(endDate.getDate() - 5);
+            const recentNews = fullNewsList.filter(n => n.jsDate >= newsStart && n.jsDate <= endDate).slice(0, 10);
+            const newsText = recentNews.map(n => `- ${n.Date} (${n.ticker}): ${n.Title}`).join('\n');
+
+            const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
+
+            const prompt = `
+            Act as a market strategist.
+            Analyze the comparative performance of key semiconductor/tech stocks during the period: ${formatDateYYYYMMDD(startDate)} to ${formatDateYYYYMMDD(endDate)}.
+            
+            Performance Data:
+            ${perfSummary}
+            
+            Recent News Headlines (near end date):
+            ${newsText}
+            
+            Provide a 200-300 word analysis on why certain tickers outperformed others and the general market sentiment at the end of the period.
+            Output in ${lang}.
+            `;
+
+            callGemini(prompt);
+        }
+
+        // 2.5 Analyze Summary Table
+        function analyzeSummaryTable() {
+            // Get visible tickers from watchlist
+            let watchlistTickers = summaryTickersConfig['tw-stocks'].filter(t => visibleTickers.has(t));
+            let peerTickers = summaryTickersConfig['us-stocks'].filter(t => visibleTickers.has(t));
+            let benchmark = summaryTickersConfig['equity-index'];
+            
+            const getDataStr = (list) => {
+                return list.map(t => {
+                    const perf = allPerformanceData.get(t);
+                    if (!perf) return '';
+                    const curr = perf.findActualDataPoint(summaryReferenceDate);
+                    if(!curr) return '';
+                    
+                    // Get 1M and YTD for context
+                    const getRet = (period) => {
+                        let d = new Date(summaryReferenceDate);
+                        if(period==='1M') d.setMonth(d.getMonth()-1);
+                        else if(period==='YTD') d = new Date(d.getFullYear(),0,1);
+                        const p0 = perf.findPriceOnOrBefore(d);
+                        if(!p0) return 'N/A';
+                        return (((curr.price/p0)-1)*100).toFixed(1) + '%';
+                    };
+                    
+                    return `${TICKER_NAMES[t]||t}: Price=${curr.price}, 1M=${getRet('1M')}, YTD=${getRet('YTD')}`;
+                }).join('\n');
+            };
+            
+            const dataText = `
+            Benchmark:
+            ${getDataStr(benchmark)}
+            
+            Watchlist:
+            ${getDataStr(watchlistTickers)}
+            
+            Peers:
+            ${getDataStr(peerTickers)}
+            `;
+            
+            const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
+            
+            const prompt = `
+            Act as a portfolio manager. 
+            Analyze the current snapshot of the watchlist below (As of ${formatDateYYYYMMDD(summaryReferenceDate)}).
+            
+            Data:
+            ${dataText}
+            
+            Provide a comprehensive market overview:
+            1. **Market Sentiment**: Based on Benchmark and key movers.
+            2. **Sector Performance**: Compare Taiwan semis vs US peers.
+            3. **Outliers**: Highlight any stock with significant deviation.
+            
+            Output in ${lang}.
+            `;
+            
+            callGemini(prompt);
+        }
+
+        // 2.6 Analyze Performance Report
+        function analyzePerformanceReport() {
+            // This reads the table rendered in #stats-table-grid or computes it
+            const tickers = ['2330.TW', 'TSM', 'INTC', '005930.KS', '.TWII', '.SOX', 'NVDA', 'AMD'];
+            const periods = ['1-Week', '1-Month', 'YTD', '1-Year'];
+            
+            let tableData = "Ticker | 1W | 1M | YTD | 1Y\n---|---|---|---|---\n";
+            
+            tickers.forEach(t => {
+                const perf = allPerformanceData.get(t);
+                if(!perf) return;
+                
+                const getRet = (pd) => {
+                    let d = new Date(summaryReferenceDate);
+                    if (pd === '1-Week') d.setDate(d.getDate() - 7);
+                    else if (pd === '1-Month') d.setMonth(d.getMonth() - 1);
+                    else if (pd === 'YTD') d = new Date(d.getFullYear(), 0, 1);
+                    else if (pd === '1-Year') d.setFullYear(d.getFullYear() - 1);
+                    
+                    const p0 = perf.findPriceOnOrBefore(d);
+                    const p1 = perf.findPriceOnOrBefore(summaryReferenceDate);
+                    if(p0 && p1) return (((p1/p0)-1)*100).toFixed(2) + '%';
+                    return '-';
+                };
+                
+                tableData += `${TICKER_NAMES[t]||t} | ${getRet('1-Week')} | ${getRet('1-Month')} | ${getRet('YTD')} | ${getRet('1-Year')}\n`;
+            });
+
+            // Get recent news to add context
+            const newsStart = new Date(summaryReferenceDate); newsStart.setDate(newsStart.getDate()-7);
+            const recentNews = fullNewsList.filter(n => n.jsDate >= newsStart && n.jsDate <= summaryReferenceDate).slice(0, 8);
+             const newsText = recentNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+
+            const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
+            
+            const prompt = `
+            Act as a financial analyst writing a weekly performance report.
+            
+            Performance Table:
+            ${tableData}
+            
+            Recent News Context:
+            ${newsText}
+            
+            Write a "Performance Report" covering:
+            1. **Short-term Momentum**: (1W, 1M trends)
+            2. **Long-term Trend**: (YTD, 1Y context)
+            3. **Key Drivers**: Use news to explain moves in TSMC, Nvidia or Indexes.
+            
+            Output in ${lang}.
+            `;
+            
+            callGemini(prompt);
+        }
+
+        // --- Standard Rendering Functions ---
 
         function renderChartTab() {
             if (document.getElementById('chart-grid').classList.contains('active')) renderPerformanceGrid();
@@ -1390,12 +1844,10 @@
                 const tData = dataByTicker[t].filter(pt => pt.date >= startDate && pt.date <= endDate);
                 if (tData.length === 0) return null;
                 const basePrice = tData[0].price;
-                
                 const dataPoints = tData.map(pt => ({
                     x: pt.date,
                     y: ((pt.price / basePrice) - 1) * 100
                 }));
-
                 return { 
                     label: TICKER_NAMES[t] || t, 
                     data: dataPoints, 
@@ -1407,9 +1859,8 @@
                 };
             }).filter(Boolean);
 
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            const gridColor = 'rgba(0, 0, 0, 0.1)';
+            const textColor = '#555';
 
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line', 
@@ -1425,11 +1876,7 @@
                             max: endDate,
                             time: {
                                 unit: unit,
-                                displayFormats: {
-                                    day: 'dd/MMM',
-                                    week: 'dd/MMM',
-                                    month: 'MMM'
-                                }
+                                displayFormats: { day: 'dd/MMM', week: 'dd/MMM', month: 'MMM' }
                             },
                             ticks: { color: textColor, maxRotation: 0, autoSkip: true },
                             grid: { color: gridColor, drawTicks: true }
@@ -1439,13 +1886,8 @@
                     plugins: { 
                         title: { display: true, text: `${periodName} Trend`, color: textColor, font: { size: 14, weight: 'bold' }, align: 'start' },
                         legend: { 
-                            display: true, 
-                            position: 'top', 
-                            align: 'start',
-                            labels: { 
-                                color: textColor, boxWidth: 10, font: { size: 10 }, 
-                                usePointStyle: true, pointStyle: 'rect', padding: 10 
-                            }
+                            display: true, position: 'top', align: 'start',
+                            labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'rect', padding: 10 }
                         }, 
                         tooltip: { mode: 'index', intersect: false }
                     } 
@@ -1481,6 +1923,8 @@
              if (period !== 'CUSTOM') {
                  document.getElementById('custom-chart-start').value = formatDateYYYYMMDD(startDate);
                  document.getElementById('custom-chart-end').value = formatDateYYYYMMDD(endDate);
+                 customPeriodState.start = startDate;
+                 customPeriodState.end = endDate;
              }
 
              renderCustomPerfChart(startDate, period === 'CUSTOM' ? new Date(document.getElementById('custom-chart-end').value || endDate) : endDate);
@@ -1501,18 +1945,12 @@
                 const tData = dataByTicker[t].filter(pt => pt.date >= startDate && pt.date <= endDate);
                 if (tData.length === 0) return null;
                 const basePrice = tData[0].price;
-                
-                const dataPoints = tData.map(pt => ({
-                    x: pt.date,
-                    y: ((pt.price / basePrice) - 1) * 100
-                }));
-
+                const dataPoints = tData.map(pt => ({ x: pt.date, y: ((pt.price / basePrice) - 1) * 100 }));
                 return { label: TICKER_NAMES[t] || t, data: dataPoints, borderColor: TICKER_COLORS[t] || '#999', borderWidth: 2, pointRadius: 0, tension: 0.1, spanGaps: true };
             }).filter(Boolean);
 
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            const gridColor = 'rgba(0, 0, 0, 0.1)';
+            const textColor = '#555';
 
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line', data: { datasets },
@@ -1573,9 +2011,7 @@
                         }
                         html += `<td>${turnover}</td>`;
                     } else {
-                        // Use currPoint.date as reference for calculating previous dates
                         let d = new Date(currPoint ? currPoint.date : summaryReferenceDate);
-                        
                         if (p === '1-Day') d.setDate(d.getDate() - 1);
                         else if (p === '1-Week') d.setDate(d.getDate() - 7);
                         else if (p === '1-Month') d.setMonth(d.getMonth() - 1);
@@ -1583,7 +2019,6 @@
                         else if (p === 'YTD') d = new Date(d.getFullYear(), 0, 1);
                         
                         const startPrice = perfData.findPriceOnOrBefore(d);
-                        // Numerator is the price at currPoint (latest available)
                         if (currPoint && startPrice) {
                             const ret = perfData.calcPerf(startPrice, currPoint.price);
                             const css = ret >= 0 ? 'text-positive' : 'text-negative';
@@ -1612,8 +2047,6 @@
             
             const filter = (arr) => arr.filter(pt => pt.date >= startDate && pt.date <= summaryReferenceDate);
             const tData = filter(tsmc); const mData = filter(mci);
-            
-            // Normalize
             const normalize = (arr) => {
                 if(arr.length===0) return [];
                 const base = arr[0].price; 
@@ -1625,9 +2058,8 @@
                 { label: 'MCI', data: normalize(mData), borderColor: TICKER_COLORS['.MCI'], borderWidth: 2, pointRadius: 0, tension: 0.1 }
             ];
 
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const textColor = isDarkMode ? '#a0a0a0' : '#555';
+            const gridColor = 'rgba(0, 0, 0, 0.1)';
+            const textColor = '#555';
             
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line', data: { datasets },
@@ -1670,30 +2102,23 @@
         function renderSummaryTab() {
             const refDate = summaryReferenceDate;
             const containers = {'equity-index': 'summary-equity-index', 'tw-stocks': 'summary-tw-stocks', 'us-stocks': 'summary-us-stocks'};
-            
             const startStr = customPeriodState.start ? formatDateSlash(customPeriodState.start) : '...';
             const endStr = customPeriodState.end ? formatDateSlash(customPeriodState.end) : '...';
             const customHeader = 'Custom';
 
             Object.entries(containers).forEach(([group, id]) => {
                 let tickers = [...summaryTickersConfig[group]];
-                
-                // Filter
                 tickers = tickers.filter(t => {
                      if (group !== 'equity-index' && !visibleTickers.has(t)) return false;
                      if (group === 'equity-index' && !visibleTickers.has(t)) return false; 
                      return true;
                 });
-
-                // Filter columns
                 const groupColumns = summaryColumnsState.filter(col => {
                     if (!col.visible) return false;
-                    // Hide Market Cap for Benchmark
                     if (group === 'equity-index' && col.id === 'MarketCap') return false;
                     return true;
                 });
 
-                // SORTING
                 const sortSettings = tableSortState[group];
                 if (sortSettings.column) {
                     tickers.sort((a, b) => {
@@ -1706,33 +2131,44 @@
                 const table = document.getElementById(id).querySelector('table');
                 let html = '<thead><tr>';
                 
-                groupColumns.forEach(col => {
+                // --- Column Headers (Draggable) ---
+                groupColumns.forEach((col, colIdx) => {
                     let onClickAction = `toggleSort('${group}', '${col.id}')`;
                     let sortIcon = '';
                     if (sortSettings.column === col.id) {
                         sortIcon = sortSettings.direction === 'asc' ? ' \u25B2' : ' \u25BC';
                     }
                     
+                    let thContent = '';
                     if (col.id === 'Custom') {
-                         html += `<th class="summary-clickable-header">
-                                    <span onclick="${onClickAction}" style="cursor:pointer">${customHeader}${sortIcon}</span>
-                                    <i class="material-icons" style="font-size:12px; cursor:pointer; margin-left:4px;" onclick="openCustomPeriodModal()" title="${startStr}~${endStr}">edit</i>
-                                  </th>`;
+                         thContent = `
+                            <span onclick="${onClickAction}" style="cursor:pointer">${customHeader}${sortIcon}</span>
+                            <i class="material-icons" style="font-size:12px; cursor:pointer; margin-left:4px;" onclick="openCustomPeriodModal()" title="${startStr}~${endStr}">edit</i>
+                         `;
                     } else {
-                         html += `<th onclick="${onClickAction}">${col.label}${sortIcon}</th>`;
+                         thContent = `<span onclick="${onClickAction}">${col.label}${sortIcon}</span>`;
                     }
+                    
+                    html += `<th draggable="true" ondragstart="handleDragStart(event, 'col', '${col.id}')" ondragover="handleDragOver(event, 'col')" ondrop="handleDrop(event, 'col', ${colIdx})" ondragend="handleDragEnd(event)">${thContent}</th>`;
                 });
                 html += '</tr></thead><tbody>';
 
-                tickers.forEach(t => {
+                // --- Rows (Draggable) ---
+                tickers.forEach((t, rowIdx) => {
                     const perfData = allPerformanceData.get(t);
                     if (!perfData) return;
                     const currPoint = perfData.findActualDataPoint(refDate);
                     if (!currPoint) return;
 
-                    html += `<tr class="clickable-row" onclick="openTickerModal('${t}')">`;
+                    html += `<tr class="draggable-row clickable-row" draggable="true" 
+                                ondragstart="handleDragStart(event, 'row', '${group}|${rowIdx}')" 
+                                ondragover="handleDragOver(event, 'row')" 
+                                ondrop="handleDrop(event, 'row', '${group}|${rowIdx}')"
+                                ondragend="handleDragEnd(event)"
+                                onclick="openTickerModal('${t}')">`;
+                                
                     groupColumns.forEach(col => {
-                        let val = '-'; let css = '';
+                        let val = '-'; let css = ''; let cellExtra = '';
                         const price = currPoint.price;
                         const anchorDate = currPoint.date;
 
@@ -1770,10 +2206,19 @@
                                     const ret = perfData.calcPerf(startPrice, comparePrice);
                                     val = ret.toFixed(2) + '%';
                                     css = ret >= 0 ? 'text-positive' : 'text-negative';
+                                    
+                                    // 2.2 Volatility Logic for AI
+                                    if (col.id === '1-Day' && Math.abs(ret) > 5) {
+                                        css += ret > 0 ? ' cell-pos-light' : ' cell-neg-light';
+                                        cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}')">?</div>`;
+                                    } else if (col.id === '1-Week' && Math.abs(ret) > 10) {
+                                        css += ret > 0 ? ' cell-pos-light' : ' cell-neg-light';
+                                        cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}')">?</div>`;
+                                    }
                                 }
                                 break;
                         }
-                        html += `<td class="${css}">${val}</td>`;
+                        html += `<td class="${css}">${val}${cellExtra}</td>`;
                     });
                     html += '</tr>';
                 });
@@ -1781,15 +2226,143 @@
                 table.innerHTML = html;
             });
         }
+        
+        // --- Drag and Drop Handlers ---
+        function handleDragStart(e, type, id) {
+            dragSrcEl = e.target;
+            dragType = type;
+            e.target.classList.add('dragging');
+            if (type === 'row') {
+                e.dataTransfer.setData('text/plain', id); // contains group|index
+                e.dataTransfer.effectAllowed = 'move';
+            } else {
+                e.dataTransfer.setData('text/plain', id); // contains colId
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        }
 
-        // Sorting Helpers
+        function handleDragOver(e, type) {
+            if (e.preventDefault) e.preventDefault();
+            // Only allow dropping if types match
+            if (dragType === type) {
+                e.dataTransfer.dropEffect = 'move';
+                e.currentTarget.classList.add('drag-over');
+            }
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        }
+
+        function handleDrop(e, type, targetId) {
+            if (e.stopPropagation) e.stopPropagation();
+            if (dragType !== type) return false;
+
+            const sourceId = e.dataTransfer.getData('text/plain');
+
+            // --- Column Reordering ---
+            if (type === 'col') {
+                const srcColId = sourceId;
+                const visibleCols = summaryColumnsState.filter(c => c.visible);
+                if (targetId >= 0 && targetId < visibleCols.length) {
+                    const targetCol = visibleCols[targetId];
+                    const fromIdx = summaryColumnsState.findIndex(c => c.id === srcColId);
+                    const toIdx = summaryColumnsState.findIndex(c => c.id === targetCol.id);
+                    
+                    if (fromIdx > -1 && toIdx > -1) {
+                        const item = summaryColumnsState.splice(fromIdx, 1)[0];
+                        summaryColumnsState.splice(toIdx, 0, item);
+                        renderSummaryTab();
+                    }
+                }
+            } 
+            
+            // --- Row Reordering ---
+            else if (type === 'row') {
+                const [srcGroup, srcIdxStr] = sourceId.split('|');
+                const srcIdx = parseInt(srcIdxStr);
+                const [targetGroup, targetIdxStr] = targetId.split('|');
+                const targetIdx = parseInt(targetIdxStr);
+
+                // Only allow reordering within the same group for data integrity
+                if (srcGroup === targetGroup) {
+                    const groupList = summaryTickersConfig[srcGroup];
+                    
+                    if (tableSortState[srcGroup].column !== null) {
+                        alert("Please disable sorting (click header until arrows disappear) before reordering rows.");
+                        return false;
+                    }
+
+                    let list = [...summaryTickersConfig[srcGroup]];
+                    list = list.filter(t => {
+                         if (srcGroup !== 'equity-index' && !visibleTickers.has(t)) return false;
+                         if (srcGroup === 'equity-index' && !visibleTickers.has(t)) return false; 
+                         return true;
+                    });
+                    
+                    const tickerToMove = list[srcIdx];
+                    const tickerAtTarget = list[targetIdx];
+                    
+                    // Now find these in the main config and swap/move
+                    const realSrcIdx = summaryTickersConfig[srcGroup].indexOf(tickerToMove);
+                    const realTargetIdx = summaryTickersConfig[srcGroup].indexOf(tickerAtTarget);
+                    
+                    if (realSrcIdx > -1 && realTargetIdx > -1) {
+                        const item = summaryTickersConfig[srcGroup].splice(realSrcIdx, 1)[0];
+                        summaryTickersConfig[srcGroup].splice(realTargetIdx, 0, item);
+                        renderSummaryTab();
+                    }
+                }
+            }
+            
+            return false;
+        }
+
+        // --- Copy to Clipboard Function ---
+        function copySummaryTables() {
+            let copyText = "";
+            const tables = document.querySelectorAll('.summary-card table');
+            
+            tables.forEach(table => {
+                // Get Card Title
+                const cardTitle = table.closest('.summary-card').querySelector('.summary-card-label').innerText;
+                copyText += `[${cardTitle}]\n`;
+                
+                // Headers
+                const headers = Array.from(table.querySelectorAll('th')).map(th => th.innerText.trim());
+                copyText += headers.join('\t') + '\n';
+                
+                // Rows
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText.replace('?', '').trim()); // remove vol icon ?
+                    copyText += cells.join('\t') + '\n';
+                });
+                copyText += '\n';
+            });
+            
+            navigator.clipboard.writeText(copyText).then(() => {
+                alert("All summary tables copied to clipboard!");
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert("Failed to copy data.");
+            });
+        }
+
         function toggleSort(group, colId) {
             const current = tableSortState[group];
             if (current.column === colId) {
-                current.direction = current.direction === 'asc' ? 'desc' : 'asc';
+                // Toggle: asc -> desc -> null (default order)
+                if (current.direction === 'asc') current.direction = 'desc';
+                else {
+                    current.column = null;
+                    current.direction = 'asc';
+                }
             } else {
                 current.column = colId;
-                current.direction = 'desc'; // Default desc for numbers usually
+                current.direction = 'desc'; 
                 if(colId === 'Name' || colId === 'Ticker') current.direction = 'asc';
             }
             renderSummaryTab();
@@ -1802,7 +2375,6 @@
             if(!currPoint) return -999999999;
             const price = currPoint.price;
             const anchorDate = currPoint.date;
-
             const getP = (pd) => {
                 let d = new Date(anchorDate);
                 if (pd === '1-Day') d.setDate(d.getDate() - 1);
@@ -1814,14 +2386,13 @@
                 else if (pd === 'Custom') return perfData.findPriceOnOrBefore(customPeriodState.start);
                 return perfData.findPriceOnOrBefore(d);
             }
-
             switch(colId) {
                 case 'Name': return perfData.name;
                 case 'Ticker': return ticker;
                 case 'Date': return currPoint.date.getTime();
                 case 'Price': return price;
                 case 'MarketCap': return calculateMarketCapNumeric(ticker, price, anchorDate);
-                default: // Perf columns
+                default: 
                     let comparePrice = price;
                     if (colId === 'Custom' && customPeriodState.end) {
                          const endPoint = perfData.findPriceOnOrBefore(customPeriodState.end);
@@ -1835,27 +2406,22 @@
 
         function compareValues(a, b, dir) {
             if (a === b) return 0;
-            if (a === -999999999) return 1; // Push invalid to bottom
+            if (a === -999999999) return 1; 
             if (b === -999999999) return -1;
-            
             let comparison = 0;
             if (a > b) comparison = 1;
             else comparison = -1;
-            
             return dir === 'asc' ? comparison : -comparison;
         }
         
-        // Manage Tickers Functions
         function openManageTickerModal() {
             const listContainer = document.getElementById('manage-ticker-list');
             listContainer.innerHTML = '';
-            
             const groups = [
-                { name: 'Benchmark', tickers: summaryTickersConfig['equity-index'] }, // Added Benchmark
+                { name: 'Benchmark', tickers: summaryTickersConfig['equity-index'] }, 
                 { name: 'Watchlist (TW Stocks)', tickers: summaryTickersConfig['tw-stocks'] },
                 { name: 'Peers (US Stocks)', tickers: summaryTickersConfig['us-stocks'] }
             ];
-
             groups.forEach(group => {
                 const groupHeader = document.createElement('div');
                 groupHeader.style.gridColumn = '1 / -1';
@@ -1865,7 +2431,6 @@
                 groupHeader.style.borderBottom = '1px solid var(--border-color)';
                 groupHeader.innerText = group.name;
                 listContainer.appendChild(groupHeader);
-
                 group.tickers.forEach(t => {
                     const item = document.createElement('label');
                     item.className = 'manage-ticker-item';
@@ -1874,7 +2439,6 @@
                     listContainer.appendChild(item);
                 });
             });
-
             const m = document.getElementById('manageTickerModal');
             m.style.display='block'; setTimeout(() => m.classList.add('show'), 10);
         }
@@ -1888,7 +2452,24 @@
             closeModal('manageTickerModal');
             renderSummaryTab();
         }
+        
+        // --- Redesigned Column Modal ---
+        function openColumnModal() {
+            const list = document.getElementById('column-list');
+            list.innerHTML = '';
+            summaryColumnsState.forEach((col, idx) => {
+                const item = document.createElement('label');
+                item.className = 'column-item';
+                const isChecked = col.visible ? 'checked' : '';
+                item.innerHTML = `<input type="checkbox" id="col-chk-${idx}" ${isChecked}> ${col.label}`;
+                list.appendChild(item);
+            });
+            document.getElementById('columnModal').style.display='block';
+            setTimeout(() => document.getElementById('columnModal').classList.add('show'),10);
+        }
 
+        function applyColumnChanges() { summaryColumnsState.forEach((col, idx) => { col.visible = document.getElementById(`col-chk-${idx}`).checked; }); closeModal('columnModal'); renderSummaryTab(); }
+        
         function openCustomPeriodModal() {
              document.getElementById('modal-custom-start').value = formatDateYYYYMMDD(customPeriodState.start || new Date('2020-01-01'));
              document.getElementById('modal-custom-end').value = formatDateYYYYMMDD(customPeriodState.end || summaryReferenceDate);
@@ -1912,20 +2493,14 @@
         // --- Data Tab Functions ---
         function pivotDataForDownload() {
             try {
-                // Reset Maps to ensure fresh data
                 pivotedPriceData = new Map();
                 pivotedVolumeData = new Map();
-
                 let usedTickers = [];
                 Object.values(summaryTickersConfig).forEach(list => usedTickers = usedTickers.concat(list));
-                
                 const uniqueDates = [...new Set(allData.map(d => d.originalDateStr.split(' ')[0]))].sort();
-                
                 pivotedDataHeaders = ['Date', ...usedTickers];
-
                 const priceDataMap = new Map();
                 const volumeDataMap = new Map();
-
                 allData.forEach(d => {
                     const dateStr = d.originalDateStr.split(' ')[0];
                     if (!priceDataMap.has(dateStr)) priceDataMap.set(dateStr, new Map());
@@ -1933,41 +2508,32 @@
                     priceDataMap.get(dateStr).set(d.ticker, d.price);
                     volumeDataMap.get(dateStr).set(d.ticker, d.volume);
                 });
-                
                 let lastKnownPrices = {};
                 let lastKnownVolumes = {}; 
                 usedTickers.forEach(t => { lastKnownPrices[t] = null; lastKnownVolumes[t] = null; });
-                
                 uniqueDates.forEach(date => {
                      const pMap = priceDataMap.get(date);
                      const vMap = volumeDataMap.get(date);
-                     
                      const rowP = [];
                      const rowV = [];
-                     
                      usedTickers.forEach(ticker => {
                          let pVal = pMap.get(ticker);
                          if (pVal !== undefined && pVal !== null) { lastKnownPrices[ticker] = pVal; } 
                          else { pVal = lastKnownPrices[ticker]; }
                          rowP.push(pVal);
-
                          let vVal = vMap.get(ticker);
                          if (vVal !== undefined && vVal !== null) { lastKnownVolumes[ticker] = vVal; } 
                          else { vVal = lastKnownVolumes[ticker]; }
                          rowV.push(vVal);
                      });
-                     
                      pivotedPriceData.set(date, rowP);
                      pivotedVolumeData.set(date, rowV);
                 });
-
                 isDataPivoted = true;
                 if (document.getElementById('data').classList.contains('active')) {
                     renderDataTab();
                 }
-            } catch (error) {
-                console.error("Failed to pivot data:", error);
-            }
+            } catch (error) { console.error("Failed to pivot data:", error); }
         }
         
         function renderDataTab() {
@@ -1975,17 +2541,13 @@
                 document.getElementById('data-table-container').innerHTML = '<p>Data is processing...</p>';
                 return;
             }
-
             const container = document.getElementById('data-table-container');
             container.innerHTML = ''; 
-            
             const today = new Date();
             const threeMonthsAgo = new Date();
             threeMonthsAgo.setMonth(today.getMonth() - 3);
-
             let startDateVal = document.getElementById('data-start-date').value;
             let endDateVal = document.getElementById('data-end-date').value;
-            
             if (!startDateVal) {
                 startDateVal = formatDateYYYYMMDD(threeMonthsAgo);
                 document.getElementById('data-start-date').value = startDateVal;
@@ -1994,41 +2556,34 @@
                 endDateVal = formatDateYYYYMMDD(today);
                 document.getElementById('data-end-date').value = endDateVal;
             }
-
             const startDate = new Date(startDateVal);
             const endDate = new Date(endDateVal);
-            
             const summaryTickers = pivotedDataHeaders.slice(1); 
             const finalHeaders = ['Date', ...summaryTickers];
-            
             const priceColumns = finalHeaders.map((header, index) => ({
                 title: header,
                 width: index === 0 ? 120 : 100,
                 type: index === 0 ? 'text' : 'numeric',
                 mask: index > 0 ? '#,##.00' : null,
             }));
-            
             const volumeColumns = finalHeaders.map((header, index) => ({
                 title: header,
                 width: index === 0 ? 120 : 100,
                 type: index === 0 ? 'text' : 'numeric',
                 mask: index > 0 ? '#,##' : null,
             }));
-
             const priceSheetData = [];
             [...pivotedPriceData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
                 if (startDate && new Date(date) < startDate) return;
                 if (endDate && new Date(date) > endDate) return;
                 priceSheetData.push([date, ...pivotedPriceData.get(date)]);
             });
-
             const volumeSheetData = [];
             [...pivotedVolumeData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
                 if (startDate && new Date(date) < startDate) return;
                 if (endDate && new Date(date) > endDate) return;
                 volumeSheetData.push([date, ...pivotedVolumeData.get(date)]);
             });
-
             jspreadsheetInstance = jspreadsheet(container, {
                 worksheets: [
                     {
@@ -2069,10 +2624,7 @@
             if (evt) evt.currentTarget.classList.add("active"); 
             if (tabName === 'data' && isDataPivoted && !jspreadsheetInstance) renderDataTab();
         }
-        function initTheme() {
-            if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('theme-icon-sun').style.display = 'none'; document.getElementById('theme-icon-moon').style.display = 'block'; }
-            document.getElementById('theme-toggle').onclick = () => { document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); document.getElementById('theme-icon-sun').style.display = isDark ? 'none' : 'block'; document.getElementById('theme-icon-moon').style.display = isDark ? 'block' : 'none'; Object.values(activeCharts).forEach(c => { if(c) c.update() }); };
-        }
+        
         function initNewsResizer() {
             const resizer = document.getElementById('news-resizer'); const leftPane = document.getElementById('news-left-pane'); let isResizing = false;
             resizer.addEventListener('mousedown', (e) => { isResizing = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; });
@@ -2080,8 +2632,6 @@
             document.addEventListener('mouseup', () => { isResizing = false; document.body.style.cursor = 'default'; document.body.style.userSelect = ''; });
         }
         function updateSummaryReferenceDate(val) { summaryReferenceDate = new Date(val); processPerformanceData(); renderSummaryTab(); renderChartTab(); }
-        function openColumnModal() { const list = document.getElementById('column-list'); list.innerHTML = ''; summaryColumnsState.forEach((col, idx) => { list.innerHTML += `<div style="padding:5px; border-bottom:1px solid #eee;"><input type="checkbox" ${col.visible?'checked':''} id="col-chk-${idx}"><label for="col-chk-${idx}">${col.label}</label></div>`; }); document.getElementById('columnModal').style.display='block'; setTimeout(() => document.getElementById('columnModal').classList.add('show'),10); }
-        function applyColumnChanges() { summaryColumnsState.forEach((col, idx) => { col.visible = document.getElementById(`col-chk-${idx}`).checked; }); closeModal('columnModal'); renderSummaryTab(); }
         function closeModal(id) { document.getElementById(id).classList.remove('show'); setTimeout(() => document.getElementById(id).style.display='none', 300); }
         function formatNumberWithCommas(x, decimals) { if (x == null) return '-'; return x.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); }
         function formatDateYYYYMMDD(date) { return date.toISOString().split('T')[0]; }
@@ -2093,7 +2643,7 @@
             currentModalTicker = ticker;
             const modal = document.getElementById('tickerModal'); document.getElementById('modalTickerName').innerText = TICKER_NAMES[ticker] || ticker;
             modal.style.display = 'block'; setTimeout(() => modal.classList.add('show'), 10);
-            updateModalChart('1Y'); // Default view
+            updateModalChart('1Y'); 
         }
 
         function updateModalChart(period) {
