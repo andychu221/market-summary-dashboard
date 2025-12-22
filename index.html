@@ -159,7 +159,7 @@
         .summary-card th:active { cursor: grabbing; }
         .summary-card th:hover { background-color: var(--button-active-bg); }
         
-        .draggable-row { cursor: grab; }
+        .draggable-row { cursor: pointer; }
         .draggable-row:active { cursor: grabbing; }
         
         .dragging { opacity: 0.5; background-color: #f0f8ff; border: 2px dashed var(--primary-color); }
@@ -302,6 +302,9 @@
         .mci-table td:first-child { background-color: var(--header-bg); position: sticky; left: 0; z-index: 5; font-weight: 600; text-align: left; padding-left: 10px; font-size: 0.9rem; }
         
         .mci-input { width: 70px; padding: 6px; border: 1px solid transparent; text-align: right; background: transparent; color: inherit; font-family: inherit; font-size: 0.95rem; }
+        .mci-header-input { width: 100%; padding: 4px; text-align: center; font-size: 1.1rem; font-weight: bold; border: 1px solid transparent; background: transparent; color: inherit; font-family: inherit; }
+        .mci-header-input:hover { border-color: #ccc; background: var(--bg-color); }
+        .mci-header-input:focus { border-color: var(--primary-color); background: var(--bg-color); outline: none; border-radius: 4px; }
         .mci-input:hover { border-color: #ccc; background: var(--bg-color); }
         .mci-input:focus { border-color: var(--primary-color); background: var(--bg-color); outline: none; border-radius: 4px; }
         /* Hide spin buttons */
