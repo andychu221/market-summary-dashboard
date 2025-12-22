@@ -1551,32 +1551,68 @@
         
         // --- AI Analysis Functions ---
 
-        // 2.1 News Tab Analysis
-        function analyzeSelectedNews() {
+        /function analyzeSelectedNews() {
             if (selectedNewsIds.size === 0) {
                 alert('Please Ctrl+Click to select news items first.');
                 return;
             }
 
             const selectedItems = fullNewsList.filter(n => selectedNewsIds.has(n.id));
-            const newsText = selectedItems.map(n => 
-                `Title: ${n.Title}\nDate: ${n.Date}\nSource: ${n.Source}\nContent: ${n.Content.substring(0, 500)}...`
-            ).join('\n---\n');
+            
+            // Group news by ticker for better context
+            const newsByTicker = {};
+            selectedItems.forEach(n => {
+                if (!newsByTicker[n.ticker]) newsByTicker[n.ticker] = [];
+                newsByTicker[n.ticker].push(n);
+            });
+
+            // Build comprehensive news summary
+            let newsText = `Total ${selectedItems.length} news items selected from ${Object.keys(newsByTicker).length} companies:\n\n`;
+            
+            Object.keys(newsByTicker).forEach(ticker => {
+                const tickerNews = newsByTicker[ticker];
+                newsText += `## ${TICKER_NAMES[ticker] || ticker} (${ticker}) - ${tickerNews.length} articles\n`;
+                tickerNews.forEach((n, idx) => {
+                    newsText += `[${idx + 1}] ${n.Date} - ${n.Title}\n`;
+                    newsText += `    ${n.Content.substring(0, 400)}...\n\n`;
+                });
+                newsText += '\n';
+            });
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
             const prompt = `
-            Act as a professional stock market analyst. 
-            Analyze the following ${selectedItems.length} news items.
+            Act as a professional equity research analyst specializing in semiconductor and technology sectors.
             
-            Provide the output in ${lang}.
+            You are analyzing ${selectedItems.length} news articles covering ${Object.keys(newsByTicker).length} companies. 
+            Your task is to provide a COMPREHENSIVE SYNTHESIS of all these news items, not individual summaries.
             
-            Structure your response as follows:
-            1. **Summary**: 3-5 bullet points highlighting the key facts.
-            2. **Analysis**: A 100-200 word summary of the impact.
-            3. **Analyst Insight**: A 100-200 word comment on the implications for the stock price or industry trends.
+            IMPORTANT: Provide the entire response in ${lang}.
+            
+            Structure your analysis as follows:
 
-            News Data:
+            ## 📰 Executive Summary
+            - Provide 3-5 key takeaways that synthesize the OVERALL themes across all selected news
+            - Focus on cross-company trends and industry-wide developments
+            - Highlight any conflicting signals or diverging trends
+
+            ## 📊 Market Impact Analysis (150-200 words)
+            - Analyze how these developments collectively affect the sector
+            - Identify winners and losers based on the news flow
+            - Assess short-term vs long-term implications
+            - Consider supply chain, competitive, and macroeconomic factors
+
+            ## 💡 Investment Implications (150-200 words)
+            - Synthesize what these news mean for portfolio positioning
+            - Identify relative value opportunities or risks
+            - Suggest which stocks might outperform/underperform based on this news flow
+            - Highlight any catalysts or risk events to watch
+
+            ## 🎯 Key Themes Identified
+            - List 3-5 major themes that emerge from analyzing all these articles together
+            - Examples: supply chain shifts, competitive dynamics, regulatory changes, technology trends, etc.
+
+            News Articles to Analyze:
             ${newsText}
             `;
             
