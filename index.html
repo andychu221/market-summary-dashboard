@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watchlist Dashboard V7 (AI Enhanced)</title>
+    <title>Daily Market Update</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"></script>
@@ -361,6 +361,13 @@
             font-size: 28px;
             color: var(--ai-btn-color);
         }
+        /* New AI label style */
+        .ai-label {
+            font-size: 16px;
+            color: var(--ai-btn-color);
+            font-weight: 500;
+            margin-left: 5px;
+        }
 
         /* Manage Tickers Modal */
         .manage-ticker-list {
@@ -391,6 +398,45 @@
         .markdown-content ul { margin-left: 20px; margin-bottom: 1em; }
         .markdown-content p { margin-bottom: 1em; }
         .markdown-content strong { color: var(--primary-color); }
+
+        /* Multi Select Dropdown Style for Charts */
+        .multi-select-container {
+            position: relative;
+            display: inline-block;
+        }
+        .multi-select-btn {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.95rem;
+        }
+        .multi-select-content {
+            display: none;
+            position: absolute;
+            background-color: var(--modal-bg);
+            min-width: 250px;
+            box-shadow: var(--shadow-strong);
+            padding: 10px;
+            z-index: 1000;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            top: 100%;
+            left: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .multi-select-content.show { display: block; }
+        .multi-select-item {
+            display: block;
+            padding: 5px 0;
+            cursor: pointer;
+        }
+        .multi-select-item:hover { color: var(--primary-color); }
 
     </style>
 </head>
@@ -433,6 +479,7 @@
                         <!-- AI Button for Summary (AutoAwesome Icon) -->
                          <button class="ai-action-btn" title="AI Market Overview" onclick="analyzeSummaryTable()">
                              <i class="material-icons">auto_awesome</i>
+                             <span class="ai-label">AI Summary</span>
                         </button>
                     </div>
                     
@@ -468,10 +515,14 @@
                 </div>
 
                 <div id="chart-grid" class="view-content active" style="padding-top:20px;">
-                    <!-- AI Button for Performance Report (AutoAwesome Icon) -->
-                    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                    <!-- Controls for Perf Report: Dropdown + AI -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <div id="perf-ticker-select-container" class="multi-select-container">
+                            <!-- Injected by JS -->
+                        </div>
                         <button class="ai-action-btn" title="AI Report Analysis" onclick="analyzePerformanceReport()">
                             <i class="material-icons">auto_awesome</i>
+                            <span class="ai-label">AI Summary</span>
                         </button>
                     </div>
 
@@ -498,6 +549,9 @@
 
                 <div id="chart-custom" class="view-content" style="padding-top:20px;">
                     <div class="chart-controls">
+                        <!-- Dropdown inserted here by JS -->
+                        <div id="custom-ticker-select-container" class="multi-select-container"></div>
+                        
                         <button class="chart-period-btn" onclick="setCustomChartPeriod('5D')">5D</button>
                         <button class="chart-period-btn" onclick="setCustomChartPeriod('1M')">1M</button>
                         <button class="chart-period-btn" onclick="setCustomChartPeriod('3M')">3M</button>
@@ -512,6 +566,7 @@
                         <!-- AI Button (AutoAwesome Icon) -->
                         <button class="ai-action-btn" title="AI Analysis" onclick="analyzeCustomChart()" style="margin-left:10px;">
                             <i class="material-icons">auto_awesome</i>
+                            <span class="ai-label">AI Summary</span>
                         </button>
                     </div>
                     <div style="height: 500px; width: 100%; border:1px solid var(--border-color); padding:10px; border-radius:8px;">
@@ -520,16 +575,12 @@
                 </div>
 
                 <div id="chart-mci" class="view-content" style="padding-top:20px;">
-                     <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-                        <button class="controls-input" onclick="copyMciChartData()">
-                            <i class="material-icons">content_copy</i> Copy Data to Clipboard
-                        </button>
-                     </div>
+                     <!-- Copy button removed -->
                      <div style="height: 600px; width: 100%; border:1px solid var(--border-color); padding:10px; border-radius:8px;">
                         <canvas id="canvas-mci-comp"></canvas>
                      </div>
                      <p style="margin-top:10px; color: var(--text-secondary); font-size: 0.9rem;">
-                        * Base = 100 at the start of the displayed period (using MCI Recalculation Date).
+                        * Base = 100 at 2020/01/01 (or first available data after).
                      </p>
                 </div>
             </div>
@@ -561,7 +612,7 @@
                                 </div>
                             </div>
                             
-                            <!-- AI Button (AutoAwesome Icon) -->
+                            <!-- AI Button (AutoAwesome Icon) - NO TEXT LABEL HERE -->
                             <button class="ai-action-btn" onclick="analyzeSelectedNews()" title="Analyze Selected News (Ctrl+Click)" style="margin-left:auto;">
                                 <i class="material-icons">auto_awesome</i>
                             </button>
@@ -650,6 +701,7 @@
                 <!-- AI Icon for Ticker Chart (AutoAwesome Icon) -->
                 <button class="ai-action-btn" title="AI Technical Analysis" onclick="analyzeTickerChart()">
                     <i class="material-icons">auto_awesome</i>
+                    <span class="ai-label">AI Summary</span>
                 </button>
             </div>
             <div style="height: 400px; width: 100%; margin-top:15px;">
@@ -805,6 +857,11 @@
             { id: 'Custom', label: 'Custom', visible: true } 
         ];
         
+        // Chart Selector State
+        let allAvailableTickers = [];
+        let selectedPerfTickers = new Set(['2330.TW', 'TSM', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', '.TWII', '.SOX']);
+        let selectedCustomTickers = new Set(['2330.TW', 'TSM', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', '.TWII', '.SOX', 'MSFT', 'NVDA']);
+
         // Drag and Drop State
         let dragSrcEl = null;
         let dragType = null; // 'row' or 'col'
@@ -849,6 +906,10 @@
                if (!e.target.closest('.date-range-dropdown')) {
                    const menu = document.getElementById('news-date-range-content');
                    if(menu) menu.classList.remove('show');
+               }
+               // Close multi-select dropdowns when clicking outside
+               if (!e.target.closest('.multi-select-container')) {
+                   document.querySelectorAll('.multi-select-content').forEach(el => el.classList.remove('show'));
                }
             });
         });
@@ -958,8 +1019,26 @@
                     });
                 });
 
+                // Populate All Available Tickers for selectors
+                allAvailableTickers = [];
+                Object.values(summaryTickersConfig).forEach(list => {
+                    allAvailableTickers = [...allAvailableTickers, ...list];
+                });
+                // Ensure unique
+                allAvailableTickers = [...new Set(allAvailableTickers)].sort();
+
+                // Init Chart Selectors
+                initChartSelectors();
+
                 status.innerText = "Initializing MCI Weights...";
-                initMciWeightHistory(); 
+                
+                // Modified: Load historical weights from JSON if available
+                if (historicalMciData && historicalMciData.weights) {
+                    parseImportedMciWeights(historicalMciData.weights);
+                } else {
+                    initMciWeightHistory();
+                }
+                
                 renderMciTable();      
 
                 status.innerText = "Calculating Custom Index (MCI)...";
@@ -1001,6 +1080,46 @@
                 status.innerText = "Error loading data: " + e.message;
                 console.error(e);
             }
+        }
+
+        function initChartSelectors() {
+            renderMultiSelect('perf-ticker-select-container', allAvailableTickers, selectedPerfTickers, () => {
+                renderPerformanceGrid();
+            });
+            renderMultiSelect('custom-ticker-select-container', allAvailableTickers, selectedCustomTickers, () => {
+                setCustomChartPeriod('CUSTOM'); // Re-trigger chart render with current period
+            });
+        }
+
+        function renderMultiSelect(containerId, availableTickers, selectedSet, updateCallback) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            
+            const btnId = containerId + '-btn';
+            const listId = containerId + '-list';
+            
+            container.innerHTML = `
+                <div class="multi-select-btn" onclick="document.getElementById('${listId}').classList.toggle('show'); event.stopPropagation();">
+                    Select Tickers <i class="material-icons">arrow_drop_down</i>
+                </div>
+                <div id="${listId}" class="multi-select-content"></div>
+            `;
+            
+            const listEl = document.getElementById(listId);
+            availableTickers.forEach(t => {
+                const label = document.createElement('label');
+                label.className = 'multi-select-item';
+                const isChecked = selectedSet.has(t) ? 'checked' : '';
+                label.innerHTML = `<input type="checkbox" value="${t}" ${isChecked} style="margin-right:8px;"> ${TICKER_NAMES[t] || t}`;
+                
+                label.querySelector('input').addEventListener('change', (e) => {
+                    if(e.target.checked) selectedSet.add(t);
+                    else selectedSet.delete(t);
+                    updateCallback();
+                });
+                
+                listEl.appendChild(label);
+            });
         }
 
         function processTickerData(ticker, raw, market) {
@@ -1150,6 +1269,37 @@
                 });
                 curr.setMonth(curr.getMonth() + 3);
             }
+            // Original Sort: Ascending (but parsed logic below sets it to Descending)
+        }
+
+        // New function to parse weights from JSON
+        function parseImportedMciWeights(weightsObj) {
+            mciWeightHistory = [];
+            let tickerSet = new Set();
+            
+            Object.entries(weightsObj).forEach(([date, wMap]) => {
+                let rowWeights = {};
+                Object.entries(wMap).forEach(([ticker, val]) => {
+                    tickerSet.add(ticker);
+                    // Convert decimal to percentage for UI (e.g. 0.15 -> 15)
+                    rowWeights[ticker] = parseFloat((val * 100).toFixed(2));
+                });
+                mciWeightHistory.push({
+                    date: date,
+                    weights: rowWeights
+                });
+            });
+
+            // Sort Descending (Newest to Oldest)
+            mciWeightHistory.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            // Update global members list
+            mciMembers = Array.from(tickerSet).sort();
+
+            // Set default weights based on the newest available
+            if(mciWeightHistory.length > 0) {
+                defaultWeights = { ...mciWeightHistory[0].weights };
+            }
         }
 
         function renderMciTable() {
@@ -1165,10 +1315,15 @@
                 const isError = Math.abs(sumWeights - 100) > 0.1;
                 const rowClass = isError ? 'weight-error' : '';
                 
+                // Only allow editing the newest row (index 0)
+                const isEditable = (rowIdx === 0);
+                const disabledAttr = isEditable ? '' : 'disabled';
+                const styleAttr = isEditable ? '' : 'background-color:#f5f5f5; color:#888;';
+                
                 tbody += `<tr class="${rowClass}"><td>${row.date}</td>`;
                 mciMembers.forEach(m => {
                     const val = row.weights[m] !== undefined ? row.weights[m] : 0;
-                    tbody += `<td><input type="number" class="mci-input" value="${val}" data-row="${rowIdx}" data-ticker="${m}" onchange="updateMciWeight(this)"></td>`;
+                    tbody += `<td><input type="number" class="mci-input" style="${styleAttr}" value="${val}" data-row="${rowIdx}" data-ticker="${m}" onchange="updateMciWeight(this)" ${disabledAttr}></td>`;
                 });
                 tbody += '</tr>';
             });
@@ -1195,6 +1350,9 @@
 
         function updateMciWeight(input) {
             const rowIdx = parseInt(input.dataset.row);
+            // Only proceed if editing is allowed
+            if (rowIdx !== 0) return; 
+
             const ticker = input.dataset.ticker;
             const val = parseFloat(input.value) || 0;
             if(mciWeightHistory[rowIdx] && mciWeightHistory[rowIdx].weights) {
@@ -1237,31 +1395,32 @@
         }
 
         function calculateMCI() {
-            const historyMap = {}; 
-            mciWeightHistory.forEach(h => { historyMap[h.date] = h.weights; });
-            const validMembers = mciMembers.filter(m => dataByTicker[m] && dataByTicker[m].length > 0);
-            if (validMembers.length === 0) return;
-            const priceMap = {}; 
-            validMembers.forEach(t => {
-                dataByTicker[t].forEach(pt => {
-                    const dStr = formatDateYYYYMMDD(pt.date);
-                    if (!priceMap[dStr]) priceMap[dStr] = {};
-                    priceMap[dStr][t] = pt.price;
-                });
-            });
-            const allDates = Object.keys(priceMap).sort();
-            const settingsStartDateStr = mciWeightHistory.length > 0 ? mciWeightHistory[0].date : '2020-01-01';
-            const startIndex = allDates.findIndex(d => d >= settingsStartDateStr);
-            if (startIndex === -1) return;
-
+            // 1. Setup
             const mciData = [];
+            dataByTicker['.MCI'] = [];
             
-            if (historicalMciData && historicalMciData.MAG7_Index && historicalMciData.MAG7_Index.data) {
-                const histObj = historicalMciData.MAG7_Index.data;
+            if (!mciWeightHistory.length) return;
+
+            // Define the cutoff date. The "Editable" row is Index 0 (Newest).
+            // Logic: Use JSON historical data strictly BEFORE this date.
+            // Start dynamic calculation FROM this date (or first available trading day after).
+            const editableStartDateStr = mciWeightHistory[0].date;
+            const editableWeights = mciWeightHistory[0].weights;
+
+            let baseIndexValue = 100;
+            let lastJsonDateStr = null;
+
+            // 2. Load Historical Data from JSON (Pre-calculation)
+            // UPDATED: Check for direct 'data' property instead of nested MAG7_Index
+            if (historicalMciData && historicalMciData.data) {
+                const histObj = historicalMciData.data;
                 const histDates = Object.keys(histObj).sort();
+
                 histDates.forEach(dStr => {
-                    if (dStr < settingsStartDateStr) {
-                        const val = histObj[dStr].Close;
+                    // Only use historical data strictly BEFORE the new weights take effect
+                    if (dStr < editableStartDateStr) {
+                        // UPDATED: Data is a direct value, not an object with Close
+                        const val = histObj[dStr];
                         if (val) {
                             mciData.push({
                                 ticker: '.MCI',
@@ -1271,61 +1430,130 @@
                                 originalDateStr: dStr,
                                 market: 'Equity Index'
                             });
+                            baseIndexValue = val; // Keep track of the last known locked value
+                            lastJsonDateStr = dStr;
                         }
                     }
                 });
             }
-            let currentValue = 100; 
-            if (historicalMciData && historicalMciData.MAG7_Index && historicalMciData.MAG7_Index.data) {
-                const histObj = historicalMciData.MAG7_Index.data;
-                if (histObj[settingsStartDateStr]) {
-                    currentValue = histObj[settingsStartDateStr].Close;
-                } else {
-                    const histDates = Object.keys(histObj).sort();
-                    let lastVal = 100;
-                    for (let d of histDates) {
-                        if (d <= settingsStartDateStr) lastVal = histObj[d].Close;
-                        else break;
-                    }
-                    currentValue = lastVal;
-                }
+
+            // 3. Prepare for Dynamic Calculation (Forward from editableStartDateStr)
+            const validMembers = Object.keys(editableWeights).filter(t => dataByTicker[t] && dataByTicker[t].length > 0);
+            if (validMembers.length === 0) {
+                // Save what we have and exit
+                dataByTicker['.MCI'] = mciData;
+                allData = allData.concat(mciData);
+                return;
             }
+
+            // Construct Price Map for constituents
+            const priceMap = {};
+            validMembers.forEach(t => {
+                dataByTicker[t].forEach(pt => {
+                    const dStr = formatDateYYYYMMDD(pt.date);
+                    if (!priceMap[dStr]) priceMap[dStr] = {};
+                    priceMap[dStr][t] = pt.price;
+                });
+            });
+
+            // Get all trading dates sorted
+            const allDates = Object.keys(priceMap).sort();
+            
+            // Find start index: First date >= editableStartDateStr
+            let startIndex = allDates.findIndex(d => d >= editableStartDateStr);
+            if (startIndex === -1) {
+                // If no future dates found, just save what we have
+                dataByTicker['.MCI'] = mciData;
+                allData = allData.concat(mciData);
+                return;
+            }
+
+            // Initialize previous prices for calculation based on the *last known date* before start
+            // If lastJsonDateStr exists in our priceMap, use prices from there. 
+            // Otherwise, search backwards from startIndex to find a valid trading day for base prices.
             let prevPrices = {};
-            const startDStr = allDates[startIndex];
-            validMembers.forEach(t => { if (priceMap[startDStr][t]) prevPrices[t] = priceMap[startDStr][t]; });
-            const existingPoint = mciData.find(d => d.originalDateStr === startDStr);
-            if (!existingPoint) {
-                 mciData.push({ ticker: '.MCI', date: new Date(startDStr), price: currentValue, volume: 0, originalDateStr: startDStr, market: 'Equity Index' });
+            let prevIndexValue = baseIndexValue;
+
+            let baseDateIndex = startIndex - 1;
+            // If we have a gap or need to find T-1
+            if (lastJsonDateStr && allDates.includes(lastJsonDateStr)) {
+                 baseDateIndex = allDates.indexOf(lastJsonDateStr);
             } else {
-                currentValue = existingPoint.price;
+                 // Fallback: look for any valid date before startIndex
+                 while (baseDateIndex >= 0) {
+                     let hasData = true;
+                     // Ideally check if major constituents have data
+                     if (hasData) break;
+                     baseDateIndex--;
+                 }
             }
-            for (let i = startIndex + 1; i < allDates.length; i++) {
+
+            if (baseDateIndex >= 0) {
+                const baseDateStr = allDates[baseDateIndex];
+                validMembers.forEach(t => {
+                    if (priceMap[baseDateStr][t]) prevPrices[t] = priceMap[baseDateStr][t];
+                });
+            } else {
+                // If we absolutely cannot find a T-1 price (rare), we can't calculate return for T.
+                // We'll skip the first date or assume flat. Let's just grab T prices as base and not calc return for T.
+                const firstDateStr = allDates[startIndex];
+                validMembers.forEach(t => {
+                    if (priceMap[firstDateStr][t]) prevPrices[t] = priceMap[firstDateStr][t];
+                });
+                // Since we can't calculate return for the very first day without history, 
+                // we push the base value for this date (no change) to start the chain.
+                mciData.push({ 
+                    ticker: '.MCI', 
+                    date: new Date(allDates[startIndex]), 
+                    price: prevIndexValue, 
+                    volume: 0, 
+                    originalDateStr: allDates[startIndex], 
+                    market: 'Equity Index' 
+                });
+                startIndex++; // Move to next day
+            }
+
+            // Total weight for normalization
+            let totalW = 0;
+            validMembers.forEach(t => totalW += (editableWeights[t] || 0));
+            if (totalW === 0) totalW = 1;
+
+            // 4. Dynamic Calculation Loop
+            for (let i = startIndex; i < allDates.length; i++) {
                 const dStr = allDates[i];
                 const date = new Date(dStr);
                 const currentPrices = priceMap[dStr];
-               let applicableWeights = mciWeightHistory[0]?.weights || {}; 
-                for (let k = mciWeightHistory.length - 1; k >= 0; k--) {
-                    if (mciWeightHistory[k].date <= dStr) {
-                        applicableWeights = mciWeightHistory[k].weights;
-                        break;
-                    }
-                }
-                let totalW = 0;
-                validMembers.forEach(t => totalW += (applicableWeights[t] || 0));
-                if (totalW === 0) totalW = 1;
+                
                 let compositeReturn = 0;
+                // Calculate weighted return: sum( weight * (price_t / price_{t-1} - 1) )
                 validMembers.forEach(t => {
-                    const w = (applicableWeights[t] || 0) / totalW;
+                    const w = (editableWeights[t] || 0) / totalW;
                     const currP = currentPrices[t];
                     const prevP = prevPrices[t];
-                    let dailyRet = 0;
-                    if (currP && prevP) dailyRet = (currP / prevP) - 1;
-                    compositeReturn += w * dailyRet;
+                    
+                    if (currP && prevP) {
+                        const dailyRet = (currP / prevP) - 1;
+                        compositeReturn += w * dailyRet;
+                    }
+                    // Update previous price for next iteration
                     if (currP) prevPrices[t] = currP;
                 });
-                currentValue = currentValue * (1 + compositeReturn);
-                mciData.push({ ticker: '.MCI', date: date, price: currentValue, volume: 0, originalDateStr: dStr, market: 'Equity Index' });
+
+                // Update Index Value
+                const newIndexValue = prevIndexValue * (1 + compositeReturn);
+                
+                mciData.push({ 
+                    ticker: '.MCI', 
+                    date: date, 
+                    price: newIndexValue, 
+                    volume: 0, 
+                    originalDateStr: dStr, 
+                    market: 'Equity Index' 
+                });
+                
+                prevIndexValue = newIndexValue;
             }
+
             dataByTicker['.MCI'] = mciData;
             allData = allData.concat(mciData);
         }
@@ -1682,7 +1910,8 @@
             const endDate = customPeriodState.end;
             
             let perfSummary = "Performance from " + formatDateYYYYMMDD(startDate) + " to " + formatDateYYYYMMDD(endDate) + ":\n";
-            const tickers = ['2330.TW', 'TSM', 'NVDA', 'INTC', 'AMD', '.TWII', '.SOX']; 
+            // Use currently selected tickers
+            const tickers = Array.from(selectedCustomTickers); 
             
             tickers.forEach(t => {
                 if (!dataByTicker[t]) return;
@@ -1780,7 +2009,8 @@
         // 2.6 Analyze Performance Report
         function analyzePerformanceReport() {
             // This reads the table rendered in #stats-table-grid or computes it
-            const tickers = ['2330.TW', 'TSM', 'INTC', '005930.KS', '.TWII', '.SOX', 'NVDA', 'AMD'];
+            // Use currently selected tickers
+            const tickers = Array.from(selectedPerfTickers);
             const periods = ['1-Week', '1-Month', 'YTD', '1-Year'];
             
             let tableData = "Ticker | 1W | 1M | YTD | 1Y\n---|---|---|---|---\n";
@@ -1841,7 +2071,8 @@
         }
         
         function renderPerformanceGrid() {
-            const tickers = ['2330.TW', 'TSM', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', '.TWII', '.SOX'];
+            // Use selected tickers
+            const tickers = Array.from(selectedPerfTickers);
             const validTickers = tickers.filter(t => dataByTicker[t]);
             const periods = ['1-Year', 'YTD', '1-Month', '1-Week'];
             const canvasIds = ['canvas-1y', 'canvas-ytd', 'canvas-1m', 'canvas-1w'];
@@ -1977,7 +2208,8 @@
                  activeCharts[canvasId] = null;
             }
 
-            const tickers = ['2330.TW', 'TSM', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', '.TWII', '.SOX', 'MSFT', 'NVDA'];
+            // Use selected tickers
+            const tickers = Array.from(selectedCustomTickers);
             const validTickers = tickers.filter(t => dataByTicker[t]);
 
             const datasets = validTickers.map(t => {
@@ -2081,15 +2313,18 @@
             const tsmc = dataByTicker['2330.TW']; const mci = dataByTicker['.MCI'];
             if (!tsmc || !mci) return;
             
-            const startDateStr = mciWeightHistory.length > 0 ? mciWeightHistory[0].date : '2020-01-01';
-            const startDate = new Date(startDateStr);
+            // Fixed start date for comparison as requested
+            const startDate = new Date('2020-01-01');
             
             const filter = (arr) => arr.filter(pt => pt.date >= startDate && pt.date <= summaryReferenceDate);
-            const tData = filter(tsmc); const mData = filter(mci);
+            const tData = filter(tsmc); 
+            const mData = filter(mci);
+            
+            // Normalize so both start at 100 on the first available day of this period
             const normalize = (arr) => {
-                if(arr.length===0) return [];
+                if(arr.length === 0) return [];
                 const base = arr[0].price; 
-                return arr.map(pt => ({ x: pt.date, y: (pt.price/base) * 100 }));
+                return arr.map(pt => ({ x: pt.date, y: (pt.price / base) * 100 }));
             };
 
             const datasets = [
