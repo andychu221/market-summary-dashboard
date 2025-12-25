@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -438,6 +439,78 @@
         }
         .multi-select-item:hover { color: var(--primary-color); }
 
+        /* MARKET CAP TAB STYLES */
+        .mc-container {
+            background-color: white;
+            padding: 10px;
+            overflow-x: auto;
+            overflow-y: auto;
+            height: 80vh;
+            border: none; /* No outer border */
+            border-radius: 8px;
+            position: relative;
+        }
+        .mc-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;
+        }
+        .mc-wrapper {
+            transform-origin: top left;
+            transition: transform 0.2s;
+            width: fit-content;
+            min-width: 100%;
+        }
+        .mc-grid-top {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* Forced 3 columns as requested */
+            gap: 30px; /* Increased gap */
+            margin-bottom: 20px;
+        }
+        .mc-block {
+            border: none; /* No block border */
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .mc-block-title {
+            font-weight: bold; font-size: 1.1rem; margin-bottom: 8px; 
+            border-bottom: 2px solid black; /* Black line */
+            padding-bottom: 4px;
+            text-align: center; /* Centered Title */
+            color: black;
+        }
+        .mc-table {
+            width: 100%; border-collapse: collapse; font-size: 0.65rem; table-layout: auto;
+        }
+        .mc-table th, .mc-table td {
+            border: none; /* No grid lines */
+            padding: 1px 2px; text-align: right; white-space: nowrap; line-height: 1;
+        }
+        .mc-table th {
+            background-color: white; 
+            text-align: center; font-weight: 600;
+            border-bottom: 1px solid black; /* Axis line */
+            color: black;
+            /* Resizable headers */
+            resize: horizontal;
+            overflow: auto;
+            min-width: 50px;
+        }
+        .mc-table td:first-child {
+            text-align: left; font-weight: 600; background-color: white;
+        }
+
+        @media print {
+            @page { size: landscape; margin: 5mm; }
+            body * { visibility: hidden; }
+            #market-cap, #market-cap * { visibility: visible; }
+            #market-cap { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; display: block !important; }
+            .header-bar, .tabs, .mc-header { display: none !important; }
+            .mc-container { border: none; height: auto; overflow: visible; }
+            .mc-grid-top { display: flex; justify-content: space-between; gap: 20px; }
+            .mc-block { flex: 1; border: none; page-break-inside: avoid; }
+            .mc-table { font-size: 6pt; }
+            .mc-table th { resize: none; overflow: visible; }
+        }
+
     </style>
 </head>
 <body>
@@ -455,6 +528,7 @@
                     <div class="tab-link active" onclick="openTab(event, 'summary')"><i class="material-icons">dashboard</i> Summary</div>
                     <div class="tab-link" onclick="openTab(event, 'chart-main')"><i class="material-icons">show_chart</i> Chart</div>
                     <div class="tab-link" onclick="openTab(event, 'news')"><i class="material-icons">article</i> News</div>
+                    <div class="tab-link" onclick="openTab(event, 'market-cap')"><i class="material-icons">pie_chart</i> Market Cap</div>
                     <div class="tab-link" onclick="openTab(event, 'data')"><i class="material-icons">table_view</i> Data</div>
                     <div class="tab-link" onclick="openTab(event, 'mci-settings')"><i class="material-icons">settings</i> MCI Config</div>
                     
@@ -625,6 +699,34 @@
                         <div style="text-align:center; color:#999; margin-top:50px;">
                             Select news items (Ctrl+Click to multi-select) then click the AI icon to analyze.
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MARKET CAP TAB -->
+            <div id="market-cap" class="tab-content">
+                <div class="mc-header">
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <label>As of:</label>
+                        <input type="date" id="mc-as-of-date" class="controls-input" onchange="renderMarketCapTab()">
+                        <span style="font-weight:bold; color:var(--text-secondary);">Unit: US$B</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="icon-btn" onclick="zoomMarketCap(-0.1)" title="Zoom Out"><i class="material-icons">remove</i></button>
+                        <button class="icon-btn" onclick="zoomMarketCap(0.1)" title="Zoom In"><i class="material-icons">add</i></button>
+                        <button class="controls-input" onclick="window.print()" title="Print to PDF/Paper">
+                            <i class="material-icons">print</i> Print / PDF
+                        </button>
+                    </div>
+                </div>
+                <div class="mc-container">
+                    <div class="mc-wrapper" id="mc-wrapper">
+                        <div class="mc-grid-top">
+                            <div class="mc-block" id="mc-group-1"></div>
+                            <div class="mc-block" id="mc-group-2"></div>
+                            <div class="mc-block" id="mc-group-3"></div>
+                        </div>
+                        <div class="mc-block" id="mc-group-4"></div>
                     </div>
                 </div>
             </div>
@@ -824,6 +926,14 @@
             'tw-stocks': ['2330.TW', 'TSM'], 
             'us-stocks': ['NVDA', 'AAPL', 'AVGO', 'QCOM', 'AMD', 'ADI', '2454.TW', '6723.T', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA']
         };
+        
+        // Market Cap Tab Configuration
+        const marketCapGroups = {
+            1: { title: 'Group 1', tickers: ['2330.TW', '005930.KS', 'INTC'] },
+            2: { title: 'Group 2', tickers: ['2330.TW', '2454.TW', '2303.TW'] },
+            3: { title: 'Group 3', tickers: ['6723.T', '688981.SS', 'ADI', 'GFS'] },
+            4: { title: 'Group 4', tickers: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'AVGO', 'QCOM', 'AMD'] }
+        };
 
         let mciMembers = ['NVDA', 'GOOGL', 'AAPL', 'MSFT', 'AMZN', 'META', 'TSLA'];
         let defaultWeights = { 'NVDA': 30, 'GOOGL': 20, 'AAPL': 10, 'MSFT': 10, 'AMZN': 10, 'META': 10, 'TSLA': 10 };
@@ -896,6 +1006,9 @@
         let pivotedDataHeaders = [];
         let isDataPivoted = false;
         let jspreadsheetInstance = null;
+        
+        // Market Cap Zoom
+        let mcZoomLevel = 1.0;
         
         document.addEventListener('DOMContentLoaded', () => {
             // Theme init removed
@@ -1055,6 +1168,7 @@
                 latestDataDate = new Date(maxDate);
                 summaryReferenceDate = latestDataDate;
                 document.getElementById('summary-as-of-date').value = formatDateYYYYMMDD(latestDataDate);
+                document.getElementById('mc-as-of-date').value = formatDateYYYYMMDD(latestDataDate); // Init Market Cap date
                 
                 // Set default Custom Period
                 if (dataByTicker['2330.TW'] && dataByTicker['2330.TW'].length > 0) {
@@ -1067,6 +1181,7 @@
                 processPerformanceData();
                 renderSummaryTab();
                 renderChartTab();
+                renderMarketCapTab(); // Init Market Cap
                 
                 status.innerText = "Processing Raw Data...";
                 pivotDataForDownload();
@@ -2763,6 +2878,119 @@
         }
         
         function updateSinceDate(val) { renderSummaryTab(); }
+        
+        // --- Market Cap Tab Functions ---
+        
+        function zoomMarketCap(delta) {
+            mcZoomLevel += delta;
+            if (mcZoomLevel < 0.5) mcZoomLevel = 0.5;
+            if (mcZoomLevel > 1.5) mcZoomLevel = 1.5;
+            document.getElementById('mc-wrapper').style.transform = `scale(${mcZoomLevel})`;
+        }
+        
+        function renderMarketCapTab() {
+            const dateInput = document.getElementById('mc-as-of-date').value;
+            const anchorDate = dateInput ? new Date(dateInput) : summaryReferenceDate;
+            const dates = generateMarketCapDates(anchorDate);
+            
+            Object.keys(marketCapGroups).forEach(groupId => {
+                const group = marketCapGroups[groupId];
+                const container = document.getElementById(`mc-group-${groupId}`);
+                let html = `<div class="mc-block-title">${group.title}</div>`;
+                html += '<table class="mc-table"><thead><tr>';
+                
+                // Header Row: [Empty] | Ticker 1 | Ticker 2 | ...
+                html += '<th style="width:120px;">Unit: US$B</th>';
+                group.tickers.forEach(t => {
+                    html += `<th>${TICKER_NAMES[t] || t}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                
+                // Row 1: As of Date (Current)
+                html += `<tr><td>${formatDateSlash(dates[0].date)}</td>`;
+                group.tickers.forEach(t => {
+                    const val = getHistoricalMarketCap(t, dates[0].date);
+                    let displayVal = '-';
+                    if (val !== null) displayVal = val.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                    html += `<td>${displayVal}</td>`;
+                });
+                html += '</tr>';
+
+                // Row 2: Change (Current - Prev Week)
+                html += `<tr><td>WoW</td>`;
+                group.tickers.forEach(t => {
+                    const val1 = getHistoricalMarketCap(t, dates[0].date);
+                    const val2 = getHistoricalMarketCap(t, dates[1].date);
+                    let changeStr = '-';
+                    if (val1 !== null && val2 !== null) {
+                        const diff = val1 - val2;
+                        const color = diff >= 0 ? 'text-positive' : 'text-negative';
+                        changeStr = `<span class="${color}">${diff > 0 ? '+' : ''}${diff.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</span>`;
+                    }
+                    html += `<td>${changeStr}</td>`;
+                });
+                html += '</tr>';
+                
+                // Remaining Rows: Prev Week, YTD, Prev Years...
+                // Dates array index 1 is Prev Week End
+                for (let i = 1; i < dates.length; i++) {
+                    const dObj = dates[i];
+                    html += `<tr><td>${formatDateSlash(dObj.date)}</td>`;
+                    group.tickers.forEach(t => {
+                         const val = getHistoricalMarketCap(t, dObj.date);
+                         let displayVal = '-';
+                         if (val !== null) displayVal = val.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                         html += `<td>${displayVal}</td>`;
+                    });
+                    html += '</tr>';
+                }
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            });
+        }
+        
+        function generateMarketCapDates(anchorDate) {
+            const dates = [];
+            
+            // 1. As of Date (User selected or Latest)
+            const d1 = new Date(anchorDate);
+            dates.push({ label: 'Current', date: new Date(d1) });
+            
+            // 2. Previous Week End (Approx -7 days)
+            const d2 = new Date(d1);
+            d2.setDate(d2.getDate() - 7);
+            dates.push({ label: 'WoW', date: d2 });
+            
+            // 3. Start of Current Year
+            const currentYear = d1.getFullYear();
+            const d3 = new Date(currentYear, 0, 1);
+            dates.push({ label: 'YTD', date: d3 });
+            
+            // 4. Start of Previous Years back to 2011
+            for (let y = currentYear - 1; y >= 2011; y--) {
+                dates.push({ label: `1/1/${y}`, date: new Date(y, 0, 1) });
+            }
+            
+            return dates;
+        }
+        
+        function getHistoricalMarketCap(ticker, targetDate) {
+            // Find price closest to targetDate (on or before)
+            const perf = allPerformanceData.get(ticker);
+            if (!perf) return null;
+            
+            const price = perf.findPriceOnOrBefore(targetDate);
+            if (!price) return null;
+            
+            const pt = perf.findActualDataPoint(targetDate);
+            const actualDate = pt ? pt.date : targetDate;
+            
+            const val = calculateMarketCapNumeric(ticker, price, actualDate);
+            if (val === -1 || val === null) return null;
+            
+            return val / 1e9; // Return in Billions
+        }
 
         // --- Data Tab Functions ---
         function pivotDataForDownload() {
@@ -2897,6 +3125,7 @@
             document.getElementById(tabName).classList.add("active"); 
             if (evt) evt.currentTarget.classList.add("active"); 
             if (tabName === 'data' && isDataPivoted && !jspreadsheetInstance) renderDataTab();
+            if (tabName === 'market-cap') renderMarketCapTab();
         }
         
         function initNewsResizer() {
