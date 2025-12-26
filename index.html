@@ -1310,12 +1310,14 @@
             const priceTw = getPrice(tsmcTwTicker, date);
             const priceAdr = getPrice(tsmcAdrTicker, date);
             const sharesTw = tickerMetadata[tsmcTwTicker]?.shares;
-            const sharesAdr = tickerMetadata[tsmcAdrTicker]?.shares;
+            //const sharesAdr = tickerMetadata[tsmcAdrTicker]?.shares;
             const twdRate = getFxRate('TWD', date);
 
-            if (priceTw && priceAdr && sharesTw && sharesAdr && twdRate) {
-                const term1 = (priceTw / twdRate) * (sharesTw - sharesAdr / 5);
-                const term2 = priceAdr * (sharesAdr / 5);
+            if (priceTw && priceAdr && sharesTw && twdRate) {
+                const adrCommonShares = sharesTw / 5;
+                const localCommonShares = sharesTw - adrCommonShares;
+                const term1 = (priceTw / twdRate) * localCommonShares;
+                const term2 = priceAdr * (adrCommonShares / 5);
                 return term1 + term2;
             }
             return null;
