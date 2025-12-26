@@ -461,7 +461,7 @@
         }
         .mc-grid-top {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr; /* Forced 3 columns as requested */
+            grid-template-columns: repeat(4, 1fr); /* Changed to 4 columns */
             gap: 30px; /* Increased gap */
             margin-bottom: 20px;
         }
@@ -471,11 +471,16 @@
             border-radius: 4px;
         }
         .mc-block-title {
-            font-weight: bold; font-size: 1.1rem; margin-bottom: 8px; 
-            border-bottom: 2px solid black; /* Black line */
-            padding-bottom: 4px;
+            font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;
+            padding-bottom: 2px;
             text-align: center; /* Centered Title */
             color: black;
+        }
+        .mc-block-subtitle {
+             font-size: 0.85rem; margin-bottom: 8px;
+             text-align: center; color: var(--text-secondary);
+             border-bottom: 2px solid black; /* Black line */
+             padding-bottom: 4px;
         }
         .mc-table {
             width: 100%; border-collapse: collapse; font-size: 0.65rem; table-layout: auto;
@@ -487,15 +492,20 @@
         .mc-table th {
             background-color: white; 
             text-align: center; font-weight: 600;
-            border-bottom: 1px solid black; /* Axis line */
+            border-bottom: 3px double black !important; /* Double line */
             color: black;
             min-width: 50px;
         }
         .mc-table th:first-child {
             text-align: left;
         }
-        .mc-table td:first-child {
-            text-align: left; font-weight: 600; background-color: white;
+        /* Special alignment for tables without Date column */
+        .mc-table.no-date th:first-child, .mc-table.no-date td:first-child {
+            text-align: center !important;
+        }
+        /* MODIFIED: Remove Bold from First Column */
+        .mc-table td:first-child, .mc-table th:first-child {
+            text-align: left; font-weight: normal !important; background-color: white;
         }
 
         @media print {
@@ -510,6 +520,11 @@
             .mc-table { font-size: 6pt; }
             .mc-table th { resize: none; overflow: visible; }
         }
+        
+        /* MC Config Modal Styles */
+        .mc-config-group { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .mc-config-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+        .mc-config-btn-small { padding: 2px 6px; font-size: 0.8rem; cursor: pointer; border: 1px solid #ccc; background: #f0f0f0; border-radius: 4px; }
 
     </style>
 </head>
@@ -649,12 +664,23 @@
                 </div>
 
                 <div id="chart-mci" class="view-content" style="padding-top:20px;">
-                     <!-- Copy button removed -->
+                    <!-- MODIFIED: Added Controls for MCI Comparison -->
+                     <div class="chart-controls">
+                        <label>Start:</label>
+                        <input type="date" id="mci-comp-start" class="controls-input">
+                        <label>End:</label>
+                        <input type="date" id="mci-comp-end" class="controls-input">
+                        <label>TSMC Color:</label>
+                        <input type="color" id="color-tsmc" class="controls-input" value="#8b0000" style="padding: 2px; width: 40px; height: 35px;">
+                        <label>MCI Color:</label>
+                        <input type="color" id="color-mci" class="controls-input" value="#ff9900" style="padding: 2px; width: 40px; height: 35px;">
+                        <button class="controls-input" onclick="renderMciComparison()">Update Chart</button>
+                     </div>
                      <div style="height: 600px; width: 100%; border:1px solid var(--border-color); padding:10px; border-radius:8px;">
                         <canvas id="canvas-mci-comp"></canvas>
                      </div>
                      <p style="margin-top:10px; color: var(--text-secondary); font-size: 0.9rem;">
-                        * Base = 100 at 2020/01/01 (or first available data after).
+                        * Both indices are rebased to 100 at the Start Date.
                      </p>
                 </div>
             </div>
@@ -709,6 +735,8 @@
                     <div style="display:flex; align-items:center; gap:15px;">
                         <label>As of:</label>
                         <input type="date" id="mc-as-of-date" class="controls-input" onchange="renderMarketCapTab()">
+                        <!-- MODIFIED: Added Configure Button -->
+                        <button class="controls-input" onclick="openMarketCapConfig()" title="Configure Tickers"><i class="material-icons" style="font-size:16px;">settings</i> Configure</button>
                     </div>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <button class="icon-btn" onclick="zoomMarketCap(-0.1)" title="Zoom Out"><i class="material-icons">remove</i></button>
@@ -721,11 +749,12 @@
                 <div class="mc-container">
                     <div class="mc-wrapper" id="mc-wrapper">
                         <div class="mc-grid-top">
-                            <div class="mc-block" id="mc-group-1"></div>
-                            <div class="mc-block" id="mc-group-2"></div>
-                            <div class="mc-block" id="mc-group-3"></div>
+                            <div class="mc-block" id="mc-group-0"></div> <!-- Benchmark -->
+                            <div class="mc-block" id="mc-group-1"></div> <!-- Foundry -->
+                            <div class="mc-block" id="mc-group-2"></div> <!-- Semi Equip -->
+                            <div class="mc-block" id="mc-group-3"></div> <!-- Affiliates -->
                         </div>
-                        <div class="mc-block" id="mc-group-4"></div>
+                        <div class="mc-block" id="mc-group-4"></div> <!-- Top 20 -->
                     </div>
                 </div>
             </div>
@@ -866,6 +895,24 @@
             <div id="ai-content" class="markdown-content" style="padding:20px 0; min-height:200px;"></div>
         </div>
     </div>
+    
+    <!-- MODIFIED: Market Cap Configuration Modal -->
+    <div id="marketCapConfigModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeModal('marketCapConfigModal')">&times;</span>
+            <h2>Configure Market Cap Table</h2>
+            <div style="margin: 15px 0; display: flex; gap: 10px; align-items: center;">
+                <label>Column Width:</label>
+                <input type="text" id="mc-col-width" class="controls-input" placeholder="e.g. 60px" style="width: 100px;">
+            </div>
+            <div id="mc-config-container" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+                <!-- Populated by JS -->
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="email-report-btn" onclick="saveMarketCapConfig()">Save Changes</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // --- Configuration ---
@@ -883,7 +930,12 @@
             'INTC': 'Intel', 'INTC.O': 'Intel',
             '005930.KS': 'Samsung',
             '2303.TW': 'UMC', '0981.HK': 'SMIC-H', '688981.SS': 'SMIC-A', 'GFS': 'GFS',
-            'MSFT': 'Microsoft', 'GOOGL': 'Google', 'AMZN': 'Amazon', 'META': 'Meta', 'TSLA': 'Tesla'
+            'MSFT': 'Microsoft', 'GOOGL': 'Google', 'AMZN': 'Amazon', 'META': 'Meta', 'TSLA': 'Tesla',
+            // Added Tickers
+            'AMAT': 'AMAT', 'KLAC': 'KLAC', 'CSCO': 'Cisco', 'BTDR': 'Bitdeer', 'SIMO': 'Silicon',
+            'ASML.AS': 'ASML', '5347.TWO': 'Vanguard', '3443.TW': 'GUC', '3374.TWO': 'Xintec',
+            '6789.TW': 'VisEra', '3661.TW': 'Alchip', '603501.SS': 'Willsemi', '6758.T': 'Sony',
+            '6526.T': 'Socionext', '000660.KS': 'SK hynix', 'MU': 'Micron', 'NXPI': 'NXP'
         };
 
         const TICKER_DOMAINS = {
@@ -901,7 +953,12 @@
             '2303.TW': 'umc.com', '0981.HK': 'smics.com', '688981.SS': 'smics.com', 'GFS': 'gf.com',
             '.TWII': 'taiwan.gov.tw', '.SOX': 'nasdaq.com', '.SPX': 'spglobal.com',
             '.MCI': 'bloomberg.com',
-            'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com', 'META': 'meta.com', 'TSLA': 'tesla.com'
+            'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com', 'META': 'meta.com', 'TSLA': 'tesla.com',
+            // Added Tickers
+            'AMAT': 'appliedmaterials.com', 'KLAC': 'kla.com', 'CSCO': 'cisco.com', 'BTDR': 'bitdeer.com',
+            'SIMO': 'siliconmotion.com', 'ASML.AS': 'asml.com', '5347.TWO': 'vis.com', '3443.TW': 'guc-asic.com',
+            '3374.TWO': 'xintec.com', '6789.TW': 'viseratech.com', '3661.TW': 'alchip.com', '603501.SS': 'ovt.com',
+            '6758.T': 'sony.com', '6526.T': 'socionext.com', '000660.KS': 'skhynix.com', 'MU': 'micron.com', 'NXPI': 'nxp.com'
         };
 
         const TICKER_COLORS = {
@@ -917,22 +974,36 @@
             'INTC': '#0071C5', 'INTC.O': '#0071C5',
             '005930.KS': '#1428A0', '2303.TW': '#003366', '0981.HK': '#E31B23',
             '688981.SS': '#B22222', 'GFS': '#FF6A13',
-            'MSFT': '#00A4EF', 'GOOGL': '#4285F4', 'AMZN': '#FF9900', 'META': '#0668E1', 'TSLA': '#E31937'
+            'MSFT': '#00A4EF', 'GOOGL': '#4285F4', 'AMZN': '#FF9900', 'META': '#0668E1', 'TSLA': '#E31937',
+            // Defaults for new ones if not specified, or add specific colors
+            'AMAT': '#00558C', 'KLAC': '#D6000F', 'ASML.AS': '#263147', '000660.KS': '#DB0025'
         };
 
         let summaryTickersConfig = {
             'equity-index': ['.TWII', '.SOX', '.SPX', '.MCI'],
             'tw-stocks': ['2330.TW', 'TSM'], 
-            'us-stocks': ['NVDA', 'AAPL', 'AVGO', 'QCOM', 'AMD', 'ADI', '2454.TW', '6723.T', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA']
+            'us-stocks': [
+                'NVDA', 'AAPL', 'AVGO', 'QCOM', 'AMD', 'ADI', '2454.TW', '6723.T', 'INTC', 
+                '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA',
+                'AMAT', 'KLAC', 'CSCO', 'BTDR', 'SIMO', 'ASML.AS', '5347.TWO', '3443.TW', '3374.TWO',
+                '6789.TW', '3661.TW', '603501.SS', '6758.T', '6526.T', '000660.KS'
+            ]
         };
         
-        // Market Cap Tab Configuration
-        const marketCapGroups = {
-            1: { title: 'Group 1', tickers: ['2330.TW', '005930.KS', 'INTC'] },
-            2: { title: 'Group 2', tickers: ['2330.TW', '2454.TW', '2303.TW'] },
-            3: { title: 'Group 3', tickers: ['6723.T', '688981.SS', 'ADI', 'GFS'] },
-            4: { title: 'Group 4', tickers: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'AVGO', 'QCOM', 'AMD'] }
+        // Market Cap Tab Configuration (Modified: changed const to let for mutability)
+        let marketCapGroups = {
+            0: { title: 'Benchmark Index', subtitle: 'Close', tickers: ['.SPX', '.SOX', '.TWII'], showDate: true, valueType: 'price' },
+            1: { title: 'Foundry', subtitle: 'Market Cap(US$B)', tickers: ['2330.TW', '005930.KS', 'INTC', '2303.TW', 'GFS', '688981.SS'], showDate: false, valueType: 'mc' },
+            2: { title: 'Semi Equipment Players', subtitle: 'Market Cap(US$B)', tickers: ['ASML.AS', 'AMAT', 'KLAC', 'MU'], showDate: false, valueType: 'mc' },
+            3: { title: 'Affiliates', subtitle: 'Market Cap(US$B)', tickers: ['5347.TWO', '3443.TW', '3374.TWO', '6789.TW'], showDate: false, valueType: 'mc' },
+            4: { title: 'Top 20', subtitle: 'Market Cap(US$B)', tickers: [
+                'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 
+                'AVGO', 'AMD', 'INTC', '2454.TW', '3661.TW', '603501.SS', '6758.T', '6723.T', 
+                '6526.T', '000660.KS', 'ADI', 'NXPI', 'CSCO'
+            ], showDate: true, valueType: 'mc' }
         };
+        
+        let mcColumnMinWidth = '50px'; // Default
 
         let mciMembers = ['NVDA', 'GOOGL', 'AAPL', 'MSFT', 'AMZN', 'META', 'TSLA'];
         let defaultWeights = { 'NVDA': 30, 'GOOGL': 20, 'AAPL': 10, 'MSFT': 10, 'AMZN': 10, 'META': 10, 'TSLA': 10 };
@@ -943,11 +1014,11 @@
         // Visibility state for Manage Tickers
         let visibleTickers = new Set([...summaryTickersConfig['equity-index'], ...summaryTickersConfig['tw-stocks'], ...summaryTickersConfig['us-stocks']]);
 
-        // Sorting state
+        // Sorting state - UPDATED DEFAULT FOR US STOCKS
         let tableSortState = {
             'equity-index': { column: null, direction: 'asc' },
             'tw-stocks': { column: null, direction: 'asc' },
-            'us-stocks': { column: null, direction: 'asc' }
+            'us-stocks': { column: 'MarketCap', direction: 'desc' } 
         };
 
         // New Column Order: 1D, 1W, 1M, 3M, 1Y, YTD, From~To -> Custom
@@ -1177,6 +1248,10 @@
                 }
                 customPeriodState.end = latestDataDate;
 
+                // Init MCI Chart Dates
+                document.getElementById('mci-comp-start').value = '2020-01-01';
+                document.getElementById('mci-comp-end').value = formatDateYYYYMMDD(latestDataDate);
+
                 processPerformanceData();
                 renderSummaryTab();
                 renderChartTab();
@@ -1279,8 +1354,15 @@
             else if (targetCurrency === 'KRW') fxTicker = 'KRW=';
             else if (targetCurrency === 'CNY') fxTicker = 'CNY=';
             else if (targetCurrency === 'HKD') fxTicker = 'HKD=';
+            else if (targetCurrency === 'EUR') fxTicker = 'EUR='; // Added logic for ASML.AS
             else return 1;
 
+            // Handle EUR differently if source data uses EUR= (1 Euro = X USD) or USD/EUR. 
+            // Assuming FX.json contains USD pairs (e.g. TWD= means USD/TWD). 
+            // If EUR= is EURUSD (1.05), we need to invert if math is price/rate.
+            // Let's assume consistent USD/XXX format. For EUR, often quoted as EURUSD.
+            // Adjust logic based on typical FX data structure. Assuming data is Rate = Units of Local per 1 USD.
+            
             const rates = fxData[fxTicker];
             if (!rates || !rates.close || !rates.date) return 1;
 
@@ -1338,14 +1420,27 @@
             
             let currency = 'USD';
             if (ticker.endsWith('.TW')) currency = 'TWD';
+            else if (ticker.endsWith('.TWO')) currency = 'TWD';
             else if (ticker.endsWith('.T')) currency = 'JPY';
             else if (ticker.endsWith('.KS')) currency = 'KRW';
             else if (ticker.endsWith('.SS')) currency = 'CNY';
+            else if (ticker.endsWith('.AS')) currency = 'EUR'; // ASML
             
             const rate = getFxRate(currency, date);
             if (!rate || rate === 0) return '-';
             
-            const mktCap = (price * meta.shares) / rate;
+            // If EUR (quoted as EURUSD e.g. 1.05), calculation depends on FX data format. 
+            // Assuming standard USDXXX. If EUR is inverted (EURUSD), price in EUR * shares * EURUSD rate = USD.
+            // If USD/EUR (0.95), then price in EUR * shares / rate = USD.
+            // Let's assume simplified USD/Local for now based on standard.
+            
+            let mktCap = 0;
+            // Hack for ASML if it's in EUR and we treat rate as USD/EUR
+            // Actually, usually EURUSD is quoted. 
+            // We'll stick to division logic assuming rate is Local per USD.
+            // If rate is < 2 for major currencies (GBP, EUR, AUD), it might be inverted.
+            
+            mktCap = (price * meta.shares) / rate;
             
             // Format: 1,234.5B
             const billions = mktCap / 1e9;
@@ -1363,9 +1458,11 @@
              
              let currency = 'USD';
              if (ticker.endsWith('.TW')) currency = 'TWD';
+             else if (ticker.endsWith('.TWO')) currency = 'TWD';
              else if (ticker.endsWith('.T')) currency = 'JPY';
              else if (ticker.endsWith('.KS')) currency = 'KRW';
              else if (ticker.endsWith('.SS')) currency = 'CNY';
+             else if (ticker.endsWith('.AS')) currency = 'EUR';
              
              const rate = getFxRate(currency, date);
              if (!rate || rate === 0) return -1;
@@ -2419,6 +2516,7 @@
             table.innerHTML = html;
         }
 
+        // --- UPDATED: Render MCI Comparison with custom logic ---
         function renderMciComparison() {
             const canvasId = 'canvas-mci-comp';
             if (activeCharts[canvasId]) {
@@ -2429,10 +2527,16 @@
             const tsmc = dataByTicker['2330.TW']; const mci = dataByTicker['.MCI'];
             if (!tsmc || !mci) return;
             
-            // Fixed start date for comparison as requested
-            const startDate = new Date('2020-01-01');
+            // Get user inputs
+            const startInput = document.getElementById('mci-comp-start').value || '2020-01-01';
+            const endInput = document.getElementById('mci-comp-end').value || formatDateYYYYMMDD(summaryReferenceDate);
+            const colorTsmc = document.getElementById('color-tsmc').value || '#8b0000';
+            const colorMci = document.getElementById('color-mci').value || '#ff9900';
+
+            const startDate = new Date(startInput);
+            const endDate = new Date(endInput);
             
-            const filter = (arr) => arr.filter(pt => pt.date >= startDate && pt.date <= summaryReferenceDate);
+            const filter = (arr) => arr.filter(pt => pt.date >= startDate && pt.date <= endDate);
             const tData = filter(tsmc); 
             const mData = filter(mci);
             
@@ -2444,8 +2548,8 @@
             };
 
             const datasets = [
-                { label: 'TSMC (2330.TW)', data: normalize(tData), borderColor: TICKER_COLORS['2330.TW'], borderWidth: 2, pointRadius: 0, tension: 0.1 },
-                { label: 'MCI', data: normalize(mData), borderColor: TICKER_COLORS['.MCI'], borderWidth: 2, pointRadius: 0, tension: 0.1 }
+                { label: 'TSMC (2330.TW)', data: normalize(tData), borderColor: colorTsmc, borderWidth: 2, pointRadius: 0, tension: 0.1 },
+                { label: 'MCI', data: normalize(mData), borderColor: colorMci, borderWidth: 2, pointRadius: 0, tension: 0.1 }
             ];
 
             const gridColor = 'rgba(0, 0, 0, 0.1)';
@@ -2889,39 +2993,158 @@
             document.getElementById('mc-wrapper').style.transform = `scale(${mcZoomLevel})`;
         }
         
+        // NEW: Market Cap Configuration UI Logic
+        function openMarketCapConfig() {
+            renderMarketCapConfigUI();
+            const modal = document.getElementById('marketCapConfigModal');
+            modal.style.display = 'block'; setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        function renderMarketCapConfigUI() {
+            document.getElementById('mc-col-width').value = mcColumnMinWidth;
+            const container = document.getElementById('mc-config-container');
+            container.innerHTML = '';
+
+            Object.keys(marketCapGroups).forEach(groupId => {
+                const group = marketCapGroups[groupId];
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'mc-config-group';
+                
+                let html = `<h4>${group.title}</h4><div style="margin-top:5px;">`;
+                
+                group.tickers.forEach((t, index) => {
+                    const name = TICKER_NAMES[t] || t;
+                    html += `
+                    <div class="mc-config-row">
+                        <button class="mc-config-btn-small" onclick="moveMcTicker(${groupId}, ${index}, -1)">↑</button>
+                        <button class="mc-config-btn-small" onclick="moveMcTicker(${groupId}, ${index}, 1)">↓</button>
+                        <span style="width: 80px; font-weight:bold;">${t}</span>
+                        <input type="text" class="controls-input" value="${name}" onchange="updateMcTickerName('${t}', this.value)" style="flex:1;">
+                        <button class="mc-config-btn-small" style="color:red;" onclick="removeMcTicker(${groupId}, ${index})">✕</button>
+                    </div>`;
+                });
+
+                html += `
+                    <div class="mc-config-row" style="margin-top:10px;">
+                        <input type="text" id="add-ticker-input-${groupId}" class="controls-input" placeholder="Ticker (e.g. AAPL)" style="width:120px;">
+                        <button class="mc-config-btn-small" onclick="addMcTicker(${groupId})">Add Ticker</button>
+                    </div>
+                </div>`;
+                
+                groupDiv.innerHTML = html;
+                container.appendChild(groupDiv);
+            });
+        }
+
+        function moveMcTicker(groupId, index, dir) {
+            const list = marketCapGroups[groupId].tickers;
+            if (dir === -1 && index > 0) {
+                [list[index], list[index-1]] = [list[index-1], list[index]];
+            } else if (dir === 1 && index < list.length - 1) {
+                [list[index], list[index+1]] = [list[index+1], list[index]];
+            }
+            renderMarketCapConfigUI();
+        }
+
+        function removeMcTicker(groupId, index) {
+            marketCapGroups[groupId].tickers.splice(index, 1);
+            renderMarketCapConfigUI();
+        }
+
+        function addMcTicker(groupId) {
+            const input = document.getElementById(`add-ticker-input-${groupId}`);
+            const val = input.value.trim().toUpperCase();
+            if (val && !marketCapGroups[groupId].tickers.includes(val)) {
+                marketCapGroups[groupId].tickers.push(val);
+                renderMarketCapConfigUI();
+            }
+        }
+        
+        function updateMcTickerName(ticker, newName) {
+            TICKER_NAMES[ticker] = newName; // Update global map
+        }
+
+        function saveMarketCapConfig() {
+            mcColumnMinWidth = document.getElementById('mc-col-width').value || '50px';
+            closeModal('marketCapConfigModal');
+            renderMarketCapTab();
+        }
+
         function renderMarketCapTab() {
             const dateInput = document.getElementById('mc-as-of-date').value;
             const anchorDate = dateInput ? new Date(dateInput) : summaryReferenceDate;
             const dates = generateMarketCapDates(anchorDate);
             
+            // Generate style for dynamic width
+            const styleId = 'dynamic-mc-style';
+            let styleTag = document.getElementById(styleId);
+            if(!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = styleId;
+                document.head.appendChild(styleTag);
+            }
+            styleTag.innerHTML = `.mc-table th { min-width: ${mcColumnMinWidth} !important; }`;
+
             Object.keys(marketCapGroups).forEach(groupId => {
                 const group = marketCapGroups[groupId];
                 const container = document.getElementById(`mc-group-${groupId}`);
-                let html = `<div class="mc-block-title">${group.title}</div>`;
-                html += '<table class="mc-table"><thead><tr>';
                 
-                // Header Row: [Empty] | Ticker 1 | Ticker 2 | ...
-                html += '<th style="width:120px;">Unit: US$B</th>';
+                let html = `<div class="mc-block-title">${group.title}</div>`;
+                if(group.subtitle) {
+                    html += `<div class="mc-block-subtitle">${group.subtitle}</div>`;
+                }
+                
+                // Add class for centering if date is hidden
+                const tableClass = group.showDate ? 'mc-table' : 'mc-table no-date';
+                html += `<table class="${tableClass}"><thead><tr>`;
+                
+                // Header Row
+                if (group.showDate) {
+                    html += `<th style="width:120px;">Date/Ticker</th>`;
+                }
                 group.tickers.forEach(t => {
                     html += `<th>${TICKER_NAMES[t] || t}</th>`;
                 });
                 html += '</tr></thead><tbody>';
                 
+                // Rows logic
+                // Helper to get value
+                const getValue = (ticker, dObj) => {
+                    if (group.valueType === 'price') {
+                         const perf = allPerformanceData.get(ticker);
+                         if (!perf) return null;
+                         const price = perf.findPriceOnOrBefore(dObj.date);
+                         return price;
+                    } else {
+                        // Market Cap
+                        return getHistoricalMarketCap(ticker, dObj.date);
+                    }
+                };
+
+                // Helper to format value
+                const formatVal = (val) => {
+                    if (val === null) return '-';
+                    if (group.valueType === 'price') {
+                         return formatNumberWithCommas(val, 2);
+                    } else {
+                         return val.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                    }
+                };
+
                 // Row 1: As of Date (Current)
-                html += `<tr><td>${formatDateSlash(dates[0].date)}</td>`;
+                html += `<tr>`;
+                if(group.showDate) html += `<td>${formatDateSlash(dates[0].date)}</td>`;
                 group.tickers.forEach(t => {
-                    const val = getHistoricalMarketCap(t, dates[0].date);
-                    let displayVal = '-';
-                    if (val !== null) displayVal = val.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-                    html += `<td>${displayVal}</td>`;
+                    html += `<td>${formatVal(getValue(t, dates[0]))}</td>`;
                 });
                 html += '</tr>';
 
                 // Row 2: Change (Current - Prev Week)
-                html += `<tr><td>WoW</td>`;
+                html += `<tr>`;
+                if(group.showDate) html += `<td>WoW</td>`;
                 group.tickers.forEach(t => {
-                    const val1 = getHistoricalMarketCap(t, dates[0].date);
-                    const val2 = getHistoricalMarketCap(t, dates[1].date);
+                    const val1 = getValue(t, dates[0]);
+                    const val2 = getValue(t, dates[1]);
                     let changeStr = '-';
                     if (val1 !== null && val2 !== null && val2 !== 0) {
                         const diff = val1 - val2;
@@ -2934,15 +3157,12 @@
                 html += '</tr>';
                 
                 // Remaining Rows: Prev Week, YTD, Prev Years...
-                // Dates array index 1 is Prev Week End
                 for (let i = 1; i < dates.length; i++) {
                     const dObj = dates[i];
-                    html += `<tr><td>${formatDateSlash(dObj.date)}</td>`;
+                    html += `<tr>`;
+                    if(group.showDate) html += `<td>${formatDateSlash(dObj.date)}</td>`;
                     group.tickers.forEach(t => {
-                         const val = getHistoricalMarketCap(t, dObj.date);
-                         let displayVal = '-';
-                         if (val !== null) displayVal = val.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-                         html += `<td>${displayVal}</td>`;
+                         html += `<td>${formatVal(getValue(t, dObj))}</td>`;
                     });
                     html += '</tr>';
                 }
