@@ -1310,12 +1310,18 @@
             const priceTw = getPrice(tsmcTwTicker, date);
             const priceAdr = getPrice(tsmcAdrTicker, date);
             const sharesTw = tickerMetadata[tsmcTwTicker]?.shares;
-            const sharesAdr = tickerMetadata[tsmcAdrTicker]?.shares;
+            // User Request: Use 2330.TW Shares / 5 as the ADR portion (Common Shares)
+            // const sharesAdr = tickerMetadata[tsmcAdrTicker]?.shares; // Ignore data
             const twdRate = getFxRate('TWD', date);
 
-            if (priceTw && priceAdr && sharesTw && sharesAdr && twdRate) {
-                const term1 = (priceTw / twdRate) * (sharesTw - sharesAdr / 5);
-                const term2 = priceAdr * (sharesAdr / 5);
+            if (priceTw && priceAdr && sharesTw && twdRate) {
+                // Derived ADR Common Shares (approx 20% of total)
+                const adrCommonShares = sharesTw / 5;
+                const localCommonShares = sharesTw - adrCommonShares;
+
+                const term1 = (priceTw / twdRate) * localCommonShares;
+                // ADR Part: Convert common shares to ADR units (divide by 5) then multiply by ADR Price
+                const term2 = priceAdr * (adrCommonShares / 5);
                 return term1 + term2;
             }
             return null;
