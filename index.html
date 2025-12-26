@@ -482,7 +482,7 @@
         }
         .mc-table th, .mc-table td {
             border: none; /* No grid lines */
-            padding: 2px 4px; text-align: right; white-space: nowrap; line-height: 1;
+            padding: 2px 4px; text-align: center; white-space: nowrap; line-height: 1;
         }
         .mc-table th {
             background-color: white; 
@@ -2921,10 +2921,11 @@
                     const val1 = getHistoricalMarketCap(t, dates[0].date);
                     const val2 = getHistoricalMarketCap(t, dates[1].date);
                     let changeStr = '-';
-                    if (val1 !== null && val2 !== null) {
+                    if (val1 !== null && val2 !== null && val2 !== 0) {
                         const diff = val1 - val2;
-                        const color = diff >= 0 ? 'text-positive' : 'text-negative';
-                        changeStr = `<span class="${color}">${diff > 0 ? '+' : ''}${diff.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</span>`;
+                        const pct = (diff / val2) * 100;
+                        const color = pct >= 0 ? 'text-positive' : 'text-negative';
+                        changeStr = `<span class="${color}">${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span>`;
                     }
                     html += `<td>${changeStr}</td>`;
                 });
@@ -3138,8 +3139,7 @@
         function formatNumberWithCommas(x, decimals) { if (x == null) return '-'; return x.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); }
         function formatDateYYYYMMDD(date) { return date.toISOString().split('T')[0]; }
         function formatDateDDMMM(date) { const month = date.toLocaleString('en-US', { month: 'short' }); const day = String(date.getDate()).padStart(2, '0'); return `${day}/${month}`; }
-        function formatDateSlash(date) { const m = String(date.getMonth()+1).padStart(2,'0'); const d = String(date.getDate()).padStart(2,'0'); return `${m}/${d}/${date.getFullYear()}`; }
-        
+        function formatDateSlash(date) { const m = String(date.getMonth()+1).padStart(2,'0'); const d = String(date.getDate()).padStart(2,'0'); return `${date.getFullYear()}/${m}/${d}`; }
         // --- Ticker Modal Chart with Controls ---
         function openTickerModal(ticker) {
             currentModalTicker = ticker;
