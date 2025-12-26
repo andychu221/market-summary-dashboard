@@ -482,17 +482,17 @@
         }
         .mc-table th, .mc-table td {
             border: none; /* No grid lines */
-            padding: 1px 2px; text-align: right; white-space: nowrap; line-height: 1;
+            padding: 4px 6px; text-align: right; white-space: nowrap; line-height: 1.4;
         }
         .mc-table th {
             background-color: white; 
             text-align: center; font-weight: 600;
             border-bottom: 1px solid black; /* Axis line */
             color: black;
-            /* Resizable headers */
-            resize: horizontal;
-            overflow: auto;
             min-width: 50px;
+        }
+        .mc-table th:first-child {
+            text-align: left;
         }
         .mc-table td:first-child {
             text-align: left; font-weight: 600; background-color: white;
@@ -709,7 +709,6 @@
                     <div style="display:flex; align-items:center; gap:15px;">
                         <label>As of:</label>
                         <input type="date" id="mc-as-of-date" class="controls-input" onchange="renderMarketCapTab()">
-                        <span style="font-weight:bold; color:var(--text-secondary);">Unit: US$B</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <button class="icon-btn" onclick="zoomMarketCap(-0.1)" title="Zoom Out"><i class="material-icons">remove</i></button>
