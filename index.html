@@ -504,8 +504,11 @@
             text-align: center !important;
         }
         /* MODIFIED: Remove Bold from First Column */
-        .mc-table td:first-child, .mc-table th:first-child {
+        .mc-table td:first-child {
             text-align: left; font-weight: normal !important; background-color: white;
+        }
+        .mc-table th:first-child {
+            text-align: left; font-weight: bold !important; background-color: white;
         }
 
         @media print {
@@ -3234,6 +3237,30 @@
             });
         }
         
+        function getFirstTradingDay(year) {
+             // Try to use TSMC as reference for Taiwan market, or fallback to others
+             const referenceTickers = ['2330.TW', '.TWII', '.SPX', 'AAPL'];
+             let data = null;
+
+             for (const t of referenceTickers) {
+                 if (dataByTicker[t] && dataByTicker[t].length > 0) {
+                     data = dataByTicker[t];
+                     break;
+                 }
+             }
+
+             if (!data) return new Date(year, 0, 1);
+
+             const startOfYear = new Date(year, 0, 1);
+             const endOfYear = new Date(year, 11, 31);
+
+             // Data is sorted by date ascending
+             const entry = data.find(d => d.date >= startOfYear && d.date <= endOfYear);
+
+             if (entry) return entry.date;
+             return new Date(year, 0, 1);
+        }
+
         function generateMarketCapDates(anchorDate) {
             const dates = [];
             
@@ -3248,12 +3275,13 @@
             
             // 3. Start of Current Year
             const currentYear = d1.getFullYear();
-            const d3 = new Date(currentYear, 0, 1);
-            dates.push({ label: 'YTD', date: d3 });
+            const d3 = getFirstTradingDay(currentYear);
+            dates.push({ label: formatDateSlash(d3), date: d3 });
             
             // 4. Start of Previous Years back to 2011
             for (let y = currentYear - 1; y >= 2011; y--) {
-                dates.push({ label: `1/1/${y}`, date: new Date(y, 0, 1) });
+                const d = getFirstTradingDay(y);
+                dates.push({ label: formatDateSlash(d), date: d });
             }
             
             return dates;
