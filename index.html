@@ -689,9 +689,15 @@
                 <div id="news-container">
                     <div id="news-left-pane">
                         <div id="news-filters">
-                            <select id="news-filter-company" class="controls-select" onchange="filterNews()" title="Filter news by company" style="min-width: 150px;">
-                                <!-- Populated JS -->
-                            </select>
+                            <div style="position: relative; display: inline-block;">
+                                <input type="text" id="news-company-search" class="controls-input" placeholder="Search Company..." 
+                                    oninput="filterCompanyDropdown()" 
+                                    onfocus="document.getElementById('news-company-dropdown').style.display='block'"
+                                    style="min-width: 180px; padding-right: 30px;">
+                                <i class="material-icons" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; color: #999;">search</i>
+                                <div id="news-company-dropdown" class="date-range-content" style="min-width: 250px; max-height: 300px; overflow-y: auto;">
+                                </div>
+                            </div>
                             
                             <select id="news-filter-source" class="controls-select" onchange="filterNews()" title="Filter news by source" style="min-width: 120px;">
                                 <option value="all">Source (All)</option>
@@ -1855,18 +1861,45 @@
         }
 
         function populateNewsFilters() {
-            const tkSelect = document.getElementById('news-filter-company');
-            tkSelect.innerHTML = '<option value="all">Company (All)</option>';
-            Array.from(loadedNewsTickers).sort().forEach(t => {
-                tkSelect.innerHTML += `<option value="${t}">${TICKER_NAMES[t] || t}</option>`;
-            });
-
+            const searchInput = document.getElementById('news-company-search');
+            searchInput.value = 'All Companies';
+            searchInput.dataset.selectedTicker = 'all';
+            filterCompanyDropdown();
             const srcSelect = document.getElementById('news-filter-source');
             srcSelect.innerHTML = '<option value="all">Source (All)</option>';
             Array.from(newsSources).sort().forEach(s => {
                 srcSelect.innerHTML += `<option value="${s}">${s}</option>`;
             });
         }
+        function filterCompanyDropdown() {
+            const searchTerm = document.getElementById('news-company-search').value.toLowerCase();
+            const dropdown = document.getElementById('news-company-dropdown');
+            dropdown.innerHTML = '<div class="date-option" onclick="selectCompanyFilter(\'all\')">All Companies</div>';
+    
+            Array.from(loadedNewsTickers).sort().forEach(t => {
+                const name = TICKER_NAMES[t] || t;
+                const matchTicker = t.toLowerCase().includes(searchTerm);
+                const matchName = name.toLowerCase().includes(searchTerm);
+                if (searchTerm === '' || matchTicker || matchName) {
+                    dropdown.innerHTML += `<div class="date-option" onclick="selectCompanyFilter('${t}')">${name} (${t})</div>`;
+                }
+            });
+        }
+        function selectCompanyFilter(ticker) {
+            const searchInput = document.getElementById('news-company-search');
+            const dropdown = document.getElementById('news-company-dropdown');
+            if (ticker === 'all') {
+                searchInput.value = 'All Companies';
+                searchInput.dataset.selectedTicker = 'all';
+            } else {
+                const name = TICKER_NAMES[ticker] || ticker;
+                searchInput.value = `${name} (${ticker})`;
+                searchInput.dataset.selectedTicker = ticker;
+            }    
+            dropdown.style.display = 'none';
+            filterNews();
+        }
+
         
         function toggleDateRangeMenu() { document.getElementById('news-date-range-content').classList.toggle('show'); }
         function toggleCustomDateRow() { document.getElementById('custom-date-row').classList.toggle('active'); }
@@ -1909,7 +1942,7 @@
         
         function filterNews() {
             if (!fullNewsList) return;
-            const tickerFilter = document.getElementById('news-filter-company').value;
+            const tickerFilter = document.getElementById('news-company-search').dataset.selectedTicker || 'all';
             const sourceFilter = document.getElementById('news-filter-source').value;
 
             const listEl = document.getElementById('news-list');
