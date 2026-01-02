@@ -1333,7 +1333,7 @@
 
                 const price = closes[i];
                 if (price == null) return;
-                const date = new Date(dStr); 
+                const date = new Date(dStr  + 'T00:00:00'); 
                 cleanData.push({ ticker, date, price, volume: vols[i] || 0, originalDateStr: dStr, market });
             });
             if (!dataByTicker[ticker]) dataByTicker[ticker] = [];
@@ -2393,6 +2393,7 @@
                             time: {
                                 unit: unit,
                                 displayFormats: { day: 'dd/MMM', week: 'dd/MMM', month: 'MMM' }
+                                parser: 'yyyy-MM-dd'
                             },
                             ticks: { color: textColor, maxRotation: 0, autoSkip: true },
                             grid: { color: gridColor, drawTicks: true }
@@ -2405,7 +2406,16 @@
                             display: true, position: 'top', align: 'start',
                             labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'rect', padding: 10 }
                         }, 
-                        tooltip: { mode: 'index', intersect: false }
+                        tooltip: { 
+                                  mode: 'index', 
+                                  intersect: false,
+                                  callbacks: {
+                                    title: function(context) {
+                                    const date = new Date(context[0].parsed.x);
+                                    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                                    }
+                                    }
+                                 }
                     } 
                 }
             });
@@ -2479,6 +2489,7 @@
                             time: { 
                                 unit: 'month', 
                                 displayFormats: { month: "MMM''yy" }
+                                parser: 'yyyy-MM-dd'
                             },
                             ticks: { color: textColor, maxRotation: 0, autoSkip: true },
                             grid: { color: gridColor }
@@ -2595,7 +2606,10 @@
                     scales: { 
                         x: {
                             type: 'time', 
-                            time: { unit: 'month' },
+                            time: { 
+                                unit: 'month' ,
+                                 parser: 'yyyy-MM-dd'      
+                                  },
                             ticks: { color: textColor, maxRotation: 0, autoSkip: true },
                             grid: { color: gridColor }
                         },
@@ -3461,6 +3475,7 @@
                                      month: timeDisplayFormat,
                                      year: 'yyyy'
                                  }
+                                 parser: 'yyyy-MM-dd'
                              } 
                          } 
                      },
