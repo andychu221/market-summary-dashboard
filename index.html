@@ -2705,7 +2705,7 @@
                                     if (col.id === '1-Day' && Math.abs(ret) > 5) {
                                         css += ret > 0 ? ' cell-pos-light' : ' cell-neg-light';
                                         cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}')">?</div>`;
-                                    } else if (col.id === '1-Week' && Math.abs(ret) > 10) {
+                                    } else if (col.id === '1-Week' && Math.abs(ret) > 5) {
                                         css += ret > 0 ? ' cell-pos-light' : ' cell-neg-light';
                                         cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}')">?</div>`;
                                     }
