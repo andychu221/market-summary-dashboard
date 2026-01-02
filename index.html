@@ -2479,6 +2479,14 @@
             const gridColor = 'rgba(0, 0, 0, 0.1)';
             const textColor = '#555';
 
+            // Dynamic Time Unit for Custom Chart
+            const diffTime = endDate - startDate;
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            let timeUnit = 'month';
+            if (diffDays <= 7) timeUnit = 'day';
+            else if (diffDays <= 90) timeUnit = 'week';
+            else if (diffDays > 365 * 2) timeUnit = 'year';
+
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line', data: { datasets },
                 options: { 
@@ -2487,8 +2495,13 @@
                         x: {
                             type: 'time', 
                             time: { 
-                                unit: 'month', 
-                                displayFormats: { month: "MMM''yy" },
+                                unit: timeUnit,
+                                displayFormats: {
+                                    day: 'dd/MMM',
+                                    week: 'dd/MMM',
+                                    month: "MMM''yy",
+                                    year: 'yyyy'
+                                },
                                 parser: 'yyyy-MM-dd'
                             },
                             ticks: { color: textColor, maxRotation: 0, autoSkip: true },
@@ -3451,14 +3464,13 @@
              const recentData = data.filter(pt => pt.date >= startDate && pt.date <= endDate);
              
              // Time Scale Logic
-             const timeDiffYears = (endDate - startDate) / (1000 * 60 * 60 * 24 * 365);
+             const diffTime = endDate - startDate;
+             const diffDays = diffTime / (1000 * 60 * 60 * 24);
              let timeUnit = 'month';
-             let timeDisplayFormat = "MMM''yy";
              
-             if (timeDiffYears > 2 || period === 'ALL') {
-                 timeUnit = 'year';
-                 timeDisplayFormat = 'yyyy';
-             }
+             if (diffDays <= 7) timeUnit = 'day';
+             else if (diffDays <= 90) timeUnit = 'week';
+             else if (diffDays > 365 * 2) timeUnit = 'year';
 
              const datasetData = recentData.map(pt => ({
                  x: pt.date,
@@ -3487,7 +3499,9 @@
                              time: { 
                                  unit: timeUnit,
                                  displayFormats: {
-                                     month: timeDisplayFormat,
+                                     day: 'dd/MMM',
+                                     week: 'dd/MMM',
+                                     month: "MMM''yy",
                                      year: 'yyyy'
                                  },
                                  parser: 'yyyy-MM-dd'
