@@ -3495,7 +3495,16 @@
                          } 
                      },
                      plugins: {
-                         title: { display: true, text: `${period} Trend` }
+                         title: { display: true, text: `${period} Trend` },
+    tooltip: { 
+        mode: 'index', 
+        intersect: false,
+        callbacks: {title: function(context) {
+                const date = new Date(context[0].parsed.x);
+                return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+        }
+    }
                      }
                  } 
              });
