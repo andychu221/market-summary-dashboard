@@ -48,8 +48,6 @@
             --ai-gradient: linear-gradient(to right, #4285F4, #2ecc71);
         }
 
-        /* Removed Dark Mode Styles */
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -110,7 +108,6 @@
             top: 1px; padding-top: 12px; margin-top: -2px;
         }
 
-        /* Right aligned controls in tab bar */
         .tab-right-controls {
             margin-left: auto;
             display: flex;
@@ -125,11 +122,10 @@
             border-radius: 6px;
             display: flex; align-items: center; justify-content: center;
             color: var(--text-primary); transition: all 0.2s;
-            height: 38px; width: 38px; /* Match tab height roughly */
+            height: 38px; width: 38px; 
         }
         .icon-btn:hover { color: var(--primary-color); background: var(--hover-bg); }
         
-        /* Sub Tabs */
         .chart-sub-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); }
         .chart-sub-tab-link {
             padding: 8px 20px; cursor: pointer; font-size: 0.95rem; font-weight: 500; 
@@ -150,12 +146,10 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Summary Tables */
         .summary-card table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: right; }
         .summary-card th, .summary-card td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 0.95rem; border-right: none; position: relative;}
         .summary-card td:first-child, .summary-card th:first-child { text-align: left; }
         
-        /* Drag and Drop Styles */
         .summary-card th { cursor: grab; user-select: none; position: relative; }
         .summary-card th:active { cursor: grabbing; }
         .summary-card th:hover { background-color: var(--button-active-bg); }
@@ -167,13 +161,9 @@
         .drag-over { border-top: 2px solid var(--primary-color); }
         
         tr:hover { background-color: var(--hover-bg); }
-        .clickable-row { } /* Kept class for styling, but cursor handled by draggable */
         .text-positive { color: var(--positive-color) !important; font-weight: 500; }
         .text-negative { color: var(--negative-color) !important; font-weight: 500; }
         
-        .summary-clickable-header:hover { color: var(--primary-color); }
-
-        /* AI Volatility Styles */
         .cell-pos-light { background-color: var(--bg-pos-light) !important; }
         .cell-neg-light { background-color: var(--bg-neg-light) !important; }
         .volatility-icon {
@@ -185,7 +175,6 @@
         }
         .volatility-icon:hover { background: var(--primary-color); color: white; }
 
-        /* Chart 2x2 Grid */
         .chart-grid-2x2 {
             display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 450px 450px; gap: 20px; margin-bottom: 20px;
         }
@@ -194,7 +183,6 @@
             border-radius: 8px; padding: 10px; box-shadow: var(--shadow-light);
         }
 
-        /* Stats Table */
         .stats-table-container { margin-top: 20px; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; }
         .stats-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         .stats-table th, .stats-table td { padding: 8px 12px; border: 1px solid var(--border-color); text-align: right; white-space: nowrap; }
@@ -204,8 +192,9 @@
         .controls-input, .controls-select {
             border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; font-size: 0.95rem;
             background-color: var(--bg-color); color: var(--text-primary);
-            display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 5px; cursor: text;
         }
+        button.controls-input, select.controls-select { cursor: pointer; }
         
         .modal {
             position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto;
@@ -230,10 +219,13 @@
             box-shadow: var(--shadow-light); overflow: auto; position: relative; padding-top: 35px; 
         }
         .summary-card-label { position: absolute; top: 10px; left: 15px; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+        
+        /* Search Mode Styles */
+        .search-mode .summary-card { border: none; box-shadow: none; padding-top: 0; background: transparent; }
+        .search-mode .summary-card-label { display: none; }
+        .search-mode #summary-content-container { gap: 0; }
 
-        /* News with Resizable Pane */
         #news-container { display: flex; height: 75vh; width: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: 8px; }
-        /* Adjusted split to 50/50 */
         #news-left-pane { flex: 0 0 50%; min-width: 350px; display: flex; flex-direction: column; background: var(--bg-color); border-right: 1px solid var(--border-color); }
         #news-resizer { width: 5px; cursor: col-resize; background: #ddd; transition: background 0.2s; }
         #news-resizer:hover { background: var(--primary-color); }
@@ -247,7 +239,6 @@
         .news-tag { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
         .news-title { font-weight: 600; font-size: 0.95rem; line-height: 1.4; }
         
-        /* Fixed News Filters */
         #news-filters {
             padding: 10px;
             border-bottom: 1px solid var(--border-color);
@@ -294,7 +285,6 @@
         }
         .custom-date-row.active { display: flex; }
 
-        /* MCI Manual Grid */
         .mci-grid-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; max-height: 60vh; }
         .mci-table { width: 100%; border-collapse: collapse; min-width: 800px; }
         .mci-table th, .mci-table td { padding: 5px; border: 1px solid var(--border-color); text-align: center; vertical-align: middle; }
@@ -308,14 +298,13 @@
         .mci-header-input:focus { border-color: var(--primary-color); background: var(--bg-color); outline: none; border-radius: 4px; }
         .mci-input:hover { border-color: #ccc; background: var(--bg-color); }
         .mci-input:focus { border-color: var(--primary-color); background: var(--bg-color); outline: none; border-radius: 4px; }
-        /* Hide spin buttons */
+        
         .mci-input::-webkit-outer-spin-button,
         .mci-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .mci-input[type=number] { -moz-appearance: textfield; }
         
         .weight-error { background-color: #ffcccc !important; color: #b71c1c; }
 
-        /* Reusing list container style for consistency */
         .column-list-container { 
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -325,14 +314,12 @@
             padding: 10px;
         }
         
-        /* Data Tab Styles */
         #data-table-container { min-height: 70vh; }
         .email-report-btn {
             background-color: var(--primary-color); color: white; border: none; padding: 8px 15px;
             border-radius: 6px; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 5px; justify-content: center;
         }
 
-        /* Chart Controls */
         .chart-controls {
             display: flex; gap: 8px; margin-bottom: 15px; align-items: center; flex-wrap: wrap;
         }
@@ -343,7 +330,6 @@
         .chart-period-btn:hover { background: var(--hover-bg); color: var(--primary-color); }
         .chart-period-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
-        /* Updated AI Buttons (Using Font Icon) */
         .ai-action-btn {
             cursor: pointer;
             display: inline-flex; 
@@ -357,12 +343,10 @@
         }
         .ai-action-btn:hover { transform: scale(1.1); }
         
-        /* Replaced img style with generic style or icon style */
         .ai-action-btn i {
             font-size: 28px;
             color: var(--ai-btn-color);
         }
-        /* New AI label style */
         .ai-label {
             font-size: 16px;
             color: var(--ai-btn-color);
@@ -370,7 +354,6 @@
             margin-left: 5px;
         }
 
-        /* Manage Tickers Modal */
         .manage-ticker-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -393,14 +376,12 @@
             background-color: var(--hover-bg);
         }
         
-        /* Markdown Content */
         .markdown-content { line-height: 1.6; font-size: 1rem; }
         .markdown-content h1, .markdown-content h2, .markdown-content h3 { margin-top: 1em; margin-bottom: 0.5em; }
         .markdown-content ul { margin-left: 20px; margin-bottom: 1em; }
         .markdown-content p { margin-bottom: 1em; }
         .markdown-content strong { color: var(--primary-color); }
 
-        /* Multi Select Dropdown Style for Charts */
         .multi-select-container {
             position: relative;
             display: inline-block;
@@ -420,7 +401,7 @@
             display: none;
             position: absolute;
             background-color: var(--modal-bg);
-            min-width: 250px;
+            min-width: 320px;
             box-shadow: var(--shadow-strong);
             padding: 10px;
             z-index: 1000;
@@ -428,14 +409,17 @@
             border-radius: 6px;
             top: 100%;
             left: 0;
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
         }
         .multi-select-content.show { display: block; }
         .multi-select-item {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             padding: 5px 0;
             cursor: pointer;
+            width: 100%;
         }
         .multi-select-item:hover { color: var(--primary-color); }
 
@@ -446,7 +430,7 @@
             overflow-x: auto;
             overflow-y: auto;
             height: 80vh;
-            border: none; /* No outer border */
+            border: none;
             border-radius: 8px;
             position: relative;
         }
@@ -461,54 +445,49 @@
         }
         .mc-grid-top {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Changed to 4 columns */
-            gap: 30px; /* Increased gap */
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
             margin-bottom: 20px;
         }
         .mc-block {
-            border: none; /* No block border */
+            border: none;
             padding: 10px;
             border-radius: 4px;
         }
         .mc-block-title {
             font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;
             padding-bottom: 2px;
-            text-align: center; /* Centered Title */
+            text-align: center;
             color: black;
         }
         .mc-block-subtitle {
              font-size: 0.85rem; margin-bottom: 8px;
              text-align: center; color: var(--text-secondary);
-             border-bottom: 2px solid black; /* Black line */
+             border-bottom: 2px solid black;
              padding-bottom: 4px;
         }
         .mc-table {
             width: 100%; border-collapse: collapse; font-size: 0.65rem; table-layout: auto;
         }
         .mc-table th, .mc-table td {
-            border: none; /* No grid lines */
+            border: none;
             padding: 2px 4px; text-align: center; white-space: nowrap; line-height: 1;
         }
         .mc-table th {
             background-color: white; 
             text-align: center; font-weight: 600;
-            border-bottom: 3px double black !important; /* Double line */
+            border-bottom: 3px double black !important;
             color: black;
             min-width: 50px;
         }
         .mc-table th:first-child {
             text-align: left;
         }
-        /* Special alignment for tables without Date column */
         .mc-table.no-date th:first-child, .mc-table.no-date td:first-child {
             text-align: center !important;
         }
-        /* MODIFIED: Remove Bold from First Column */
-        .mc-table td:first-child { {
+        .mc-table td:first-child {
             text-align: left; font-weight: normal !important; background-color: white;
-        }
-        mc-table th:first-child {
-            text-align: left; font-weight: bold !important; background-color: white;
         }
         @media print {
             @page { size: landscape; margin: 5mm; }
@@ -523,7 +502,6 @@
             .mc-table th { resize: none; overflow: visible; }
         }
         
-        /* MC Config Modal Styles */
         .mc-config-group { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .mc-config-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
         .mc-config-btn-small { padding: 2px 6px; font-size: 0.8rem; cursor: pointer; border: 1px solid #ccc; background: #f0f0f0; border-radius: 4px; }
@@ -537,8 +515,6 @@
     </div>
 
     <div class="container">
-        <!-- Moved header controls inside main content -->
-
         <div class="main-content">
             <div class="header-bar">
                 <div class="tabs">
@@ -549,12 +525,10 @@
                     <div class="tab-link" onclick="openTab(event, 'data')"><i class="material-icons">table_view</i> Data</div>
                     <div class="tab-link" onclick="openTab(event, 'mci-settings')"><i class="material-icons">settings</i> MCI Config</div>
                     
-                    <!-- Moved Controls Here -->
                     <div class="tab-right-controls">
                          <button class="icon-btn" onclick="openAiSettings()" title="AI Settings">
                             <i class="material-icons">settings_suggest</i>
                         </button>
-                        <!-- Theme Toggle Removed -->
                     </div>
                 </div>
             </div>
@@ -564,17 +538,17 @@
                     <div class="summary-header-left">
                         <label for="summary-as-of-date">As of:</label>
                         <input type="date" id="summary-as-of-date" class="controls-input" onchange="updateSummaryReferenceDate(this.value)">
+                        <input type="text" id="summary-search" class="controls-input" placeholder="Search Ticker/Name..." oninput="filterSummaryTable()" style="width: 200px; cursor: text;">
+                        
                         <button class="controls-input" onclick="openManageTickerModal()"><i class="material-icons">list</i> Manage Tickers</button>
                         <button class="controls-input" onclick="openColumnModal()"><i class="material-icons">view_column</i> Custom Column</button>
                         
-                        <!-- AI Button for Summary (AutoAwesome Icon) -->
                          <button class="ai-action-btn" title="AI Market Overview" onclick="analyzeSummaryTable()">
                              <i class="material-icons">auto_awesome</i>
                              <span class="ai-label">AI Summary</span>
                         </button>
                     </div>
                     
-                    <!-- New Copy Button -->
                     <button class="controls-input" onclick="copySummaryTables()" title="Copy all tables to clipboard for Excel">
                         <i class="material-icons">content_copy</i> Copy All Tables
                     </button>
@@ -606,10 +580,8 @@
                 </div>
 
                 <div id="chart-grid" class="view-content active" style="padding-top:20px;">
-                    <!-- Controls for Perf Report: Dropdown + AI -->
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <div id="perf-ticker-select-container" class="multi-select-container">
-                            <!-- Injected by JS -->
                         </div>
                         <button class="ai-action-btn" title="AI Report Analysis" onclick="analyzePerformanceReport()">
                             <i class="material-icons">auto_awesome</i>
@@ -633,14 +605,12 @@
                     </div>
                     <div class="stats-table-container">
                          <table class="stats-table" id="stats-table-grid">
-                             <!-- Populated by JS -->
                          </table>
                     </div>
                 </div>
 
                 <div id="chart-custom" class="view-content" style="padding-top:20px;">
                     <div class="chart-controls">
-                        <!-- Dropdown inserted here by JS -->
                         <div id="custom-ticker-select-container" class="multi-select-container"></div>
                         
                         <button class="chart-period-btn" onclick="setCustomChartPeriod('5D')">5D</button>
@@ -654,7 +624,6 @@
                         <span>to</span>
                         <input type="date" id="custom-chart-end" class="controls-input" onchange="setCustomChartPeriod('CUSTOM')">
                         
-                        <!-- AI Button (AutoAwesome Icon) -->
                         <button class="ai-action-btn" title="AI Analysis" onclick="analyzeCustomChart()" style="margin-left:10px;">
                             <i class="material-icons">auto_awesome</i>
                             <span class="ai-label">AI Summary</span>
@@ -666,7 +635,6 @@
                 </div>
 
                 <div id="chart-mci" class="view-content" style="padding-top:20px;">
-                    <!-- MODIFIED: Added Controls for MCI Comparison -->
                      <div class="chart-controls">
                         <label>Start:</label>
                         <input type="date" id="mci-comp-start" class="controls-input">
@@ -720,7 +688,6 @@
                                 </div>
                             </div>
                             
-                            <!-- AI Button (AutoAwesome Icon) - NO TEXT LABEL HERE -->
                             <button class="ai-action-btn" onclick="analyzeSelectedNews()" title="Analyze Selected News (Ctrl+Click)" style="margin-left:auto;">
                                 <i class="material-icons">auto_awesome</i>
                             </button>
@@ -737,13 +704,11 @@
                 </div>
             </div>
 
-            <!-- MARKET CAP TAB -->
             <div id="market-cap" class="tab-content">
                 <div class="mc-header">
                     <div style="display:flex; align-items:center; gap:15px;">
                         <label>As of:</label>
                         <input type="date" id="mc-as-of-date" class="controls-input" onchange="renderMarketCapTab()">
-                        <!-- MODIFIED: Added Configure Button -->
                         <button class="controls-input" onclick="openMarketCapConfig()" title="Configure Tickers"><i class="material-icons" style="font-size:16px;">settings</i> Configure</button>
                     </div>
                     <div style="display:flex; align-items:center; gap:10px;">
@@ -757,17 +722,16 @@
                 <div class="mc-container">
                     <div class="mc-wrapper" id="mc-wrapper">
                         <div class="mc-grid-top">
-                            <div class="mc-block" id="mc-group-0"></div> <!-- Benchmark -->
-                            <div class="mc-block" id="mc-group-1"></div> <!-- Foundry -->
-                            <div class="mc-block" id="mc-group-2"></div> <!-- Semi Equip -->
-                            <div class="mc-block" id="mc-group-3"></div> <!-- Affiliates -->
+                            <div class="mc-block" id="mc-group-0"></div>
+                            <div class="mc-block" id="mc-group-1"></div>
+                            <div class="mc-block" id="mc-group-2"></div>
+                            <div class="mc-block" id="mc-group-3"></div>
                         </div>
-                        <div class="mc-block" id="mc-group-4"></div> <!-- Top 20 -->
+                        <div class="mc-block" id="mc-group-4"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- DATA TAB -->
             <div id="data" class="tab-content">
                 <div class="header-controls" style="margin-bottom: 10px; justify-content: flex-start; gap: 10px;">
                     <label>Start:</label><input type="date" id="data-start-date" class="controls-input" title="Filter data start date">
@@ -792,7 +756,6 @@
                 
                 <div class="mci-grid-wrapper">
                     <table class="mci-table" id="mci-weights-table">
-                        <!-- Populated by JS -->
                     </table>
                 </div>
                 
@@ -817,12 +780,20 @@
         <div class="modal-content" style="max-width: 600px;">
             <span class="close" onclick="closeModal('manageTickerModal')">&times;</span>
             <h2 class="modal-header" style="margin-bottom:15px;">Manage Tickers</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; align-items: center;">
+                <input type="text" id="add-ticker-input" class="controls-input" placeholder="Enter Ticker (e.g. MSFT)" style="flex:1;">
+                <select id="add-ticker-group-select" class="controls-select">
+                    <option value="equity-index">Benchmark</option>
+                    <option value="tw-stocks" selected>Watchlist</option>
+                    <option value="us-stocks">Peers</option>
+                </select>
+                <button class="controls-input" onclick="addNewTickerToManage()">Add</button>
+            </div>
             <div id="manage-ticker-list" class="manage-ticker-list"></div>
             <button class="controls-input" onclick="applyManageTickers()" style="width: 100%; justify-content: center; margin-top:15px;">Apply</button>
         </div>
     </div>
     
-    <!-- Ticker Chart Modal -->
     <div id="tickerModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('tickerModal')">&times;</span>
@@ -836,7 +807,6 @@
                     <button class="chart-period-btn" onclick="updateModalChart('1Y')">1Y</button>
                     <button class="chart-period-btn" onclick="updateModalChart('ALL')">All</button>
                 </div>
-                <!-- AI Icon for Ticker Chart (AutoAwesome Icon) -->
                 <button class="ai-action-btn" title="AI Technical Analysis" onclick="analyzeTickerChart()">
                     <i class="material-icons">auto_awesome</i>
                     <span class="ai-label">AI Summary</span>
@@ -848,7 +818,6 @@
         </div>
     </div>
     
-    <!-- Custom Period (From~To) Modal -->
     <div id="customPeriodModal" class="modal">
         <div class="modal-content modal-sm">
             <span class="close" onclick="closeModal('customPeriodModal')">&times;</span>
@@ -865,7 +834,6 @@
         </div>
     </div>
 
-    <!-- AI Settings Modal -->
     <div id="aiSettingsModal" class="modal">
         <div class="modal-content modal-sm">
             <span class="close" onclick="closeModal('aiSettingsModal')">&times;</span>
@@ -888,7 +856,6 @@
         </div>
     </div>
 
-    <!-- AI Result Modal -->
     <div id="aiResultModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('aiResultModal')">&times;</span>
@@ -904,7 +871,6 @@
         </div>
     </div>
     
-    <!-- MODIFIED: Market Cap Configuration Modal -->
     <div id="marketCapConfigModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
             <span class="close" onclick="closeModal('marketCapConfigModal')">&times;</span>
@@ -914,7 +880,6 @@
                 <input type="text" id="mc-col-width" class="controls-input" placeholder="e.g. 60px" style="width: 100px;">
             </div>
             <div id="mc-config-container" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
-                <!-- Populated by JS -->
             </div>
             <div style="margin-top: 20px; text-align: right;">
                 <button class="email-report-btn" onclick="saveMarketCapConfig()">Save Changes</button>
@@ -923,7 +888,6 @@
     </div>
 
     <script>
-        // --- Configuration ---
         const TICKER_NAMES = {
             '2330.TW': 'TSMC', 'TSM': 'TSMC ADR', 'TSM.N': 'TSMC ADR',
             '.TWII': 'TWSE', '.SOX': 'SOX', '.SPX': 'S&P 500', '.MCI': 'MCI',
@@ -939,7 +903,6 @@
             '005930.KS': 'Samsung',
             '2303.TW': 'UMC', '0981.HK': 'SMIC-H', '688981.SS': 'SMIC-A', 'GFS': 'GFS',
             'MSFT': 'Microsoft', 'GOOGL': 'Google', 'AMZN': 'Amazon', 'META': 'Meta', 'TSLA': 'Tesla',
-            // Added Tickers
             'AMAT': 'AMAT', 'KLAC': 'KLAC', 'CSCO': 'Cisco', 'BTDR': 'Bitdeer', 'SIMO': 'Silicon',
             'ASML.AS': 'ASML', '5347.TWO': 'Vanguard', '3443.TW': 'GUC', '3374.TWO': 'Xintec',
             '6789.TW': 'VisEra', '3661.TW': 'Alchip', '603501.SS': 'Willsemi', '6758.T': 'Sony',
@@ -962,14 +925,13 @@
             '.TWII': 'taiwan.gov.tw', '.SOX': 'nasdaq.com', '.SPX': 'spglobal.com',
             '.MCI': 'bloomberg.com',
             'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com', 'META': 'meta.com', 'TSLA': 'tesla.com',
-            // Added Tickers
             'AMAT': 'appliedmaterials.com', 'KLAC': 'kla.com', 'CSCO': 'cisco.com', 'BTDR': 'bitdeer.com',
             'SIMO': 'siliconmotion.com', 'ASML.AS': 'asml.com', '5347.TWO': 'vis.com', '3443.TW': 'guc-asic.com',
             '3374.TWO': 'xintec.com', '6789.TW': 'viseratech.com', '3661.TW': 'alchip.com', '603501.SS': 'ovt.com',
             '6758.T': 'sony.com', '6526.T': 'socionext.com', '000660.KS': 'skhynix.com', 'MU': 'micron.com', 'NXPI': 'nxp.com'
         };
 
-        const TICKER_COLORS = {
+        let TICKER_COLORS = {
             '2330.TW': '#8b0000', 'TSM': '#a52a2a', 'TSM.N': '#a52a2a', '.MCI': '#ff9900',
             '.TWII': '#000000', '.SOX': '#008080', '.SPX': '#555555',
             'NVDA': '#76b900', 'NVDA.O': '#76b900',
@@ -983,7 +945,6 @@
             '005930.KS': '#1428A0', '2303.TW': '#003366', '0981.HK': '#E31B23',
             '688981.SS': '#B22222', 'GFS': '#FF6A13',
             'MSFT': '#00A4EF', 'GOOGL': '#4285F4', 'AMZN': '#FF9900', 'META': '#0668E1', 'TSLA': '#E31937',
-            // Defaults for new ones if not specified, or add specific colors
             'AMAT': '#00558C', 'KLAC': '#D6000F', 'ASML.AS': '#263147', '000660.KS': '#DB0025'
         };
 
@@ -997,8 +958,13 @@
                 '6789.TW', '3661.TW', '603501.SS', '6758.T', '6526.T', '000660.KS'
             ]
         };
+
+        let GROUP_DISPLAY_NAMES = {
+            'equity-index': 'Benchmark',
+            'tw-stocks': 'Watchlist',
+            'us-stocks': 'Peers'
+        };
         
-        // Market Cap Tab Configuration (Modified: changed const to let for mutability)
         let marketCapGroups = {
             0: { title: 'Benchmark Index', subtitle: 'Close', tickers: ['.SPX', '.SOX', '.TWII'], showDate: true, valueType: 'price' },
             1: { title: 'Foundry', subtitle: 'Market Cap(US$B)', tickers: ['2330.TW', '005930.KS', 'INTC', '2303.TW', 'GFS', '688981.SS'], showDate: false, valueType: 'mc' },
@@ -1011,7 +977,7 @@
             ], showDate: true, valueType: 'mc' }
         };
         
-        let mcColumnMinWidth = '50px'; // Default
+        let mcColumnMinWidth = '50px';
 
         let mciMembers = ['NVDA', 'GOOGL', 'AAPL', 'MSFT', 'AMZN', 'META', 'TSLA'];
         let defaultWeights = { 'NVDA': 30, 'GOOGL': 20, 'AAPL': 10, 'MSFT': 10, 'AMZN': 10, 'META': 10, 'TSLA': 10 };
@@ -1019,17 +985,14 @@
         let mciWeightHistory = []; 
         let historicalMciData = null; 
         
-        // Visibility state for Manage Tickers
         let visibleTickers = new Set([...summaryTickersConfig['equity-index'], ...summaryTickersConfig['tw-stocks'], ...summaryTickersConfig['us-stocks']]);
 
-        // Sorting state - UPDATED DEFAULT FOR US STOCKS
         let tableSortState = {
             'equity-index': { column: null, direction: 'asc' },
             'tw-stocks': { column: null, direction: 'asc' },
             'us-stocks': { column: 'MarketCap', direction: 'desc' } 
         };
 
-        // New Column Order: 1D, 1W, 1M, 3M, 1Y, YTD, From~To -> Custom
         let summaryColumnsState = [
             { id: 'Name', label: 'Name', visible: true },
             { id: 'Ticker', label: 'Ticker', visible: true },
@@ -1045,15 +1008,16 @@
             { id: 'Custom', label: 'Custom', visible: true } 
         ];
         
-        // Chart Selector State
         let allAvailableTickers = [];
         let selectedPerfTickers = new Set(['2330.TW', 'TSM', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', '.TWII', '.SOX']);
         let selectedCustomTickers = new Set(['2330.TW', 'TSM', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', '.TWII', '.SOX', 'MSFT', 'NVDA']);
+        // State for persistence
+        let currentPerfPeriod = '1-Year'; 
+        let currentCustomPeriod = 'YTD';
 
-        // Drag and Drop State
         let dragSrcEl = null;
-        let dragType = null; // 'row' or 'col'
-        let dragGroup = null; // For rows: 'equity-index', etc.
+        let dragType = null; 
+        let dragGroup = null; 
 
         let allData = [];
         let dataByTicker = {}; 
@@ -1069,27 +1033,24 @@
         let newsSelectedRange = { start: null, end: null };
         let customPeriodState = { start: null, end: null };
         let currentModalTicker = null;
-        let selectedNewsIds = new Set(); // Store indices of selected news
+        let selectedNewsIds = new Set(); 
 
-        // AI Config
         let aiConfig = {
             apiKey: '',
             language: 'zh-TW',
             modelUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent'
         };
 
-        // Data Tab Variables
         let pivotedPriceData = new Map();
         let pivotedVolumeData = new Map();
+        let pivotedTriData = new Map(); 
         let pivotedDataHeaders = [];
         let isDataPivoted = false;
         let jspreadsheetInstance = null;
         
-        // Market Cap Zoom
         let mcZoomLevel = 1.0;
         
         document.addEventListener('DOMContentLoaded', () => {
-            // Theme init removed
             loadAiSettings();
             initNewsResizer();
             loadAllDataFromGitHub();
@@ -1098,14 +1059,12 @@
                    const menu = document.getElementById('news-date-range-content');
                    if(menu) menu.classList.remove('show');
                }
-               // Close multi-select dropdowns when clicking outside
                if (!e.target.closest('.multi-select-container')) {
                    document.querySelectorAll('.multi-select-content').forEach(el => el.classList.remove('show'));
                }
             });
         });
 
-        // --- AI Settings Functions ---
         function loadAiSettings() {
             const saved = localStorage.getItem('aiConfig');
             if(saved) aiConfig = JSON.parse(saved);
@@ -1128,7 +1087,6 @@
             m.style.display='block'; setTimeout(()=>m.classList.add('show'), 10);
         }
 
-        // --- Core AI Service ---
         async function callGemini(promptText) {
             if (!aiConfig.apiKey) {
                 alert('Please enter your Google Gemini API Key in Settings first.');
@@ -1204,39 +1162,16 @@
                             cleanTicker = rawTicker.split('.')[0];
                         }
                         if (cleanTicker === 'TSM.N') cleanTicker = 'TSM';
-                        if (cleanTicker === '0059.KS') cleanTicker = '005930.KS'; // Fix Samsung
+                        if (cleanTicker === '0059.KS') cleanTicker = '005930.KS';
 
                         processTickerData(cleanTicker, data, market);
                     });
                 });
 
-                // Populate All Available Tickers for selectors
-                allAvailableTickers = [];
-                Object.values(summaryTickersConfig).forEach(list => {
-                    allAvailableTickers = [...allAvailableTickers, ...list];
-                });
-                // Ensure unique
-                allAvailableTickers = [...new Set(allAvailableTickers)].sort();
-
-                // Init Chart Selectors
-                initChartSelectors();
-
-                status.innerText = "Initializing MCI Weights...";
-                
-                // Modified: Load historical weights from JSON if available
-                if (historicalMciData && historicalMciData.weights) {
-                    parseImportedMciWeights(historicalMciData.weights);
-                } else {
-                    initMciWeightHistory();
-                }
-                
-                renderMciTable();      
-
-                status.innerText = "Calculating Custom Index (MCI)...";
-                calculateMCI();
-
+                // Calculate latestDataDate immediately for MCI Auto-Extension logic
                 let maxDate = 0;
                 Object.keys(dataByTicker).forEach(t => {
+                    // Sorting happens here to ensure latest date is correct
                     dataByTicker[t].sort((a,b) => a.date - b.date);
                     if (dataByTicker[t].length) {
                         const d = dataByTicker[t][dataByTicker[t].length-1].date.getTime();
@@ -1245,25 +1180,48 @@
                 });
                 latestDataDate = new Date(maxDate);
                 summaryReferenceDate = latestDataDate;
-                document.getElementById('summary-as-of-date').value = formatDateYYYYMMDD(latestDataDate);
-                document.getElementById('mc-as-of-date').value = formatDateYYYYMMDD(latestDataDate); // Init Market Cap date
+
+                allAvailableTickers = [];
+                Object.values(summaryTickersConfig).forEach(list => {
+                    allAvailableTickers = [...allAvailableTickers, ...list];
+                });
+                allAvailableTickers = [...new Set(allAvailableTickers)].sort();
+
+                initChartSelectors();
+
+                status.innerText = "Initializing MCI Weights...";
                 
-                // Set default Custom Period
-                if (dataByTicker['2330.TW'] && dataByTicker['2330.TW'].length > 0) {
-                    customPeriodState.start = dataByTicker['2330.TW'][0].date;
+                if (historicalMciData && historicalMciData.weights) {
+                    parseImportedMciWeights(historicalMciData.weights);
                 } else {
-                    customPeriodState.start = new Date('2020-01-01');
+                    initMciWeightHistory();
                 }
+                
+                // Requirement 1: Auto-extend MCI based on latestDataDate
+                checkMciAutoExtension();
+
+                renderMciTable();      
+
+                status.innerText = "Calculating Custom Index (MCI)...";
+                calculateMCI();
+
+                document.getElementById('summary-as-of-date').value = formatDateYYYYMMDD(latestDataDate);
+                document.getElementById('mc-as-of-date').value = formatDateYYYYMMDD(latestDataDate);
+                
+                // Default Custom Period (Req 2: From 2020-01-01)
+                customPeriodState.start = new Date('2020-01-01');
                 customPeriodState.end = latestDataDate;
 
-                // Init MCI Chart Dates
                 document.getElementById('mci-comp-start').value = '2020-01-01';
                 document.getElementById('mci-comp-end').value = formatDateYYYYMMDD(latestDataDate);
+
+                // Requirement 3: Rebase TRI to 2020-01-01 = 100
+                rebaseTriData();
 
                 processPerformanceData();
                 renderSummaryTab();
                 renderChartTab();
-                renderMarketCapTab(); // Init Market Cap
+                renderMarketCapTab();
                 
                 status.innerText = "Processing Raw Data...";
                 pivotDataForDownload();
@@ -1281,10 +1239,10 @@
 
         function initChartSelectors() {
             renderMultiSelect('perf-ticker-select-container', allAvailableTickers, selectedPerfTickers, () => {
-                renderPerformanceGrid();
+                renderPerformanceGrid(); 
             });
             renderMultiSelect('custom-ticker-select-container', allAvailableTickers, selectedCustomTickers, () => {
-                setCustomChartPeriod('CUSTOM'); // Re-trigger chart render with current period
+                setCustomChartPeriod('CUSTOM'); 
             });
         }
 
@@ -1297,28 +1255,49 @@
             
             container.innerHTML = `
                 <div class="multi-select-btn" onclick="document.getElementById('${listId}').classList.toggle('show'); event.stopPropagation();">
-                    Select Tickers <i class="material-icons">arrow_drop_down</i>
+                    Select Tickers / Colors <i class="material-icons">arrow_drop_down</i>
                 </div>
                 <div id="${listId}" class="multi-select-content"></div>
             `;
             
             const listEl = document.getElementById(listId);
             availableTickers.forEach(t => {
-                const label = document.createElement('label');
-                label.className = 'multi-select-item';
+                const div = document.createElement('div');
+                div.className = 'multi-select-item';
                 const isChecked = selectedSet.has(t) ? 'checked' : '';
-                label.innerHTML = `<input type="checkbox" value="${t}" ${isChecked} style="margin-right:8px;"> ${TICKER_NAMES[t] || t}`;
+                const color = TICKER_COLORS[t] || '#000000';
                 
-                label.querySelector('input').addEventListener('change', (e) => {
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center;">
+                        <input type="checkbox" value="${t}" ${isChecked} style="margin-right:8px;">
+                        ${TICKER_NAMES[t] || t}
+                    </div>
+                    <input type="color" value="${color}" style="width:20px; height:20px; border:none; padding:0; background:none; cursor:pointer;" onclick="event.stopPropagation();">
+                `;
+                
+                const checkbox = div.querySelector('input[type="checkbox"]');
+                const colorInput = div.querySelector('input[type="color"]');
+                
+                checkbox.addEventListener('change', (e) => {
                     if(e.target.checked) selectedSet.add(t);
                     else selectedSet.delete(t);
                     updateCallback();
                 });
                 
-                listEl.appendChild(label);
+                colorInput.addEventListener('change', (e) => {
+                     updateTickerColor(t, e.target.value);
+                     updateCallback();
+                });
+                
+                listEl.appendChild(div);
             });
         }
+        
+        function updateTickerColor(ticker, newColor) {
+            TICKER_COLORS[ticker] = newColor;
+        }
 
+        // Requirement 3: Ensure TRI works for indices using fallback
         function processTickerData(ticker, raw, market) {
             if (!raw || !raw.date || !raw.close) return;
             
@@ -1329,18 +1308,60 @@
             const closes = raw.close;
             const dates = raw.date;
             const vols = raw.volume || [];
+            const dailyRets = raw.dailyTotalReturn || []; 
+            
             const cleanData = [];
+            
+            let currentTri = 100;
+            
             dates.forEach((dStr, i) => {
                 if (dStr.includes(' ') || dStr.includes('T')) return;
 
                 const price = closes[i];
                 if (price == null) return;
                 const date = new Date(dStr); 
-                cleanData.push({ ticker, date, price, volume: vols[i] || 0, originalDateStr: dStr, market });
+                
+                if (i > 0) {
+                    let ret = 0;
+                    if (dailyRets[i] !== undefined && dailyRets[i] !== null) {
+                        ret = dailyRets[i];
+                    } else if (closes[i-1]) {
+                        // Fallback proxy logic for indices
+                        ret = (price / closes[i-1]) - 1;
+                    }
+                    currentTri = currentTri * (1 + ret);
+                }
+                
+                cleanData.push({ 
+                    ticker, date, price, volume: vols[i] || 0, 
+                    tri: currentTri, 
+                    originalDateStr: dStr, market 
+                });
             });
             if (!dataByTicker[ticker]) dataByTicker[ticker] = [];
             dataByTicker[ticker] = dataByTicker[ticker].concat(cleanData);
             allData = allData.concat(cleanData);
+        }
+
+        // Requirement 3: Rebase TRI to 2020-01-01 = 100
+        function rebaseTriData() {
+            const baseDate = new Date('2020-01-01');
+            Object.keys(dataByTicker).forEach(t => {
+                const data = dataByTicker[t];
+                if (!data || data.length === 0) return;
+                
+                // Find index of first date >= 2020-01-01
+                let baseIndex = data.findIndex(d => d.date >= baseDate);
+                // Fallback: if data ends before 2020 (unlikely) or starts way after, use index 0
+                if (baseIndex === -1) baseIndex = 0;
+                
+                const baseVal = data[baseIndex].tri;
+                if (baseVal === 0) return; // avoid div by zero
+
+                for (let i = 0; i < data.length; i++) {
+                    data[i].tri = (data[i].tri / baseVal) * 100;
+                }
+            });
         }
 
         function parseMetric(val) {
@@ -1352,7 +1373,6 @@
             return parseFloat(val.replace(/[BM,]/g, '')) * mult;
         }
 
-        // --- FX and Market Cap Logic ---
         function getFxRate(targetCurrency, date) {
             if (targetCurrency === 'USD') return 1;
             
@@ -1362,15 +1382,9 @@
             else if (targetCurrency === 'KRW') fxTicker = 'KRW=';
             else if (targetCurrency === 'CNY') fxTicker = 'CNY=';
             else if (targetCurrency === 'HKD') fxTicker = 'HKD=';
-            else if (targetCurrency === 'EUR') fxTicker = 'EUR='; // Added logic for ASML.AS
+            else if (targetCurrency === 'EUR') fxTicker = 'EUR=';
             else return 1;
 
-            // Handle EUR differently if source data uses EUR= (1 Euro = X USD) or USD/EUR. 
-            // Assuming FX.json contains USD pairs (e.g. TWD= means USD/TWD). 
-            // If EUR= is EURUSD (1.05), we need to invert if math is price/rate.
-            // Let's assume consistent USD/XXX format. For EUR, often quoted as EURUSD.
-            // Adjust logic based on typical FX data structure. Assuming data is Rate = Units of Local per 1 USD.
-            
             const rates = fxData[fxTicker];
             if (!rates || !rates.close || !rates.date) return 1;
 
@@ -1400,7 +1414,6 @@
             const priceTw = getPrice(tsmcTwTicker, date);
             const priceAdr = getPrice(tsmcAdrTicker, date);
             const sharesTw = tickerMetadata[tsmcTwTicker]?.shares;
-            //const sharesAdr = tickerMetadata[tsmcAdrTicker]?.shares;
             const twdRate = getFxRate('TWD', date);
 
             if (priceTw && priceAdr && sharesTw && twdRate) {
@@ -1414,7 +1427,6 @@
         }
         
         function calculateMarketCap(ticker, price, date) {
-            // Exclude Benchmark
             if (summaryTickersConfig['equity-index'].includes(ticker)) return '-';
             if (ticker === '2330.TW' || ticker === 'TSM') {
                 const blended = getBlendedMarketCap(date);
@@ -1432,25 +1444,13 @@
             else if (ticker.endsWith('.T')) currency = 'JPY';
             else if (ticker.endsWith('.KS')) currency = 'KRW';
             else if (ticker.endsWith('.SS')) currency = 'CNY';
-            else if (ticker.endsWith('.AS')) currency = 'EUR'; // ASML
+            else if (ticker.endsWith('.AS')) currency = 'EUR';
             
             const rate = getFxRate(currency, date);
             if (!rate || rate === 0) return '-';
             
-            // If EUR (quoted as EURUSD e.g. 1.05), calculation depends on FX data format. 
-            // Assuming standard USDXXX. If EUR is inverted (EURUSD), price in EUR * shares * EURUSD rate = USD.
-            // If USD/EUR (0.95), then price in EUR * shares / rate = USD.
-            // Let's assume simplified USD/Local for now based on standard.
+            let mktCap = (price * meta.shares) / rate;
             
-            let mktCap = 0;
-            // Hack for ASML if it's in EUR and we treat rate as USD/EUR
-            // Actually, usually EURUSD is quoted. 
-            // We'll stick to division logic assuming rate is Local per USD.
-            // If rate is < 2 for major currencies (GBP, EUR, AUD), it might be inverted.
-            
-            mktCap = (price * meta.shares) / rate;
-            
-            // Format: 1,234.5B
             const billions = mktCap / 1e9;
             return billions.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1}) + 'B';
         }
@@ -1490,10 +1490,8 @@
                 });
                 curr.setMonth(curr.getMonth() + 3);
             }
-            // Original Sort: Ascending (but parsed logic below sets it to Descending)
         }
 
-        // New function to parse weights from JSON
         function parseImportedMciWeights(weightsObj) {
             mciWeightHistory = [];
             let tickerSet = new Set();
@@ -1502,7 +1500,6 @@
                 let rowWeights = {};
                 Object.entries(wMap).forEach(([ticker, val]) => {
                     tickerSet.add(ticker);
-                    // Convert decimal to percentage for UI (e.g. 0.15 -> 15)
                     rowWeights[ticker] = parseFloat((val * 100).toFixed(2));
                 });
                 mciWeightHistory.push({
@@ -1511,15 +1508,44 @@
                 });
             });
 
-            // Sort Descending (Newest to Oldest)
             mciWeightHistory.sort((a,b) => new Date(b.date) - new Date(a.date));
-
-            // Update global members list
             mciMembers = Array.from(tickerSet).sort();
 
-            // Set default weights based on the newest available
             if(mciWeightHistory.length > 0) {
                 defaultWeights = { ...mciWeightHistory[0].weights };
+            }
+        }
+
+        // Requirement 1: Optimized Logic
+        function checkMciAutoExtension() {
+            if (mciWeightHistory.length === 0) return;
+            
+            // Loop to catch up multiple quarters if needed
+            while (true) {
+                const lastEntry = mciWeightHistory[0];
+                const lastDate = new Date(lastEntry.date);
+                
+                // Theoretical next date is +3 months
+                let nextDate = new Date(lastDate);
+                nextDate.setMonth(nextDate.getMonth() + 3);
+                
+                // If latest data is available BEYOND the next theoretical start date,
+                // it implies the current "lastEntry" (e.g. 10/1) is now history, 
+                // and we need a row for (e.g. 1/1)
+                // Using >= to be safe (if data exists on 1/1, we need 1/1 row)
+                if (latestDataDate >= nextDate) {
+                    const newDateStr = formatDateYYYYMMDD(nextDate);
+                    // Don't add if already exists (sanity check)
+                    if (lastEntry.date === newDateStr) break;
+
+                    mciWeightHistory.unshift({
+                        date: newDateStr,
+                        weights: { ...lastEntry.weights }
+                    });
+                    defaultWeights = { ...lastEntry.weights };
+                } else {
+                    break; 
+                }
             }
         }
 
@@ -1536,7 +1562,6 @@
                 const isError = Math.abs(sumWeights - 100) > 0.1;
                 const rowClass = isError ? 'weight-error' : '';
                 
-                // Only allow editing the newest row (index 0)
                 const isEditable = (rowIdx === 0);
                 const disabledAttr = isEditable ? '' : 'disabled';
                 const styleAttr = isEditable ? '' : 'background-color:#f5f5f5; color:#888;';
@@ -1571,7 +1596,6 @@
 
         function updateMciWeight(input) {
             const rowIdx = parseInt(input.dataset.row);
-            // Only proceed if editing is allowed
             if (rowIdx !== 0) return; 
 
             const ticker = input.dataset.ticker;
@@ -1601,6 +1625,9 @@
                     defaultWeights = { ...mciWeightHistory[0].weights };
                 }
                 calculateMCI();
+                // Need to calculate latestDataDate again in case it changed? Likely not, but rebase depends on it.
+                // Just maintain state.
+                rebaseTriData(); // Rebase new MCI data
                 processPerformanceData();
                 renderSummaryTab();
                 renderChartTab();
@@ -1616,31 +1643,23 @@
         }
 
         function calculateMCI() {
-            // 1. Setup
             const mciData = [];
             dataByTicker['.MCI'] = [];
             
             if (!mciWeightHistory.length) return;
 
-            // Define the cutoff date. The "Editable" row is Index 0 (Newest).
-            // Logic: Use JSON historical data strictly BEFORE this date.
-            // Start dynamic calculation FROM this date (or first available trading day after).
             const editableStartDateStr = mciWeightHistory[0].date;
             const editableWeights = mciWeightHistory[0].weights;
 
             let baseIndexValue = 100;
             let lastJsonDateStr = null;
 
-            // 2. Load Historical Data from JSON (Pre-calculation)
-            // UPDATED: Check for direct 'data' property instead of nested MAG7_Index
             if (historicalMciData && historicalMciData.data) {
                 const histObj = historicalMciData.data;
                 const histDates = Object.keys(histObj).sort();
 
                 histDates.forEach(dStr => {
-                    // Only use historical data strictly BEFORE the new weights take effect
                     if (dStr < editableStartDateStr) {
-                        // UPDATED: Data is a direct value, not an object with Close
                         const val = histObj[dStr];
                         if (val) {
                             mciData.push({
@@ -1648,62 +1667,51 @@
                                 date: new Date(dStr),
                                 price: val,
                                 volume: 0,
+                                tri: val, 
                                 originalDateStr: dStr,
                                 market: 'Equity Index'
                             });
-                            baseIndexValue = val; // Keep track of the last known locked value
+                            baseIndexValue = val; 
                             lastJsonDateStr = dStr;
                         }
                     }
                 });
             }
 
-            // 3. Prepare for Dynamic Calculation (Forward from editableStartDateStr)
             const validMembers = Object.keys(editableWeights).filter(t => dataByTicker[t] && dataByTicker[t].length > 0);
             if (validMembers.length === 0) {
-                // Save what we have and exit
                 dataByTicker['.MCI'] = mciData;
                 allData = allData.concat(mciData);
                 return;
             }
 
-            // Construct Price Map for constituents
             const priceMap = {};
             validMembers.forEach(t => {
                 dataByTicker[t].forEach(pt => {
                     const dStr = formatDateYYYYMMDD(pt.date);
                     if (!priceMap[dStr]) priceMap[dStr] = {};
-                    priceMap[dStr][t] = pt.price;
+                    priceMap[dStr][t] = pt.price; 
                 });
             });
 
-            // Get all trading dates sorted
             const allDates = Object.keys(priceMap).sort();
             
-            // Find start index: First date >= editableStartDateStr
             let startIndex = allDates.findIndex(d => d >= editableStartDateStr);
             if (startIndex === -1) {
-                // If no future dates found, just save what we have
                 dataByTicker['.MCI'] = mciData;
                 allData = allData.concat(mciData);
                 return;
             }
 
-            // Initialize previous prices for calculation based on the *last known date* before start
-            // If lastJsonDateStr exists in our priceMap, use prices from there. 
-            // Otherwise, search backwards from startIndex to find a valid trading day for base prices.
             let prevPrices = {};
             let prevIndexValue = baseIndexValue;
 
             let baseDateIndex = startIndex - 1;
-            // If we have a gap or need to find T-1
             if (lastJsonDateStr && allDates.includes(lastJsonDateStr)) {
                  baseDateIndex = allDates.indexOf(lastJsonDateStr);
             } else {
-                 // Fallback: look for any valid date before startIndex
                  while (baseDateIndex >= 0) {
                      let hasData = true;
-                     // Ideally check if major constituents have data
                      if (hasData) break;
                      baseDateIndex--;
                  }
@@ -1715,38 +1723,32 @@
                     if (priceMap[baseDateStr][t]) prevPrices[t] = priceMap[baseDateStr][t];
                 });
             } else {
-                // If we absolutely cannot find a T-1 price (rare), we can't calculate return for T.
-                // We'll skip the first date or assume flat. Let's just grab T prices as base and not calc return for T.
                 const firstDateStr = allDates[startIndex];
                 validMembers.forEach(t => {
                     if (priceMap[firstDateStr][t]) prevPrices[t] = priceMap[firstDateStr][t];
                 });
-                // Since we can't calculate return for the very first day without history, 
-                // we push the base value for this date (no change) to start the chain.
                 mciData.push({ 
                     ticker: '.MCI', 
                     date: new Date(allDates[startIndex]), 
                     price: prevIndexValue, 
                     volume: 0, 
+                    tri: prevIndexValue,
                     originalDateStr: allDates[startIndex], 
                     market: 'Equity Index' 
                 });
-                startIndex++; // Move to next day
+                startIndex++; 
             }
 
-            // Total weight for normalization
             let totalW = 0;
             validMembers.forEach(t => totalW += (editableWeights[t] || 0));
             if (totalW === 0) totalW = 1;
 
-            // 4. Dynamic Calculation Loop
             for (let i = startIndex; i < allDates.length; i++) {
                 const dStr = allDates[i];
                 const date = new Date(dStr);
                 const currentPrices = priceMap[dStr];
                 
                 let compositeReturn = 0;
-                // Calculate weighted return: sum( weight * (price_t / price_{t-1} - 1) )
                 validMembers.forEach(t => {
                     const w = (editableWeights[t] || 0) / totalW;
                     const currP = currentPrices[t];
@@ -1756,11 +1758,9 @@
                         const dailyRet = (currP / prevP) - 1;
                         compositeReturn += w * dailyRet;
                     }
-                    // Update previous price for next iteration
                     if (currP) prevPrices[t] = currP;
                 });
 
-                // Update Index Value
                 const newIndexValue = prevIndexValue * (1 + compositeReturn);
                 
                 mciData.push({ 
@@ -1768,6 +1768,7 @@
                     date: date, 
                     price: newIndexValue, 
                     volume: 0, 
+                    tri: newIndexValue,
                     originalDateStr: dStr, 
                     market: 'Equity Index' 
                 });
@@ -1806,6 +1807,27 @@
                 }
                 return null;
             };
+
+            const findTriOnOrBefore = (date) => {
+                if (!date) return null;
+                const target = date.getTime();
+                for (let i = tickerData.length - 1; i >= 0; i--) {
+                    if (tickerData[i].date.getTime() <= target) return tickerData[i].tri;
+                }
+                return null;
+            };
+
+            // Requirement 2: Find next data if missing
+            const findTriOnOrAfter = (date) => {
+                if (!date) return null;
+                const target = date.getTime();
+                // tickerData is sorted ascending
+                for (let i = 0; i < tickerData.length; i++) {
+                    if (tickerData[i].date.getTime() >= target) return tickerData[i].tri;
+                }
+                return null;
+            };
+
             const findActualDataPoint = (date) => {
                  if (!date) return null;
                  const target = date.getTime();
@@ -1814,11 +1836,13 @@
                  }
                  return null;
             };
-            const calcPerf = (startPrice, endPrice) => {
-                if (!startPrice || !endPrice) return null;
-                return ((endPrice / startPrice) - 1) * 100;
+
+            const calcPerf = (startVal, endVal) => {
+                if (!startVal || !endVal) return null;
+                return ((endVal / startVal) - 1) * 100;
             };
-            return { ticker, name: TICKER_NAMES[ticker] || ticker, currency, findPriceOnOrBefore, findActualDataPoint, calcPerf };
+            
+            return { ticker, name: TICKER_NAMES[ticker] || ticker, currency, findPriceOnOrBefore, findTriOnOrBefore, findTriOnOrAfter, findActualDataPoint, calcPerf };
         }
 
         async function loadNews() {
@@ -1842,7 +1866,7 @@
 
                             list.forEach((n, idx) => {
                                 n.ticker = t;
-                                n.id = `${t}_${idx}_${Math.random().toString(36).substr(2,9)}`; // Unique ID
+                                n.id = `${t}_${idx}_${Math.random().toString(36).substr(2,9)}`; 
                                 n.jsDate = new Date(n.Date + ' ' + (n.Time || ''));
                                 if(n.Source) newsSources.add(n.Source);
                             });
@@ -1857,7 +1881,6 @@
             populateNewsFilters();
             filterNews();
             
-            // Auto-select first news item
             const firstNews = document.querySelector('.news-item');
             if(firstNews) firstNews.click();
         }
@@ -1971,7 +1994,6 @@
 
         function renderNewsList(items) {
             const listEl = document.getElementById('news-list'); 
-            // Only render first 100 for performance
             items.slice(0, 100).forEach((n, idx) => {
                 const div = document.createElement('div'); 
                 div.className = 'news-item';
@@ -1979,7 +2001,6 @@
                 if(selectedNewsIds.has(n.id)) div.classList.add('selected-for-ai');
                 
                 const lang = (n.Title.match(/[\u4e00-\u9fa5]/)) ? 'CH' : 'EN';
-                // Modified: Added Time to display
                 div.innerHTML = `
                     <div class="news-meta">
                         <span class="news-tag" style="background:${TICKER_COLORS[n.ticker]||'#ccc'}; color:white;">${TICKER_NAMES[n.ticker] || n.ticker}</span>
@@ -1992,7 +2013,6 @@
                 
                 div.onclick = (e) => {
                     if (e.ctrlKey || e.metaKey) {
-                        // Multi-select Logic
                         if (selectedNewsIds.has(n.id)) {
                             selectedNewsIds.delete(n.id);
                             div.classList.remove('selected-for-ai');
@@ -2025,8 +2045,6 @@
             `;
         }
         
-        // --- AI Analysis Functions ---
-
         function analyzeSelectedNews() {
             if (selectedNewsIds.size === 0) {
                 alert('Please Ctrl+Click to select news items first.');
@@ -2035,14 +2053,12 @@
 
             const selectedItems = fullNewsList.filter(n => selectedNewsIds.has(n.id));
             
-            // Group news by ticker for better context
             const newsByTicker = {};
             selectedItems.forEach(n => {
                 if (!newsByTicker[n.ticker]) newsByTicker[n.ticker] = [];
                 newsByTicker[n.ticker].push(n);
             });
 
-            // Build comprehensive news summary
             let newsText = `Total ${selectedItems.length} news items selected from ${Object.keys(newsByTicker).length} companies:\n\n`;
             
             Object.keys(newsByTicker).forEach(ticker => {
@@ -2058,78 +2074,51 @@
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
             const prompt = `
-            Act as a professional equity research analyst specializing in semiconductor and technology sectors.
+            Act as a professional equity research analyst.
+            Synthesize these ${selectedItems.length} news articles covering ${Object.keys(newsByTicker).length} companies.
             
-            You are analyzing ${selectedItems.length} news articles covering ${Object.keys(newsByTicker).length} companies. 
-            Your task is to provide a COMPREHENSIVE SYNTHESIS of all these news items, not individual summaries.
-            
-            IMPORTANT: Provide the entire response in ${lang}.
-            
-            Structure your analysis as follows:
-
+            Structure:
             ## 📰 Executive Summary
-            - Provide 3-5 key takeaways that synthesize the OVERALL themes across all selected news
-            - Focus on cross-company trends and industry-wide developments
-            - Highlight any conflicting signals or diverging trends
+            ## 📊 Market Impact
+            ## 💡 Investment Implications
+            ## 🎯 Key Themes
 
-            ## 📊 Market Impact Analysis (150-200 words)
-            - Analyze how these developments collectively affect the sector
-            - Identify winners and losers based on the news flow
-            - Assess short-term vs long-term implications
-            - Consider supply chain, competitive, and macroeconomic factors
-
-            ## 💡 Investment Implications (150-200 words)
-            - Synthesize what these news mean for portfolio positioning
-            - Identify relative value opportunities or risks
-            - Suggest which stocks might outperform/underperform based on this news flow
-            - Highlight any catalysts or risk events to watch
-
-            ## 🎯 Key Themes Identified
-            - List 3-5 major themes that emerge from analyzing all these articles together
-            - Examples: supply chain shifts, competitive dynamics, regulatory changes, technology trends, etc.
-
-            News Articles to Analyze:
+            Output in ${lang}.
+            
+            News:
             ${newsText}
             `;
             
             callGemini(prompt);
         }
 
-        // 2.2 Volatility Analysis (Summary Tab)
         function explainVolatility(ticker, val, dateStr) {
             const targetDate = new Date(dateStr);
             const startDate = new Date(targetDate); startDate.setDate(targetDate.getDate() - 2);
             const endDate = new Date(targetDate); endDate.setDate(targetDate.getDate() + 2);
             
-            // Filter news around that date for that ticker
             const relevantNews = fullNewsList.filter(n => {
                 const nDate = n.jsDate;
                 return n.ticker === ticker && nDate >= startDate && nDate <= endDate;
             });
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
-            let newsContext = "No specific news found in the database for this period.";
+            let newsContext = "No specific news found.";
             if (relevantNews.length > 0) {
                 newsContext = relevantNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
             }
 
             const prompt = `
-            Act as a professional stock analyst.
-            The stock **${TICKER_NAMES[ticker] || ticker}** moved by **${val}%** around **${dateStr}**.
-            
-            Using the following news headlines from that period (if any) and your general knowledge, explain the primary drivers for this volatility.
-            
-            Provide the output in ${lang}.
-            Format as bullet points.
-            
-            News Context:
+            Act as a stock analyst.
+            ${TICKER_NAMES[ticker] || ticker} moved by **${val}%** around **${dateStr}**.
+            Explain drivers based on:
             ${newsContext}
+            Output in ${lang}, bullet points.
             `;
             
             callGemini(prompt);
         }
 
-        // 2.3 Ticker Chart Analysis
         function analyzeTickerChart() {
             if (!currentModalTicker) return;
             const data = dataByTicker[currentModalTicker];
@@ -2139,33 +2128,28 @@
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
 
             const prompt = `
-            Act as a technical analyst.
-            Analyze the recent price trend for **${TICKER_NAMES[currentModalTicker] || currentModalTicker}**.
-            
-            Here is the raw price data for the last 30 trading days:
+            Technical analysis for **${TICKER_NAMES[currentModalTicker] || currentModalTicker}**.
+            Last 30 days prices:
             ${recentData}
-            
-            Provide a 200-300 word technical analysis including trends, potential support/resistance levels (estimated), and momentum.
+            Provide trend, support/resistance, momentum.
             Output in ${lang}.
             `;
             
             callGemini(prompt);
         }
 
-        // 2.4 Custom Period Comparison Analysis
         function analyzeCustomChart() {
             const startDate = customPeriodState.start;
             const endDate = customPeriodState.end;
             
             let perfSummary = "Performance from " + formatDateYYYYMMDD(startDate) + " to " + formatDateYYYYMMDD(endDate) + ":\n";
-            // Use currently selected tickers
             const tickers = Array.from(selectedCustomTickers); 
             
             tickers.forEach(t => {
                 if (!dataByTicker[t]) return;
                 const perf = allPerformanceData.get(t);
-                const p1 = perf.findPriceOnOrBefore(startDate);
-                const p2 = perf.findPriceOnOrBefore(endDate);
+                const p1 = perf.findTriOnOrBefore(startDate);
+                const p2 = perf.findTriOnOrBefore(endDate);
                 if(p1 && p2) {
                     const chg = ((p2/p1)-1)*100;
                     perfSummary += `${TICKER_NAMES[t]||t}: ${chg.toFixed(2)}%\n`;
@@ -2179,25 +2163,19 @@
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
 
             const prompt = `
-            Act as a market strategist.
-            Analyze the comparative performance of key semiconductor/tech stocks during the period: ${formatDateYYYYMMDD(startDate)} to ${formatDateYYYYMMDD(endDate)}.
-            
-            Performance Data:
+            Market Strategist Analysis: ${formatDateYYYYMMDD(startDate)} to ${formatDateYYYYMMDD(endDate)}.
+            Performance (Total Return):
             ${perfSummary}
-            
-            Recent News Headlines (near end date):
+            News context:
             ${newsText}
-            
-            Provide a 200-300 word analysis on why certain tickers outperformed others and the general market sentiment at the end of the period.
+            Why distinct performance? Sentiment?
             Output in ${lang}.
             `;
 
             callGemini(prompt);
         }
 
-        // 2.5 Analyze Summary Table
         function analyzeSummaryTable() {
-            // Get visible tickers from watchlist
             let watchlistTickers = summaryTickersConfig['tw-stocks'].filter(t => visibleTickers.has(t));
             let peerTickers = summaryTickersConfig['us-stocks'].filter(t => visibleTickers.has(t));
             let benchmark = summaryTickersConfig['equity-index'];
@@ -2209,14 +2187,14 @@
                     const curr = perf.findActualDataPoint(summaryReferenceDate);
                     if(!curr) return '';
                     
-                    // Get 1M and YTD for context
                     const getRet = (period) => {
                         let d = new Date(summaryReferenceDate);
                         if(period==='1M') d.setMonth(d.getMonth()-1);
                         else if(period==='YTD') d = new Date(d.getFullYear(),0,1);
-                        const p0 = perf.findPriceOnOrBefore(d);
-                        if(!p0) return 'N/A';
-                        return (((curr.price/p0)-1)*100).toFixed(1) + '%';
+                        const p0 = perf.findTriOnOrBefore(d);
+                        const p1 = perf.findTriOnOrBefore(summaryReferenceDate);
+                        if(!p0 || !p1) return 'N/A';
+                        return (((p1/p0)-1)*100).toFixed(1) + '%';
                     };
                     
                     return `${TICKER_NAMES[t]||t}: Price=${curr.price}, 1M=${getRet('1M')}, YTD=${getRet('YTD')}`;
@@ -2226,10 +2204,8 @@
             const dataText = `
             Benchmark:
             ${getDataStr(benchmark)}
-            
             Watchlist:
             ${getDataStr(watchlistTickers)}
-            
             Peers:
             ${getDataStr(peerTickers)}
             `;
@@ -2237,30 +2213,20 @@
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
             const prompt = `
-            Act as a portfolio manager. 
-            Analyze the current snapshot of the watchlist below (As of ${formatDateYYYYMMDD(summaryReferenceDate)}).
-            
+            Portfolio Manager Analysis (As of ${formatDateYYYYMMDD(summaryReferenceDate)}).
             Data:
             ${dataText}
-            
-            Provide a comprehensive market overview:
-            1. **Market Sentiment**: Based on Benchmark and key movers.
-            2. **Sector Performance**: Compare Taiwan semis vs US peers.
-            3. **Outliers**: Highlight any stock with significant deviation.
-            
+            1. Market Sentiment
+            2. Sector Performance (TW vs US)
+            3. Outliers
             Output in ${lang}.
             `;
             
             callGemini(prompt);
         }
 
-        // 2.6 Analyze Performance Report
         function analyzePerformanceReport() {
-            // This reads the table rendered in #stats-table-grid or computes it
-            // Use currently selected tickers
             const tickers = Array.from(selectedPerfTickers);
-            const periods = ['1-Week', '1-Month', 'YTD', '1-Year'];
-            
             let tableData = "Ticker | 1W | 1M | YTD | 1Y\n---|---|---|---|---\n";
             
             tickers.forEach(t => {
@@ -2274,8 +2240,8 @@
                     else if (pd === 'YTD') d = new Date(d.getFullYear(), 0, 1);
                     else if (pd === '1-Year') d.setFullYear(d.getFullYear() - 1);
                     
-                    const p0 = perf.findPriceOnOrBefore(d);
-                    const p1 = perf.findPriceOnOrBefore(summaryReferenceDate);
+                    const p0 = perf.findTriOnOrBefore(d);
+                    const p1 = perf.findTriOnOrBefore(summaryReferenceDate);
                     if(p0 && p1) return (((p1/p0)-1)*100).toFixed(2) + '%';
                     return '-';
                 };
@@ -2283,7 +2249,6 @@
                 tableData += `${TICKER_NAMES[t]||t} | ${getRet('1-Week')} | ${getRet('1-Month')} | ${getRet('YTD')} | ${getRet('1-Year')}\n`;
             });
 
-            // Get recent news to add context
             const newsStart = new Date(summaryReferenceDate); newsStart.setDate(newsStart.getDate()-7);
             const recentNews = fullNewsList.filter(n => n.jsDate >= newsStart && n.jsDate <= summaryReferenceDate).slice(0, 8);
              const newsText = recentNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
@@ -2291,35 +2256,29 @@
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
             const prompt = `
-            Act as a financial analyst writing a weekly performance report.
-            
-            Performance Table:
+            Weekly Performance Report.
+            Table:
             ${tableData}
-            
-            Recent News Context:
+            News:
             ${newsText}
-            
-            Write a "Performance Report" covering:
-            1. **Short-term Momentum**: (1W, 1M trends)
-            2. **Long-term Trend**: (YTD, 1Y context)
-            3. **Key Drivers**: Use news to explain moves in TSMC, Nvidia or Indexes.
-            
+            1. Short-term Momentum
+            2. Long-term Trend
+            3. Key Drivers
             Output in ${lang}.
             `;
             
             callGemini(prompt);
         }
 
-        // --- Standard Rendering Functions ---
-
         function renderChartTab() {
             if (document.getElementById('chart-grid').classList.contains('active')) renderPerformanceGrid();
-            else if (document.getElementById('chart-custom').classList.contains('active')) setCustomChartPeriod('YTD');
+            else if (document.getElementById('chart-custom').classList.contains('active')) {
+                setCustomChartPeriod(currentCustomPeriod);
+            }
             else renderMciComparison();
         }
         
         function renderPerformanceGrid() {
-            // Use selected tickers
             const tickers = Array.from(selectedPerfTickers);
             const validTickers = tickers.filter(t => dataByTicker[t]);
             const periods = ['1-Year', 'YTD', '1-Month', '1-Week'];
@@ -2361,10 +2320,10 @@
             const datasets = tickers.map(t => {
                 const tData = dataByTicker[t].filter(pt => pt.date >= startDate && pt.date <= endDate);
                 if (tData.length === 0) return null;
-                const basePrice = tData[0].price;
+                const baseVal = tData[0].tri; 
                 const dataPoints = tData.map(pt => ({
                     x: pt.date,
-                    y: ((pt.price / basePrice) - 1) * 100
+                    y: ((pt.tri / baseVal) - 1) * 100
                 }));
                 return { 
                     label: TICKER_NAMES[t] || t, 
@@ -2423,8 +2382,17 @@
             });
         }
 
-        // --- Custom Performance Chart ---
         function setCustomChartPeriod(period) {
+             if (period === 'YTD') {
+                 const ytdStart = new Date(summaryReferenceDate.getFullYear(), 0, 1);
+                 const daysDiff = (summaryReferenceDate - ytdStart) / (1000 * 60 * 60 * 24);
+                 if (daysDiff < 10) {
+                     period = '1Y';
+                 }
+             }
+
+             currentCustomPeriod = period;
+
              const btns = document.querySelectorAll('#chart-custom .chart-period-btn');
              btns.forEach(b => {
                  if (period === 'CUSTOM') {
@@ -2466,15 +2434,14 @@
                  activeCharts[canvasId] = null;
             }
 
-            // Use selected tickers
             const tickers = Array.from(selectedCustomTickers);
             const validTickers = tickers.filter(t => dataByTicker[t]);
 
             const datasets = validTickers.map(t => {
                 const tData = dataByTicker[t].filter(pt => pt.date >= startDate && pt.date <= endDate);
                 if (tData.length === 0) return null;
-                const basePrice = tData[0].price;
-                const dataPoints = tData.map(pt => ({ x: pt.date, y: ((pt.price / basePrice) - 1) * 100 }));
+                const baseVal = tData[0].tri; 
+                const dataPoints = tData.map(pt => ({ x: pt.date, y: ((pt.tri / baseVal) - 1) * 100 }));
                 return { label: TICKER_NAMES[t] || t, data: dataPoints, borderColor: TICKER_COLORS[t] || '#999', borderWidth: 2, pointRadius: 0, tension: 0.1, spanGaps: true };
             }).filter(Boolean);
 
@@ -2557,9 +2524,11 @@
                         else if (p === '1-Year') d.setFullYear(d.getFullYear() - 1);
                         else if (p === 'YTD') d = new Date(d.getFullYear(), 0, 1);
                         
-                        const startPrice = perfData.findPriceOnOrBefore(d);
-                        if (currPoint && startPrice) {
-                            const ret = perfData.calcPerf(startPrice, currPoint.price);
+                        const startVal = perfData.findTriOnOrBefore(d);
+                        const endVal = perfData.findTriOnOrBefore(summaryReferenceDate);
+                        
+                        if (endVal && startVal) {
+                            const ret = ((endVal/startVal)-1)*100;
                             const css = ret >= 0 ? 'text-positive' : 'text-negative';
                             html += `<td class="${css}">${ret.toFixed(2)}%</td>`;
                         } else { html += '<td>-</td>'; }
@@ -2571,7 +2540,6 @@
             table.innerHTML = html;
         }
 
-        // --- UPDATED: Render MCI Comparison with custom logic ---
         function renderMciComparison() {
             const canvasId = 'canvas-mci-comp';
             if (activeCharts[canvasId]) {
@@ -2582,7 +2550,6 @@
             const tsmc = dataByTicker['2330.TW']; const mci = dataByTicker['.MCI'];
             if (!tsmc || !mci) return;
             
-            // Get user inputs
             const startInput = document.getElementById('mci-comp-start').value || '2020-01-01';
             const endInput = document.getElementById('mci-comp-end').value || formatDateYYYYMMDD(summaryReferenceDate);
             const colorTsmc = document.getElementById('color-tsmc').value || '#8b0000';
@@ -2595,10 +2562,9 @@
             const tData = filter(tsmc); 
             const mData = filter(mci);
             
-            // Normalize so both start at 100 on the first available day of this period
             const normalize = (arr) => {
                 if(arr.length === 0) return [];
-                const base = arr[0].price; 
+                const base = arr[0].price; // Use Price
                 return arr.map(pt => ({ x: pt.date, y: (pt.price / base) * 100 }));
             };
 
@@ -2640,37 +2606,53 @@
             });
         }
         
-        function copyMciChartData() {
-            const chart = activeCharts['canvas-mci-comp'];
-            if (!chart) { alert('Chart not loaded'); return; }
-            const ds1 = chart.data.datasets[0]; 
-            const ds2 = chart.data.datasets[1];
+        function filterSummaryTable() {
+            const searchTerm = document.getElementById('summary-search').value.toLowerCase();
+            const container = document.getElementById('summary-content-container');
+            const summaryTab = document.getElementById('summary');
             
-            let csv = "Date\tTSMC(Base100)\tMCI(Base100)\n";
-            ds1.data.forEach((pt, i) => {
-                const dStr = formatDateYYYYMMDD(pt.x);
-                const v1 = pt.y.toFixed(2);
-                const v2 = ds2.data[i] ? ds2.data[i].y.toFixed(2) : '';
-                csv += `${dStr}\t${v1}\t${v2}\n`;
-            });
-            navigator.clipboard.writeText(csv).then(() => alert('Chart data copied to clipboard!'));
+            if (searchTerm.length > 0) {
+                summaryTab.classList.add('search-mode');
+            } else {
+                summaryTab.classList.remove('search-mode');
+            }
+            
+            renderSummaryTab();
         }
 
-        // --- Summary Tab Functions ---
         function renderSummaryTab() {
             const refDate = summaryReferenceDate;
             const containers = {'equity-index': 'summary-equity-index', 'tw-stocks': 'summary-tw-stocks', 'us-stocks': 'summary-us-stocks'};
             const startStr = customPeriodState.start ? formatDateSlash(customPeriodState.start) : '...';
             const endStr = customPeriodState.end ? formatDateSlash(customPeriodState.end) : '...';
             const customHeader = 'Custom';
+            
+            const searchTerm = document.getElementById('summary-search').value.toLowerCase();
 
             Object.entries(containers).forEach(([group, id]) => {
+                // Update Card Labels from Config
+                const cardLabel = document.getElementById(id).querySelector('.summary-card-label');
+                if(cardLabel) cardLabel.innerText = GROUP_DISPLAY_NAMES[group];
+
                 let tickers = [...summaryTickersConfig[group]];
                 tickers = tickers.filter(t => {
+                     // Filter Logic
                      if (group !== 'equity-index' && !visibleTickers.has(t)) return false;
-                     if (group === 'equity-index' && !visibleTickers.has(t)) return false; 
+                     // For Search
+                     if (searchTerm.length > 0) {
+                         const name = TICKER_NAMES[t] || '';
+                         if (!t.toLowerCase().includes(searchTerm) && !name.toLowerCase().includes(searchTerm)) return false;
+                     }
                      return true;
                 });
+                
+                const wrapper = document.getElementById(id);
+                if (searchTerm.length > 0 && tickers.length === 0) {
+                    wrapper.style.display = 'none';
+                } else {
+                    wrapper.style.display = 'flex';
+                }
+
                 const groupColumns = summaryColumnsState.filter(col => {
                     if (!col.visible) return false;
                     if (group === 'equity-index' && col.id === 'MarketCap') return false;
@@ -2689,7 +2671,6 @@
                 const table = document.getElementById(id).querySelector('table');
                 let html = '<thead><tr>';
                 
-                // --- Column Headers (Draggable) ---
                 groupColumns.forEach((col, colIdx) => {
                     let onClickAction = `toggleSort('${group}', '${col.id}')`;
                     let sortIcon = '';
@@ -2711,7 +2692,6 @@
                 });
                 html += '</tr></thead><tbody>';
 
-                // --- Rows (Draggable) ---
                 tickers.forEach((t, rowIdx) => {
                     const perfData = allPerformanceData.get(t);
                     if (!perfData) return;
@@ -2738,14 +2718,14 @@
                             else if (pd === '3-Month') d.setMonth(d.getMonth() - 3);
                             else if (pd === '1-Year') d.setFullYear(d.getFullYear() - 1);
                             else if (pd === 'YTD') d = new Date(d.getFullYear(), 0, 1);
-                            else if (pd === 'Custom') return perfData.findPriceOnOrBefore(customPeriodState.start);
-                            return perfData.findPriceOnOrBefore(d);
+                            else if (pd === 'Custom') return perfData.findTriOnOrBefore(customPeriodState.start);
+                            return perfData.findTriOnOrBefore(d);
                         }
                         
-                        let comparePrice = price;
+                        let compareVal = currPoint.tri; 
                         if (col.id === 'Custom' && customPeriodState.end) {
-                             const endPoint = perfData.findPriceOnOrBefore(customPeriodState.end);
-                             if (endPoint) comparePrice = endPoint;
+                             const endPoint = perfData.findTriOnOrBefore(customPeriodState.end);
+                             if (endPoint) compareVal = endPoint;
                         }
 
                         switch(col.id) {
@@ -2755,17 +2735,21 @@
                             case 'Ticker': val = t; break;
                             case 'Date': val = formatDateDDMMM(currPoint.date); break; 
                             case 'MarketCap': 
-                                val = calculateMarketCap(t, price, currPoint.date);
+                                val = calculateMarketCap(t, price, currPoint.date); 
                                 break;
-                            case 'Price': val = formatNumberWithCommas(price, 2); break;
+                            case 'Price': val = formatNumberWithCommas(price, 2); break; 
                             default: 
-                                const startPrice = getP(col.id);
-                                if (startPrice) {
-                                    const ret = perfData.calcPerf(startPrice, comparePrice);
-                                    val = ret.toFixed(2) + '%';
+                                let startVal = getP(col.id);
+                                // Requirement 2: Fallback to next available data if Start Date missing (e.g. IPO later)
+                                if (col.id === 'Custom' && startVal === null) {
+                                    startVal = perfData.findTriOnOrAfter(customPeriodState.start);
+                                }
+
+                                if (startVal) {
+                                    const ret = ((compareVal / startVal) - 1) * 100;
+                                    val = formatNumberWithCommas(ret, 2) + '%';
                                     css = ret >= 0 ? 'text-positive' : 'text-negative';
                                     
-                                    // 2.2 Volatility Logic for AI
                                     if (col.id === '1-Day' && Math.abs(ret) > 5) {
                                         css += ret > 0 ? ' cell-pos-light' : ' cell-neg-light';
                                         cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}')">?</div>`;
@@ -2785,23 +2769,21 @@
             });
         }
         
-        // --- Drag and Drop Handlers ---
         function handleDragStart(e, type, id) {
             dragSrcEl = e.target;
             dragType = type;
             e.target.classList.add('dragging');
             if (type === 'row') {
-                e.dataTransfer.setData('text/plain', id); // contains group|index
+                e.dataTransfer.setData('text/plain', id); 
                 e.dataTransfer.effectAllowed = 'move';
             } else {
-                e.dataTransfer.setData('text/plain', id); // contains colId
+                e.dataTransfer.setData('text/plain', id); 
                 e.dataTransfer.effectAllowed = 'move';
             }
         }
 
         function handleDragOver(e, type) {
             if (e.preventDefault) e.preventDefault();
-            // Only allow dropping if types match
             if (dragType === type) {
                 e.dataTransfer.dropEffect = 'move';
                 e.currentTarget.classList.add('drag-over');
@@ -2820,7 +2802,6 @@
 
             const sourceId = e.dataTransfer.getData('text/plain');
 
-            // --- Column Reordering ---
             if (type === 'col') {
                 const srcColId = sourceId;
                 const visibleCols = summaryColumnsState.filter(c => c.visible);
@@ -2837,14 +2818,12 @@
                 }
             } 
             
-            // --- Row Reordering ---
             else if (type === 'row') {
                 const [srcGroup, srcIdxStr] = sourceId.split('|');
                 const srcIdx = parseInt(srcIdxStr);
                 const [targetGroup, targetIdxStr] = targetId.split('|');
                 const targetIdx = parseInt(targetIdxStr);
 
-                // Only allow reordering within the same group for data integrity
                 if (srcGroup === targetGroup) {
                     const groupList = summaryTickersConfig[srcGroup];
                     
@@ -2856,14 +2835,12 @@
                     let list = [...summaryTickersConfig[srcGroup]];
                     list = list.filter(t => {
                          if (srcGroup !== 'equity-index' && !visibleTickers.has(t)) return false;
-                         if (srcGroup === 'equity-index' && !visibleTickers.has(t)) return false; 
                          return true;
                     });
                     
                     const tickerToMove = list[srcIdx];
                     const tickerAtTarget = list[targetIdx];
                     
-                    // Now find these in the main config and swap/move
                     const realSrcIdx = summaryTickersConfig[srcGroup].indexOf(tickerToMove);
                     const realTargetIdx = summaryTickersConfig[srcGroup].indexOf(tickerAtTarget);
                     
@@ -2878,24 +2855,20 @@
             return false;
         }
 
-        // --- Copy to Clipboard Function ---
         function copySummaryTables() {
             let copyText = "";
             const tables = document.querySelectorAll('.summary-card table');
             
             tables.forEach(table => {
-                // Get Card Title
                 const cardTitle = table.closest('.summary-card').querySelector('.summary-card-label').innerText;
                 copyText += `[${cardTitle}]\n`;
                 
-                // Headers
                 const headers = Array.from(table.querySelectorAll('th')).map(th => th.innerText.trim());
                 copyText += headers.join('\t') + '\n';
                 
-                // Rows
                 const rows = table.querySelectorAll('tbody tr');
                 rows.forEach(row => {
-                    const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText.replace('?', '').trim()); // remove vol icon ?
+                    const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText.replace('?', '').trim());
                     copyText += cells.join('\t') + '\n';
                 });
                 copyText += '\n';
@@ -2912,7 +2885,6 @@
         function toggleSort(group, colId) {
             const current = tableSortState[group];
             if (current.column === colId) {
-                // Toggle: asc -> desc -> null (default order)
                 if (current.direction === 'asc') current.direction = 'desc';
                 else {
                     current.column = null;
@@ -2931,8 +2903,10 @@
             if(!perfData) return -999999999;
             const currPoint = perfData.findActualDataPoint(refDate);
             if(!currPoint) return -999999999;
+            
             const price = currPoint.price;
             const anchorDate = currPoint.date;
+
             const getP = (pd) => {
                 let d = new Date(anchorDate);
                 if (pd === '1-Day') d.setDate(d.getDate() - 1);
@@ -2941,8 +2915,8 @@
                 else if (pd === '3-Month') d.setMonth(d.getMonth() - 3);
                 else if (pd === '1-Year') d.setFullYear(d.getFullYear() - 1);
                 else if (pd === 'YTD') d = new Date(d.getFullYear(), 0, 1);
-                else if (pd === 'Custom') return perfData.findPriceOnOrBefore(customPeriodState.start);
-                return perfData.findPriceOnOrBefore(d);
+                else if (pd === 'Custom') return perfData.findTriOnOrBefore(customPeriodState.start);
+                return perfData.findTriOnOrBefore(d);
             }
             switch(colId) {
                 case 'Name': return perfData.name;
@@ -2951,13 +2925,20 @@
                 case 'Price': return price;
                 case 'MarketCap': return calculateMarketCapNumeric(ticker, price, anchorDate);
                 default: 
-                    let comparePrice = price;
+                    // Use TRI for sort
+                    let compareVal = currPoint.tri;
                     if (colId === 'Custom' && customPeriodState.end) {
-                         const endPoint = perfData.findPriceOnOrBefore(customPeriodState.end);
-                         if (endPoint) comparePrice = endPoint;
+                         const endPoint = perfData.findTriOnOrBefore(customPeriodState.end);
+                         if (endPoint) compareVal = endPoint;
                     }
-                    const startPrice = getP(colId);
-                    if(startPrice) return perfData.calcPerf(startPrice, comparePrice);
+                    let startVal = getP(colId);
+                    
+                    // Fallback for Custom Sort
+                    if (colId === 'Custom' && startVal === null) {
+                        startVal = perfData.findTriOnOrAfter(customPeriodState.start);
+                    }
+
+                    if(startVal) return ((compareVal/startVal)-1)*100;
                     return -999999999;
             }
         }
@@ -2975,11 +2956,14 @@
         function openManageTickerModal() {
             const listContainer = document.getElementById('manage-ticker-list');
             listContainer.innerHTML = '';
+            document.getElementById('add-ticker-input').value = '';
+
             const groups = [
-                { name: 'Benchmark', tickers: summaryTickersConfig['equity-index'] }, 
-                { name: 'Watchlist (TW Stocks)', tickers: summaryTickersConfig['tw-stocks'] },
-                { name: 'Peers (US Stocks)', tickers: summaryTickersConfig['us-stocks'] }
+                { id: 'equity-index', name: GROUP_DISPLAY_NAMES['equity-index'], tickers: summaryTickersConfig['equity-index'] }, 
+                { id: 'tw-stocks', name: GROUP_DISPLAY_NAMES['tw-stocks'], tickers: summaryTickersConfig['tw-stocks'] },
+                { id: 'us-stocks', name: GROUP_DISPLAY_NAMES['us-stocks'], tickers: summaryTickersConfig['us-stocks'] }
             ];
+
             groups.forEach(group => {
                 const groupHeader = document.createElement('div');
                 groupHeader.style.gridColumn = '1 / -1';
@@ -2987,7 +2971,18 @@
                 groupHeader.style.marginTop = '10px';
                 groupHeader.style.paddingBottom = '5px';
                 groupHeader.style.borderBottom = '1px solid var(--border-color)';
-                groupHeader.innerText = group.name;
+                groupHeader.style.display = 'flex';
+                groupHeader.style.justifyContent = 'space-between';
+                groupHeader.style.alignItems = 'center';
+
+                // Editable Group Name
+                groupHeader.innerHTML = `
+                    <span>${group.name}</span>
+                    <input type="text" class="controls-input" value="${group.name}" 
+                           style="width:150px; font-size:0.9rem; padding:2px 5px;"
+                           onchange="updateGroupName('${group.id}', this.value)">
+                `;
+                
                 listContainer.appendChild(groupHeader);
                 group.tickers.forEach(t => {
                     const item = document.createElement('label');
@@ -3000,6 +2995,50 @@
             const m = document.getElementById('manageTickerModal');
             m.style.display='block'; setTimeout(() => m.classList.add('show'), 10);
         }
+        
+        function updateGroupName(groupId, newName) {
+            if(newName && newName.trim() !== "") {
+                GROUP_DISPLAY_NAMES[groupId] = newName.trim();
+                renderSummaryTab(); // Updates the main tab labels
+            }
+        }
+
+        // Requirement 1: Select Group when adding
+        function addNewTickerToManage() {
+            const input = document.getElementById('add-ticker-input');
+            const groupSelect = document.getElementById('add-ticker-group-select');
+            
+            const ticker = input.value.trim().toUpperCase();
+            const targetGroupId = groupSelect.value;
+
+            if (!ticker) return;
+
+            if (dataByTicker[ticker]) {
+                if (!visibleTickers.has(ticker)) {
+                    visibleTickers.add(ticker);
+                    // Add to config if not present in any group
+                    let found = false;
+                    Object.values(summaryTickersConfig).forEach(arr => { if(arr.includes(ticker)) found = true; });
+                    if(!found) {
+                        summaryTickersConfig[targetGroupId].push(ticker);
+                    } else {
+                        // If already in another group, maybe move it? For now just ensure it's visible.
+                        // Or strict: remove from old, add to new. Let's strict move.
+                        Object.keys(summaryTickersConfig).forEach(k => {
+                            const idx = summaryTickersConfig[k].indexOf(ticker);
+                            if(idx > -1) summaryTickersConfig[k].splice(idx, 1);
+                        });
+                        summaryTickersConfig[targetGroupId].push(ticker);
+                    }
+                    openManageTickerModal();
+                    input.value = ''; 
+                } else {
+                    alert('Ticker already in watchlist.');
+                }
+            } else {
+                alert(`Ticker "${ticker}" not found in database. Please contact Admin/Developer.`);
+            }
+        }
 
         function applyManageTickers() {
             const checkboxes = document.querySelectorAll('#manage-ticker-list input[type="checkbox"]');
@@ -3011,7 +3050,6 @@
             renderSummaryTab();
         }
         
-        // --- Redesigned Column Modal ---
         function openColumnModal() {
             const list = document.getElementById('column-list');
             list.innerHTML = '';
@@ -3028,9 +3066,10 @@
 
         function applyColumnChanges() { summaryColumnsState.forEach((col, idx) => { col.visible = document.getElementById(`col-chk-${idx}`).checked; }); closeModal('columnModal'); renderSummaryTab(); }
         
+        // Requirement 1: Default to 2020-01-01 in Modal inputs
         function openCustomPeriodModal() {
-             document.getElementById('modal-custom-start').value = formatDateYYYYMMDD(customPeriodState.start || new Date('2020-01-01'));
-             document.getElementById('modal-custom-end').value = formatDateYYYYMMDD(customPeriodState.end || summaryReferenceDate);
+             document.getElementById('modal-custom-start').value = '2020-01-01'; // Default fixed
+             document.getElementById('modal-custom-end').value = formatDateYYYYMMDD(summaryReferenceDate);
              const m = document.getElementById('customPeriodModal');
              m.style.display='block'; setTimeout(() => m.classList.add('show'), 10);
         }
@@ -3048,8 +3087,6 @@
         
         function updateSinceDate(val) { renderSummaryTab(); }
         
-        // --- Market Cap Tab Functions ---
-        
         function zoomMarketCap(delta) {
             mcZoomLevel += delta;
             if (mcZoomLevel < 0.5) mcZoomLevel = 0.5;
@@ -3057,7 +3094,6 @@
             document.getElementById('mc-wrapper').style.transform = `scale(${mcZoomLevel})`;
         }
         
-        // NEW: Market Cap Configuration UI Logic
         function openMarketCapConfig() {
             renderMarketCapConfigUI();
             const modal = document.getElementById('marketCapConfigModal');
@@ -3125,7 +3161,7 @@
         }
         
         function updateMcTickerName(ticker, newName) {
-            TICKER_NAMES[ticker] = newName; // Update global map
+            TICKER_NAMES[ticker] = newName; 
         }
 
         function saveMarketCapConfig() {
@@ -3139,7 +3175,6 @@
             const anchorDate = dateInput ? new Date(dateInput) : summaryReferenceDate;
             const dates = generateMarketCapDates(anchorDate);
             
-            // Generate style for dynamic width
             const styleId = 'dynamic-mc-style';
             let styleTag = document.getElementById(styleId);
             if(!styleTag) {
@@ -3158,11 +3193,9 @@
                     html += `<div class="mc-block-subtitle">${group.subtitle}</div>`;
                 }
                 
-                // Add class for centering if date is hidden
                 const tableClass = group.showDate ? 'mc-table' : 'mc-table no-date';
                 html += `<table class="${tableClass}"><thead><tr>`;
                 
-                // Header Row
                 if (group.showDate) {
                     html += `<th style="width:120px;">Date/Ticker</th>`;
                 }
@@ -3171,21 +3204,17 @@
                 });
                 html += '</tr></thead><tbody>';
                 
-                // Rows logic
-                // Helper to get value
                 const getValue = (ticker, dObj) => {
                     if (group.valueType === 'price') {
                          const perf = allPerformanceData.get(ticker);
                          if (!perf) return null;
-                         const price = perf.findPriceOnOrBefore(dObj.date);
+                         const price = perf.findPriceOnOrBefore(dObj.date); 
                          return price;
                     } else {
-                        // Market Cap
                         return getHistoricalMarketCap(ticker, dObj.date);
                     }
                 };
 
-                // Helper to format value
                 const formatVal = (val) => {
                     if (val === null) return '-';
                     if (group.valueType === 'price') {
@@ -3195,7 +3224,6 @@
                     }
                 };
 
-                // Row 1: As of Date (Current)
                 html += `<tr>`;
                 if(group.showDate) html += `<td>${formatDateSlash(dates[0].date)}</td>`;
                 group.tickers.forEach(t => {
@@ -3203,7 +3231,6 @@
                 });
                 html += '</tr>';
 
-                // Row 2: Change (Current - Prev Week)
                 html += `<tr>`;
                 if(group.showDate) html += `<td>WoW</td>`;
                 group.tickers.forEach(t => {
@@ -3220,7 +3247,6 @@
                 });
                 html += '</tr>';
                 
-                // Remaining Rows: Prev Week, YTD, Prev Years...
                 for (let i = 1; i < dates.length; i++) {
                     const dObj = dates[i];
                     html += `<tr>`;
@@ -3237,7 +3263,6 @@
         }
         
         function getFirstTradingDay(year) {
-             // Try to use TSMC as reference for Taiwan market, or fallback to others
             const referenceTickers = ['2330.TW', '.TWII', '.SPX', 'AAPL'];
             let data = null;
             for (const t of referenceTickers) {
@@ -3250,7 +3275,6 @@
             const startOfYear = new Date(year, 0, 1);
             const endOfYear = new Date(year, 11, 31);
             
-            // Data is sorted by date ascending
              const entry = data.find(d => d.date >= startOfYear && d.date <= endOfYear);
              
              if (entry) return entry.date;
@@ -3260,22 +3284,17 @@
         function generateMarketCapDates(anchorDate) {
             const dates = [];
             
-            // 1. As of Date (User selected or Latest)
             const d1 = new Date(anchorDate);
             dates.push({ label: 'Current', date: new Date(d1) });
             
-            // 2. Previous Week End (Approx -7 days)
             const d2 = new Date(d1);
             d2.setDate(d2.getDate() - 7);
             dates.push({ label: 'WoW', date: d2 });
             
-            // 3. Start of Current Year
             const currentYear = d1.getFullYear();
             const d3 = getFirstTradingDay(currentYear);
             dates.push({ label: formatDateSlash(d3), date: d3 });
             
-            
-            // 4. Start of Previous Years back to 2011
             for (let y = currentYear - 1; y >= 2011; y--) {
                 const d = getFirstTradingDay(y);
                 dates.push({ label: formatDateSlash(d), date: d });
@@ -3285,7 +3304,6 @@
         }
         
         function getHistoricalMarketCap(ticker, targetDate) {
-            // Find price closest to targetDate (on or before)
             const perf = allPerformanceData.get(ticker);
             if (!perf) return null;
             
@@ -3298,47 +3316,74 @@
             const val = calculateMarketCapNumeric(ticker, price, actualDate);
             if (val === -1 || val === null) return null;
             
-            return val / 1e9; // Return in Billions
+            return val / 1e9;
         }
 
-        // --- Data Tab Functions ---
+        // Requirement 3: Filter TRI for MCI and non-stocks
         function pivotDataForDownload() {
             try {
                 pivotedPriceData = new Map();
                 pivotedVolumeData = new Map();
+                pivotedTriData = new Map();
                 let usedTickers = [];
                 Object.values(summaryTickersConfig).forEach(list => usedTickers = usedTickers.concat(list));
+                usedTickers = [...new Set(usedTickers)].sort();
                 const uniqueDates = [...new Set(allData.map(d => d.originalDateStr.split(' ')[0]))].sort();
                 pivotedDataHeaders = ['Date', ...usedTickers];
                 const priceDataMap = new Map();
                 const volumeDataMap = new Map();
+                const triDataMap = new Map();
+                
                 allData.forEach(d => {
                     const dateStr = d.originalDateStr.split(' ')[0];
-                    if (!priceDataMap.has(dateStr)) priceDataMap.set(dateStr, new Map());
-                    if (!volumeDataMap.has(dateStr)) volumeDataMap.set(dateStr, new Map());
+                    if (!priceDataMap.has(dateStr)) {
+                        priceDataMap.set(dateStr, new Map());
+                        volumeDataMap.set(dateStr, new Map());
+                        triDataMap.set(dateStr, new Map());
+                    }
                     priceDataMap.get(dateStr).set(d.ticker, d.price);
                     volumeDataMap.get(dateStr).set(d.ticker, d.volume);
+                    
+                    // Filter TRI: Don't store if it's MCI or Index (.TWII etc)
+                    if (d.ticker !== '.MCI' && !d.ticker.startsWith('.')) {
+                        triDataMap.get(dateStr).set(d.ticker, d.tri); 
+                    }
                 });
+                
                 let lastKnownPrices = {};
                 let lastKnownVolumes = {}; 
-                usedTickers.forEach(t => { lastKnownPrices[t] = null; lastKnownVolumes[t] = null; });
+                let lastKnownTri = {};
+                usedTickers.forEach(t => { lastKnownPrices[t] = null; lastKnownVolumes[t] = null; lastKnownTri[t] = null; });
+                
                 uniqueDates.forEach(date => {
                      const pMap = priceDataMap.get(date);
                      const vMap = volumeDataMap.get(date);
+                     const tMap = triDataMap.get(date);
                      const rowP = [];
                      const rowV = [];
+                     const rowT = [];
+                     
                      usedTickers.forEach(ticker => {
                          let pVal = pMap.get(ticker);
-                         if (pVal !== undefined && pVal !== null) { lastKnownPrices[ticker] = pVal; } 
-                         else { pVal = lastKnownPrices[ticker]; }
+                         if (pVal !== undefined && pVal !== null) { lastKnownPrices[ticker] = pVal; } else { pVal = lastKnownPrices[ticker]; }
                          rowP.push(pVal);
+                         
                          let vVal = vMap.get(ticker);
-                         if (vVal !== undefined && vVal !== null) { lastKnownVolumes[ticker] = vVal; } 
-                         else { vVal = lastKnownVolumes[ticker]; }
+                         if (vVal !== undefined && vVal !== null) { lastKnownVolumes[ticker] = vVal; } else { vVal = lastKnownVolumes[ticker]; }
                          rowV.push(vVal);
+
+                         // Handle TRI row creation based on filter
+                         if (ticker === '.MCI' || ticker.startsWith('.')) {
+                             rowT.push(''); // Empty cell
+                         } else {
+                             let tVal = tMap.get(ticker);
+                             if (tVal !== undefined && tVal !== null) { lastKnownTri[ticker] = tVal; } else { tVal = lastKnownTri[ticker]; }
+                             rowT.push(tVal);
+                         }
                      });
                      pivotedPriceData.set(date, rowP);
                      pivotedVolumeData.set(date, rowV);
+                     pivotedTriData.set(date, rowT);
                 });
                 isDataPivoted = true;
                 if (document.getElementById('data').classList.contains('active')) {
@@ -3371,53 +3416,50 @@
             const endDate = new Date(endDateVal);
             const summaryTickers = pivotedDataHeaders.slice(1); 
             const finalHeaders = ['Date', ...summaryTickers];
-            const priceColumns = finalHeaders.map((header, index) => ({
+            
+            const createCols = (mask) => finalHeaders.map((header, index) => ({
                 title: header,
                 width: index === 0 ? 120 : 100,
                 type: index === 0 ? 'text' : 'numeric',
-                mask: index > 0 ? '#,##.00' : null,
+                mask: index > 0 ? mask : null,
             }));
-            const volumeColumns = finalHeaders.map((header, index) => ({
-                title: header,
-                width: index === 0 ? 120 : 100,
-                type: index === 0 ? 'text' : 'numeric',
-                mask: index > 0 ? '#,##' : null,
-            }));
-            const priceSheetData = [];
-            [...pivotedPriceData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
-                if (startDate && new Date(date) < startDate) return;
-                if (endDate && new Date(date) > endDate) return;
-                priceSheetData.push([date, ...pivotedPriceData.get(date)]);
-            });
-            const volumeSheetData = [];
-            [...pivotedVolumeData.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
-                if (startDate && new Date(date) < startDate) return;
-                if (endDate && new Date(date) > endDate) return;
-                volumeSheetData.push([date, ...pivotedVolumeData.get(date)]);
-            });
+
+            const filterData = (map) => {
+                const arr = [];
+                [...map.keys()].sort((a, b) => b.localeCompare(a)).forEach(date => {
+                    if (startDate && new Date(date) < startDate) return;
+                    if (endDate && new Date(date) > endDate) return;
+                    arr.push([date, ...map.get(date)]);
+                });
+                return arr;
+            };
+
+            const priceSheetData = filterData(pivotedPriceData);
+            const volumeSheetData = filterData(pivotedVolumeData);
+            const triSheetData = filterData(pivotedTriData);
+
             jspreadsheetInstance = jspreadsheet(container, {
                 worksheets: [
                     {
                         data: priceSheetData,
-                        columns: priceColumns,
+                        columns: createCols('#,##.00'),
                         worksheetName: 'Price',
-                        freezeColumns: 1,
-                        freezeRows: 1,
-                        pagination: 25,
-                        paginationOptions: [10, 25, 50, 100],
-                        tableOverflow: true,
-                        tableWidth: "100%",
+                        freezeColumns: 1, freezeRows: 1, pagination: 25,
+                        tableOverflow: true, tableWidth: "100%",
                     },
                     {
                         data: volumeSheetData,
-                        columns: volumeColumns,
+                        columns: createCols('#,##'),
                         worksheetName: 'Volume',
-                        freezeColumns: 1,
-                        freezeRows: 1,
-                        tableOverflow: true,
-                        tableWidth: "100%",
-                        pagination: 25,
-                        paginationOptions: [10, 25, 50, 100]
+                        freezeColumns: 1, freezeRows: 1, pagination: 25,
+                        tableOverflow: true, tableWidth: "100%",
+                    },
+                    {
+                        data: triSheetData,
+                        columns: createCols('#,##.00'),
+                        worksheetName: 'TRI (Base 100)',
+                        freezeColumns: 1, freezeRows: 1, pagination: 25,
+                        tableOverflow: true, tableWidth: "100%",
                     }
                 ],
                 toolbar: true
@@ -3475,7 +3517,6 @@
 
              const recentData = data.filter(pt => pt.date >= startDate && pt.date <= endDate);
              
-             // Time Scale Logic
              const timeDiffYears = (endDate - startDate) / (1000 * 60 * 60 * 24 * 365);
              let timeUnit = 'month';
              let timeDisplayFormat = "MMM''yy";
