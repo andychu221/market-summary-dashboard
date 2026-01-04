@@ -1845,36 +1845,38 @@
             return { ticker, name: TICKER_NAMES[ticker] || ticker, currency, findPriceOnOrBefore, findTriOnOrBefore, findTriOnOrAfter, findActualDataPoint, calcPerf };
         }
 
-        async function loadNews() {
-            const newsTickers = ['2330.TW', 'TSM', 'NVDA', 'AAPL', 'AVGO', 'QCOM', 'AMD', 'ADI', '2454.TW', '6723.T', 'INTC', '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS'];
+		async function loadNews() {
             const listEl = document.getElementById('news-list'); 
             listEl.innerHTML = '<p style="padding:10px;">Loading news...</p>';
             let allNews = [];
             newsSources = new Set();
             loadedNewsTickers = new Set();
             
-            const fetches = newsTickers.map(t => {
-                let filename = t; 
-                return fetchJsonWithRetry(`https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/taiwan-stock-news/${filename}.json`)
-                    .then(json => {
-                        let list = [];
-                        if (json) {
-                            if (Array.isArray(json)) list = json;
-                            else if (json.news) list = json.news;
-                            
-                            if (list.length > 0) loadedNewsTickers.add(t);
+            // 使用單一來源 (注意：GitHub blob 連結需轉換為 raw 連結)
+            const url = 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/all_stocks_news.json';
+            const json = await fetchJsonWithRetry(url);
 
-                            list.forEach((n, idx) => {
-                                n.ticker = t;
-                                n.id = `${t}_${idx}_${Math.random().toString(36).substr(2,9)}`; 
-                                n.jsDate = new Date(n.Date + ' ' + (n.Time || ''));
-                                if(n.Source) newsSources.add(n.Source);
-                            });
-                            allNews = allNews.concat(list);
-                        }
-                    });
-            });
-            await Promise.all(fetches); 
+            if (json && json.news && Array.isArray(json.news)) {
+                // 直接使用 json.news 陣列
+                json.news.forEach((n, idx) => {
+                    // 將來源資料的 Ticker (大寫開頭) 對應到程式內部使用的 ticker (小寫)
+                    n.ticker = n.Ticker; 
+                    
+                    // 生成唯一 ID
+                    n.id = `${n.ticker}_${idx}_${Math.random().toString(36).substr(2,9)}`; 
+                    
+                    // 建立 Date 物件供排序使用
+                    n.jsDate = new Date(n.Date + ' ' + (n.Time || ''));
+                    
+                    // 收集過濾器所需的資料
+                    if (n.Source) newsSources.add(n.Source);
+                    if (n.ticker) loadedNewsTickers.add(n.ticker);
+                });
+                
+                allNews = json.news;
+            }
+
+            // 按時間倒序排列
             allNews.sort((a,b) => b.jsDate - a.jsDate); 
             fullNewsList = allNews; 
             
