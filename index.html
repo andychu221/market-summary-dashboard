@@ -932,7 +932,7 @@
             '3374.TWO': 'xintec.com', '6789.TW': 'viseratech.com', '3661.TW': 'alchip.com', '603501.SS': 'ovt.com',
             '6758.T': 'sony.com', '6526.T': 'socionext.com', '000660.KS': 'skhynix.com', 'MU': 'micron.com', 'NXPI': 'nxp.com',
 			'2388.TW': 'viatech.com', '2379.TW': 'realtek.com', 'STM': 'st.com', 'NOD.OL': 'nordicsemi.com', 'CRUS': 'cirrus.com',
-			'108320.KS': 'lxsemicon.com', '688099.SS': 'amlogic.com', '688213.SS': 'smartsens.com', '000063.SZ': 'zte.com.cn', '688220.SS': 'asrmicro.com'
+			'108320.KS': 'lxsemicon.com', '688099.SS': 'amlogic.com', '688213.SS': 'smartsenstech.com', '000063.SZ': 'zte.com.cn', '688220.SS': 'asrmicro.com'
         };
 
         let TICKER_COLORS = {
@@ -1903,7 +1903,7 @@
 
         function populateNewsFilters() {
             const searchInput = document.getElementById('news-company-search');
-            searchInput.value = 'All Companies';
+            searchInput.value = '';
             searchInput.dataset.selectedTicker = 'all';
             filterCompanyDropdown();
             const srcSelect = document.getElementById('news-filter-source');
@@ -1915,7 +1915,7 @@
         function filterCompanyDropdown() {
             const searchTerm = document.getElementById('news-company-search').value.toLowerCase();
             const dropdown = document.getElementById('news-company-dropdown');
-            dropdown.innerHTML = '<div class="date-option" onclick="selectCompanyFilter(\'all\')">All Companies</div>';
+            dropdown.innerHTML = '';
     
             Array.from(loadedNewsTickers).sort().forEach(t => {
                 const name = TICKER_NAMES[t] || t;
@@ -1930,7 +1930,7 @@
             const searchInput = document.getElementById('news-company-search');
             const dropdown = document.getElementById('news-company-dropdown');
             if (ticker === 'all') {
-                searchInput.value = 'All Companies';
+                searchInput.value = '';
                 searchInput.dataset.selectedTicker = 'all';
             } else {
                 const name = TICKER_NAMES[ticker] || ticker;
