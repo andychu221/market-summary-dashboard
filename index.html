@@ -930,7 +930,9 @@
             'AMAT': 'appliedmaterials.com', 'KLAC': 'kla.com', 'CSCO': 'cisco.com', 'BTDR': 'bitdeer.com',
             'SIMO': 'siliconmotion.com', 'ASML.AS': 'asml.com', '5347.TWO': 'vis.com', '3443.TW': 'guc-asic.com',
             '3374.TWO': 'xintec.com', '6789.TW': 'viseratech.com', '3661.TW': 'alchip.com', '603501.SS': 'ovt.com',
-            '6758.T': 'sony.com', '6526.T': 'socionext.com', '000660.KS': 'skhynix.com', 'MU': 'micron.com', 'NXPI': 'nxp.com'
+            '6758.T': 'sony.com', '6526.T': 'socionext.com', '000660.KS': 'skhynix.com', 'MU': 'micron.com', 'NXPI': 'nxp.com',
+            '2388.TW': 'viatech.com', '2379.TW': 'realtek.com', 'STM': 'st.com', 'NOD': 'nordicsemi.com', 'CRUS': 'cirrus.com',
+            '108320.KS': 'lxsemicon.com', '688099.SS': 'amlogic.com', '688213.SS': 'smartsens.com', '000063.SZ': 'zte.com.cn', '688220.SS': 'asrmicro.com'
         };
 
         let TICKER_COLORS = {
@@ -947,7 +949,9 @@
             '005930.KS': '#1428A0', '2303.TW': '#003366', '0981.HK': '#E31B23',
             '688981.SS': '#B22222', 'GFS': '#FF6A13',
             'MSFT': '#00A4EF', 'GOOGL': '#4285F4', 'AMZN': '#FF9900', 'META': '#0668E1', 'TSLA': '#E31937',
-            'AMAT': '#00558C', 'KLAC': '#D6000F', 'ASML.AS': '#263147', '000660.KS': '#DB0025'
+            'AMAT': '#00558C', 'KLAC': '#D6000F', 'ASML.AS': '#263147', '000660.KS': '#DB0025',
+            '2388.TW': '#F4A460', '2379.TW': '#8A2BE2', 'STM': '#20B2AA', 'NOD': '#FFD700', 'CRUS': '#FF69B4',
+            '108320.KS': '#CD5C5C', '688099.SS': '#4B0082', '688213.SS': '#556B2F', '000063.SZ': '#8B4513', '688220.SS': '#4682B4'
         };
 
         let summaryTickersConfig = {
@@ -957,7 +961,8 @@
                 'NVDA', 'AAPL', 'AVGO', 'QCOM', 'AMD', 'ADI', '2454.TW', '6723.T', 'INTC', 
                 '005930.KS', '2303.TW', '0981.HK', '688981.SS', 'GFS', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA',
                 'AMAT', 'KLAC', 'CSCO', 'BTDR', 'SIMO', 'ASML.AS', '5347.TWO', '3443.TW', '3374.TWO',
-                '6789.TW', '3661.TW', '603501.SS', '6758.T', '6526.T', '000660.KS'
+                '6789.TW', '3661.TW', '603501.SS', '6758.T', '6526.T', '000660.KS',
+                '2388.TW', '2379.TW', 'STM', 'NOD', 'CRUS', '108320.KS', '688099.SS', '688213.SS', '000063.SZ', '688220.SS'
             ]
         };
 
@@ -1446,6 +1451,7 @@
             else if (ticker.endsWith('.T')) currency = 'JPY';
             else if (ticker.endsWith('.KS')) currency = 'KRW';
             else if (ticker.endsWith('.SS')) currency = 'CNY';
+            else if (ticker.endsWith('.SZ')) currency = 'CNY';
             else if (ticker.endsWith('.AS')) currency = 'EUR';
             
             const rate = getFxRate(currency, date);
@@ -1472,6 +1478,7 @@
              else if (ticker.endsWith('.T')) currency = 'JPY';
              else if (ticker.endsWith('.KS')) currency = 'KRW';
              else if (ticker.endsWith('.SS')) currency = 'CNY';
+             else if (ticker.endsWith('.SZ')) currency = 'CNY';
              else if (ticker.endsWith('.AS')) currency = 'EUR';
              
              const rate = getFxRate(currency, date);
@@ -1797,6 +1804,7 @@
             if (ticker.endsWith('.TW') || ticker === '.TWII') currency = 'TWD';
             else if (ticker.endsWith('.HK')) currency = 'HKD';
             else if (ticker.endsWith('.SS')) currency = 'CNY';
+            else if (ticker.endsWith('.SZ')) currency = 'CNY';
             else if (ticker.endsWith('.T')) currency = 'JPY';
             else if (ticker.endsWith('.KS')) currency = 'KRW';
             else currency = 'USD';
