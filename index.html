@@ -888,6 +888,15 @@
     </div>
 
     <script>
+        const NEWS_TICKER_MAP = {
+            '.TWII': '^TWII',
+            '.SPX': '^GSPC'
+        };
+
+        function getNewsTicker(ticker) {
+            return NEWS_TICKER_MAP[ticker] || ticker;
+        }
+
         const TICKER_NAMES = {
             '2330.TW': 'TSMC', 'TSM': 'TSMC ADR', 'TSM.N': 'TSMC ADR',
             '.TWII': 'TWSE', '.SOX': 'SOX', '.SPX': 'S&P 500', '.MCI': 'MCI',
@@ -2069,6 +2078,13 @@
         }
         
         function analyzeSelectedNews() {
+            // Check for active item that might not be in selection set
+            const activeItem = document.querySelector('.news-item.active');
+            if (activeItem && activeItem.dataset.id) {
+                // If user is viewing an item, likely wants it included if hitting AI button
+                selectedNewsIds.add(activeItem.dataset.id);
+            }
+
             if (selectedNewsIds.size === 0) {
                 alert('Please Ctrl+Click to select news items first.');
                 return;
@@ -2120,9 +2136,11 @@
             const startDate = new Date(targetDate); startDate.setDate(targetDate.getDate() - 2);
             const endDate = new Date(targetDate); endDate.setDate(targetDate.getDate() + 2);
             
+            const newsTicker = getNewsTicker(ticker);
+
             const relevantNews = fullNewsList.filter(n => {
                 const nDate = n.jsDate;
-                return n.ticker === ticker && nDate >= startDate && nDate <= endDate;
+                return n.ticker === newsTicker && nDate >= startDate && nDate <= endDate;
             });
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
@@ -2148,12 +2166,27 @@
             if (!data) return;
             
             const recentData = data.slice(-30).map(d => `${d.date.toISOString().split('T')[0]}: ${d.price}`).join('\n');
+
+            const newsTicker = getNewsTicker(currentModalTicker);
+            const endDate = summaryReferenceDate;
+            const startDate = new Date(endDate); startDate.setDate(startDate.getDate() - 30);
+
+            const relevantNews = fullNewsList.filter(n => n.ticker === newsTicker && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 5);
+            let newsText = "No recent news found.";
+            if (relevantNews.length > 0) {
+                newsText = relevantNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+            }
+
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
 
             const prompt = `
             Technical analysis for **${TICKER_NAMES[currentModalTicker] || currentModalTicker}**.
             Last 30 days prices:
             ${recentData}
+
+            Recent News (Last 30 days):
+            ${newsText}
+
             Provide trend, support/resistance, momentum.
             Output in ${lang}.
             `;
@@ -2168,6 +2201,8 @@
             let perfSummary = "Performance from " + formatDateYYYYMMDD(startDate) + " to " + formatDateYYYYMMDD(endDate) + ":\n";
             const tickers = Array.from(selectedCustomTickers); 
             
+            let allNewsText = "";
+
             tickers.forEach(t => {
                 if (!dataByTicker[t]) return;
                 const perf = allPerformanceData.get(t);
@@ -2177,11 +2212,13 @@
                     const chg = ((p2/p1)-1)*100;
                     perfSummary += `${TICKER_NAMES[t]||t}: ${chg.toFixed(2)}%\n`;
                 }
-            });
 
-            const newsStart = new Date(endDate); newsStart.setDate(endDate.getDate() - 5);
-            const recentNews = fullNewsList.filter(n => n.jsDate >= newsStart && n.jsDate <= endDate).slice(0, 10);
-            const newsText = recentNews.map(n => `- ${n.Date} (${n.ticker}): ${n.Title}`).join('\n');
+                const newsTicker = getNewsTicker(t);
+                const tNews = fullNewsList.filter(n => n.ticker === newsTicker && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 3);
+                if(tNews.length > 0) {
+                    allNewsText += `\nNews for ${TICKER_NAMES[t]||t}:\n` + tNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+                }
+            });
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
 
@@ -2189,8 +2226,10 @@
             Market Strategist Analysis: ${formatDateYYYYMMDD(startDate)} to ${formatDateYYYYMMDD(endDate)}.
             Performance (Total Return):
             ${perfSummary}
-            News context:
-            ${newsText}
+
+            News context (during selected period):
+            ${allNewsText}
+
             Why distinct performance? Sentiment?
             Output in ${lang}.
             `;
@@ -2232,6 +2271,16 @@
             Peers:
             ${getDataStr(peerTickers)}
             `;
+
+            const twiiNewsTicker = getNewsTicker('.TWII');
+            const gspcNewsTicker = getNewsTicker('.SPX');
+
+            const newsStart = new Date(summaryReferenceDate); newsStart.setDate(summaryReferenceDate.getDate() - 5);
+
+            const getNewsFor = (t) => fullNewsList.filter(n => n.ticker === t && n.jsDate >= newsStart && n.jsDate <= summaryReferenceDate).slice(0, 10);
+
+            const twiiNews = getNewsFor(twiiNewsTicker).map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+            const gspcNews = getNewsFor(gspcNewsTicker).map(n => `- ${n.Date}: ${n.Title}`).join('\n');
             
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
@@ -2239,7 +2288,14 @@
             Portfolio Manager Analysis (As of ${formatDateYYYYMMDD(summaryReferenceDate)}).
             Data:
             ${dataText}
-            1. Market Sentiment
+
+            Recent News (TWSE):
+            ${twiiNews}
+
+            Recent News (S&P 500):
+            ${gspcNews}
+
+            1. Market Sentiment (incorporate news)
             2. Sector Performance (TW vs US)
             3. Outliers
             Output in ${lang}.
