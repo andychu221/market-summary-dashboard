@@ -888,15 +888,6 @@
     </div>
 
     <script>
-        const NEWS_TICKER_MAP = {
-            '.TWII': '^TWII',
-            '.SPX': '^GSPC'
-        };
-
-        function getNewsTicker(ticker) {
-            return NEWS_TICKER_MAP[ticker] || ticker;
-        }
-
         const TICKER_NAMES = {
             '2330.TW': 'TSMC', 'TSM': 'TSMC ADR', 'TSM.N': 'TSMC ADR',
             '.TWII': 'TWSE', '.SOX': 'SOX', '.SPX': 'S&P 500', '.MCI': 'MCI',
@@ -2136,11 +2127,9 @@
             const startDate = new Date(targetDate); startDate.setDate(targetDate.getDate() - 2);
             const endDate = new Date(targetDate); endDate.setDate(targetDate.getDate() + 2);
             
-            const newsTicker = getNewsTicker(ticker);
-
             const relevantNews = fullNewsList.filter(n => {
                 const nDate = n.jsDate;
-                return n.ticker === newsTicker && nDate >= startDate && nDate <= endDate;
+                return n.ticker === ticker && nDate >= startDate && nDate <= endDate;
             });
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
@@ -2167,11 +2156,10 @@
             
             const recentData = data.slice(-30).map(d => `${d.date.toISOString().split('T')[0]}: ${d.price}`).join('\n');
 
-            const newsTicker = getNewsTicker(currentModalTicker);
             const endDate = summaryReferenceDate;
             const startDate = new Date(endDate); startDate.setDate(startDate.getDate() - 30);
 
-            const relevantNews = fullNewsList.filter(n => n.ticker === newsTicker && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 5);
+            const relevantNews = fullNewsList.filter(n => n.ticker === currentModalTicker && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 5);
             let newsText = "No recent news found.";
             if (relevantNews.length > 0) {
                 newsText = relevantNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
@@ -2213,8 +2201,7 @@
                     perfSummary += `${TICKER_NAMES[t]||t}: ${chg.toFixed(2)}%\n`;
                 }
 
-                const newsTicker = getNewsTicker(t);
-                const tNews = fullNewsList.filter(n => n.ticker === newsTicker && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 3);
+                const tNews = fullNewsList.filter(n => n.ticker === t && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 3);
                 if(tNews.length > 0) {
                     allNewsText += `\nNews for ${TICKER_NAMES[t]||t}:\n` + tNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
                 }
@@ -2272,15 +2259,12 @@
             ${getDataStr(peerTickers)}
             `;
 
-            const twiiNewsTicker = getNewsTicker('.TWII');
-            const gspcNewsTicker = getNewsTicker('.SPX');
-
             const newsStart = new Date(summaryReferenceDate); newsStart.setDate(summaryReferenceDate.getDate() - 5);
 
             const getNewsFor = (t) => fullNewsList.filter(n => n.ticker === t && n.jsDate >= newsStart && n.jsDate <= summaryReferenceDate).slice(0, 10);
 
-            const twiiNews = getNewsFor(twiiNewsTicker).map(n => `- ${n.Date}: ${n.Title}`).join('\n');
-            const gspcNews = getNewsFor(gspcNewsTicker).map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+            const twiiNews = getNewsFor('.TWII').map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+            const gspcNews = getNewsFor('.SPX').map(n => `- ${n.Date}: ${n.Title}`).join('\n');
             
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
