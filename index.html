@@ -679,7 +679,7 @@
                         <div id="news-filters">
                             <div style="position: relative; display: inline-block;">
                                 <input type="text" id="news-company-search" class="controls-input" placeholder="Search Company..." 
-                                    oninput="filterCompanyDropdown()" 
+                                    oninput="filterCompanyDropdown(); filterNews();" 
                                     onfocus="document.getElementById('news-company-dropdown').style.display='block'"
                                     style="min-width: 180px; padding-right: 30px;">
                                 <i class="material-icons" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; color: #999;">search</i>
@@ -1140,6 +1140,18 @@
                if (!e.target.closest('.multi-select-container')) {
                    document.querySelectorAll('.multi-select-content').forEach(el => el.classList.remove('show'));
                }
+               // Requirement 4: Search dropdown should close when clicking outside
+               if (!e.target.closest('#news-filters')) {
+                   document.getElementById('news-company-dropdown').style.display='none';
+               }
+            });
+            
+            // Requirement 4: Close search dropdown on ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.getElementById('news-company-dropdown').style.display='none';
+                    document.getElementById('news-date-range-content').classList.remove('show');
+                }
             });
         });
 
@@ -1950,28 +1962,27 @@
             loadedNewsTickers = new Set();
             
             // 使用單一來源 (注意：GitHub blob 連結需轉換為 raw 連結)
-            const url = 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/all_stocks_news.json';
-            const json = await fetchJsonWithRetry(url);
+            const urls = [
+                'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/yahoo_news.json',
+                'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/udn_news.json',
+                'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/ltn_news.json'
+            ];
+            
+            const results = await Promise.all(urls.map(u => fetchJsonWithRetry(u)));
 
-            if (json && json.news && Array.isArray(json.news)) {
-                // 直接使用 json.news 陣列
-                json.news.forEach((n, idx) => {
-                    // 將來源資料的 Ticker (大寫開頭) 對應到程式內部使用的 ticker (小寫)
-                    n.ticker = n.Ticker; 
-                    
-                    // 生成唯一 ID
-                    n.id = `${n.ticker}_${idx}_${Math.random().toString(36).substr(2,9)}`; 
-                    
-                    // 建立 Date 物件供排序使用
-                    n.jsDate = new Date(n.Date + ' ' + (n.Time || ''));
-                    
-                    // 收集過濾器所需的資料
-                    if (n.Source) newsSources.add(n.Source);
-                    if (n.ticker) loadedNewsTickers.add(n.ticker);
-                });
-                
-                allNews = json.news;
-            }
+            results.forEach(json => {
+                if (json && json.news && Array.isArray(json.news)) {
+                    json.news.forEach((n, idx) => {
+                        n.ticker = n.Ticker; 
+                        n.id = `${n.ticker}_${idx}_${Math.random().toString(36).substr(2,9)}`; 
+                        n.jsDate = new Date(n.Date + ' ' + (n.Time || ''));
+                        
+                        if (n.Source) newsSources.add(n.Source);
+                        if (n.ticker) loadedNewsTickers.add(n.ticker);
+                    });
+                    allNews = allNews.concat(json.news);
+                }
+            });
 
             // 按時間倒序排列
             allNews.sort((a,b) => b.jsDate - a.jsDate); 
@@ -1999,6 +2010,11 @@
             const searchTerm = document.getElementById('news-company-search').value.toLowerCase();
             const dropdown = document.getElementById('news-company-dropdown');
             dropdown.innerHTML = '';
+            
+            // If user types, reset the locked selection so keyword search works
+            if(searchTerm !== "") {
+                document.getElementById('news-company-search').dataset.selectedTicker = 'all';
+            }
     
             Array.from(loadedNewsTickers).sort().forEach(t => {
                 const name = TICKER_NAMES[t] || t;
@@ -2066,14 +2082,28 @@
         
         function filterNews() {
             if (!fullNewsList) return;
-            const tickerFilter = document.getElementById('news-company-search').dataset.selectedTicker || 'all';
+            const searchInput = document.getElementById('news-company-search');
+            const tickerFilter = searchInput.dataset.selectedTicker || 'all';
+            const keyword = searchInput.value.toLowerCase().trim();
             const sourceFilter = document.getElementById('news-filter-source').value;
 
             const listEl = document.getElementById('news-list');
             listEl.innerHTML = '';
 
             const filtered = fullNewsList.filter(n => {
-                const matchesTicker = tickerFilter === 'all' || n.ticker === tickerFilter;
+                // Ticker / Keyword Filter Logic
+                let matchesSearch = true;
+                if (tickerFilter !== 'all') {
+                    // Strict ticker match from dropdown selection
+                    matchesSearch = n.ticker === tickerFilter;
+                } else if (keyword !== "") {
+                    // Free text search in Ticker, Name, or Title
+                    const name = (TICKER_NAMES[n.ticker] || "").toLowerCase();
+                    matchesSearch = n.ticker.toLowerCase().includes(keyword) || 
+                                    name.includes(keyword) || 
+                                    n.Title.toLowerCase().includes(keyword);
+                }
+
                 const matchesSource = sourceFilter === 'all' || n.Source === sourceFilter;
                 
                 let matchesDate = true;
@@ -2081,7 +2111,7 @@
                     const itemDate = new Date(n.Date);
                     matchesDate = itemDate <= newsSelectedRange.start && itemDate >= newsSelectedRange.end;
                 }
-                return matchesTicker && matchesSource && matchesDate;
+                return matchesSearch && matchesSource && matchesDate;
             });
 
             if (filtered.length === 0) {
@@ -2198,27 +2228,48 @@
             callGemini(prompt);
         }
 
-        function explainVolatility(ticker, val, dateStr) {
+        function explainVolatility(ticker, val, dateStr, periodType = '1W') {
             const targetDate = new Date(dateStr);
-            const startDate = new Date(targetDate); startDate.setDate(targetDate.getDate() - 2);
-            const endDate = new Date(targetDate); endDate.setDate(targetDate.getDate() + 2);
+            let startDate, endDate;
+            let maxItems = 50;
+
+            if (periodType === '1D') {
+                startDate = new Date(targetDate);
+                startDate.setDate(startDate.getDate() - 1); // Look back 1 day
+                endDate = new Date(targetDate);
+                maxItems = 30;
+            } else {
+                // 1W or default
+                startDate = new Date(targetDate);
+                startDate.setDate(startDate.getDate() - 7); // Look back 7 days
+                endDate = new Date(targetDate);
+                maxItems = 50;
+            }
             
             const relevantNews = fullNewsList.filter(n => {
                 const nDate = n.jsDate;
                 return n.ticker === ticker && nDate >= startDate && nDate <= endDate;
-            });
+            }).slice(0, maxItems);
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             let newsContext = "No specific news found.";
             if (relevantNews.length > 0) {
-                newsContext = relevantNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+                // Modified: Include Index and URL in context for citation
+                newsContext = relevantNews.map((n, i) => `[${i+1}] ${n.Date}: ${n.Title} (Link: ${n.URL})`).join('\n');
             }
 
             const prompt = `
             Act as a stock analyst.
             ${TICKER_NAMES[ticker] || ticker} moved by **${val}%** around **${dateStr}**.
-            Explain drivers based on:
+            Explain drivers based on the news provided below.
+
+            IMPORTANT CITATION RULE:
+            Whenever you mention a specific event or data point from the news, immediately append the citation number in format [Number](Link) at the end of the sentence. 
+            Example: "Earnings grew by 20% [1](https://example.com/news1)."
+            
+            News Sources:
             ${newsContext}
+
             Output in ${lang}, bullet points.
             `;
             
@@ -2910,6 +2961,10 @@
                 theadHtml += '</tr></thead>';
                 
                 let tbodyHtml = '<tbody>';
+                
+                // --- Requirement 1: Benchmark Highlight Threshold ---
+                let threshold = (group === 'equity-index') ? 3 : 5;
+
                 tickers.forEach((t) => {
                     const perfData = allPerformanceData.get(t);
                     if (!perfData) return;
@@ -2974,12 +3029,13 @@
                                     val = formatNumberWithCommas(ret, 2) + '%';
                                     css = ret >= 0 ? 'text-positive' : 'text-negative';
                                     
-                                    if (col.id === '1-Day' && Math.abs(ret) > 5) {
+                                    // --- Requirement 1 & 2: Highlight Logic & AI Period passing ---
+                                    if (col.id === '1-Day' && Math.abs(ret) > threshold) {
                                         css += ret > 0 ? ' cell-pos-light' : ' cell-neg-light';
-                                        cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}')">?</div>`;
-                                    } else if (col.id === '1-Week' && Math.abs(ret) > 5) {
+                                        cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}', '1D')">?</div>`;
+                                    } else if (col.id === '1-Week' && Math.abs(ret) > threshold) {
                                         css += ret > 0 ? ' cell-pos-light' : ' cell-neg-light';
-                                        cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}')">?</div>`;
+                                        cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}', '1W')">?</div>`;
                                     }
                                 }
                                 break;
