@@ -22,6 +22,14 @@
     <!-- Marked.js for Markdown rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+    <!-- WordCloud2.js for News Analysis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
+    
+    <!-- NEW: Sentiment.js for better sentiment analysis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sentiment/2.1.0/sentiment.min.js"></script>
+    <!-- NEW: Compromise (NLP) for better keyword extraction -->
+    <script src="https://unpkg.com/compromise@14.10.0/builds/compromise.min.js"></script>
+
     <style>
         :root {
             --bg-color: #ffffff;
@@ -514,7 +522,6 @@
         @media print {
             @page { size: landscape; margin: 5mm; }
             body * { visibility: hidden; }
-			body, html { background-color: white !important; background-image: none !important; }
             #market-cap, #market-cap * { visibility: visible; }
             #market-cap { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; display: block !important; }
             .header-bar, .tabs, .mc-header { display: none !important; }
@@ -528,6 +535,79 @@
         .mc-config-group { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .mc-config-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
         .mc-config-btn-small { padding: 2px 6px; font-size: 0.8rem; cursor: pointer; border: 1px solid #ccc; background: #f0f0f0; border-radius: 4px; }
+
+        /* --- NEWS DASHBOARD STYLES --- */
+        .nd-grid-top {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+            /* Height adjusted to fit better in viewport */
+            height: 35vh;
+            min-height: 300px;
+        }
+        .nd-grid-bottom {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            /* Height adjusted to fit better in viewport */
+            height: 35vh;
+            min-height: 300px;
+        }
+        .nd-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: var(--shadow-light);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: 100%;
+            overflow: hidden;
+        }
+        .nd-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+        .nd-header h3 { font-size: 1.1rem; color: var(--text-primary); margin: 0; }
+        .nd-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .nd-chart-container { flex: 1; position: relative; min-height: 0; }
+        
+        /* Custom Source Multiselect */
+        .source-multiselect-container { position: relative; display: inline-block; min-width: 150px;}
+        .source-multiselect-btn { 
+            border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; 
+            background: var(--bg-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
+        }
+        .source-dropdown {
+            display: none; position: absolute; background: var(--modal-bg); 
+            border: 1px solid var(--border-color); box-shadow: var(--shadow-strong);
+            z-index: 1001; /* Mod 1: Increased Z-Index to stay on top */
+            max-height: 300px; overflow-y: auto; width: 300px; top: 100%; left: 0;
+        }
+        .source-dropdown.show { display: block; }
+        .source-option { padding: 5px 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; font-size: 0.85rem;}
+        .source-option:hover { background: var(--hover-bg); }
+        
+        /* Word Cloud Stats Table */
+        .wc-table-container { overflow-y: auto; height: 100%; }
+        .wc-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .wc-table th, .wc-table td { padding: 6px; border-bottom: 1px solid var(--border-color); text-align: left; }
+        .wc-table th { position: sticky; top: 0; background: var(--header-bg); font-weight: 600; }
+        
+        #wc-canvas { width: 100%; height: 100%; }
 
     </style>
 </head>
@@ -544,6 +624,7 @@
                     <div class="tab-link active" onclick="openTab(event, 'summary')"><i class="material-icons">dashboard</i> Summary</div>
                     <div class="tab-link" onclick="openTab(event, 'chart-main')"><i class="material-icons">show_chart</i> Chart</div>
                     <div class="tab-link" onclick="openTab(event, 'news')"><i class="material-icons">article</i> News</div>
+                    <div class="tab-link" onclick="openTab(event, 'news-analysis')"><i class="material-icons">analytics</i> News Analysis</div>
                     <div class="tab-link" onclick="openTab(event, 'market-cap')"><i class="material-icons">pie_chart</i> Market Cap</div>
                     <div class="tab-link" onclick="openTab(event, 'data')"><i class="material-icons">table_view</i> Data</div>
                     <div class="tab-link" onclick="openTab(event, 'mci-settings')"><i class="material-icons">settings</i> MCI Config</div>
@@ -718,6 +799,103 @@
                     <div id="news-right-pane">
                         <div style="text-align:center; color:#999; margin-top:50px;">
                             Select news items (Ctrl+Click to multi-select) then click the AI icon to analyze.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News Analysis Tab Content -->
+            <div id="news-analysis" class="tab-content">
+                
+                <!-- Controls Section: MODIFIED with overflow:visible and z-index -->
+                <div class="nd-card" style="margin-bottom: 15px; flex-direction: row; align-items: center; padding: 10px; height: auto; overflow: visible; z-index: 20;">
+                    <strong style="margin-right: 15px;">Filters:</strong>
+                    
+                    <!-- Date Range -->
+                    <select id="nd-date-range" class="controls-select" onchange="updateNewsDashboard()">
+                        <option value="7">Last 7 Days</option>
+                        <option value="14">Last 14 Days</option>
+                        <option value="30" selected>Last 30 Days</option>
+                        <option value="60">Last 60 Days</option>
+                    </select>
+
+                    <!-- Group Filter -->
+                    <select id="nd-group-filter" class="controls-select" onchange="populateNdCompanyFilter(); updateNewsDashboard();">
+                        <option value="all">Group (All)</option>
+                        <!-- Dynamic Options -->
+                    </select>
+
+                    <!-- Company Filter -->
+                    <select id="nd-company-filter" class="controls-select" onchange="updateNewsDashboard()">
+                        <option value="all">Company (All)</option>
+                        <!-- Dynamic Options -->
+                    </select>
+
+                    <!-- Source Multiselect -->
+                    <div class="source-multiselect-container">
+                        <div class="source-multiselect-btn" onclick="toggleNdSourceDropdown()">
+                            <span id="nd-source-label">Sources (All)</span>
+                            <i class="material-icons" style="font-size:16px;">arrow_drop_down</i>
+                        </div>
+                        <div id="nd-source-dropdown" class="source-dropdown">
+                            <!-- Checkboxes populated via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Row -->
+                <div class="nd-grid-top">
+                    <!-- Trend Chart -->
+                    <div class="nd-card">
+                        <div class="nd-header">
+                            <h3>News Volume Trend</h3>
+                        </div>
+                        <div class="nd-chart-container">
+                            <canvas id="nd-trend-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Companies Bar -->
+                    <div class="nd-card">
+                        <div class="nd-header">
+                            <h3>Top Companies by Volume</h3>
+                            <div>
+                                <select id="nd-top-page-select" class="controls-select" onchange="changeNdPageSelect(this.value)" style="font-size:0.85rem; padding: 2px 5px;">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="nd-chart-container">
+                            <canvas id="nd-top-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="nd-grid-bottom">
+                    <!-- Word Cloud -->
+                    <div class="nd-card">
+                        <div class="nd-header"><h3>Topic Word Cloud</h3></div>
+                        <div class="nd-chart-container" style="display: flex; justify-content: center; align-items: center; position: relative;" id="wc-container-inner">
+                            <canvas id="wc-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Word Cloud Stats -->
+                    <div class="nd-card">
+                        <div class="nd-header"><h3>Keyword Statistics (Top 10)</h3></div>
+                        <div class="wc-table-container">
+                            <table class="wc-table" id="nd-keyword-table">
+                                <thead><tr><th>Keyword</th><th>Count</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Sentiment Analysis -->
+                    <div class="nd-card">
+                        <div class="nd-header"><h3>Sentiment Analysis</h3></div>
+                        <div class="nd-chart-container">
+                            <canvas id="nd-sentiment-chart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -1226,6 +1404,32 @@
                 loading.style.display = 'none';
             }
         }
+        
+        async function fetchGeminiJson(promptText) {
+            if (!aiConfig.apiKey) return null;
+            
+            try {
+                const response = await fetch(`${aiConfig.modelUrl}?key=${aiConfig.apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptText }] }]
+                    })
+                });
+
+                if (!response.ok) throw new Error('API Request Failed');
+
+                const data = await response.json();
+                let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+                
+                // Try to clean markdown block formatting if present
+                rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+                return JSON.parse(rawText);
+            } catch (error) {
+                console.error("Gemini JSON Fetch Error:", error);
+                throw error;
+            }
+        }
 
         async function fetchJsonWithRetry(url) {
             try {
@@ -1660,11 +1864,12 @@
 
         function renderMciTable() {
             const table = document.getElementById('mci-weights-table');
-            let thead = '<thead><tr><th style="min-width:100px;">Date</th>';
+            // FIX: Renamed variable to mciHeadHtml to prevent shadowing/confusion with any global 'thead'
+            let mciHeadHtml = '<thead><tr><th style="min-width:100px;">Date</th>';
             mciMembers.forEach((m, idx) => {
-                thead += `<th style="min-width:80px;"><input class="mci-header-input" value="${m}" onchange="updateMciHeader(this, ${idx})"></th>`;
+                mciHeadHtml += `<th style="min-width:80px;"><input class="mci-header-input" value="${m}" onchange="updateMciHeader(this, ${idx})"></th>`;
             });
-            thead += '</tr></thead>';
+            mciHeadHtml += '</tr></thead>';
             let tbody = '<tbody>';
             mciWeightHistory.forEach((row, rowIdx) => {
                 const sumWeights = Object.values(row.weights).reduce((a,b)=>a+b,0);
@@ -1683,7 +1888,7 @@
                 tbody += '</tr>';
             });
             tbody += '</tbody>';
-            table.innerHTML = thead + tbody;
+            table.innerHTML = mciHeadHtml + tbody;
         }
 
         function updateMciHeader(input, colIdx) {
@@ -2233,6 +2438,12 @@
             const targetDate = new Date(dateStr);
             let startDate, endDate;
             let maxItems = 50;
+            
+            // MOD: Use SPX news for SOX or MCI if they need explanation
+            let searchTicker = ticker;
+            if (ticker === '.SOX' || ticker === '.MCI') {
+                searchTicker = '.SPX';
+            }
 
             if (periodType === '1D') {
                 startDate = new Date(targetDate);
@@ -2249,7 +2460,7 @@
             
             const relevantNews = fullNewsList.filter(n => {
                 const nDate = n.jsDate;
-                return n.ticker === ticker && nDate >= startDate && nDate <= endDate;
+                return n.ticker === searchTicker && nDate >= startDate && nDate <= endDate;
             }).slice(0, maxItems);
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
@@ -2258,11 +2469,17 @@
                 // Modified: Include Index and URL in context for citation
                 newsContext = relevantNews.map((n, i) => `[${i+1}] ${n.Date}: ${n.Title} (Link: ${n.URL})`).join('\n');
             }
+            
+            let extraContext = "";
+            if (ticker !== searchTicker) {
+                extraContext = `Note: As specific news for ${ticker} may be limited, news for ${searchTicker} is provided as a market proxy.`;
+            }
 
             const prompt = `
             Act as a stock analyst.
             ${TICKER_NAMES[ticker] || ticker} moved by **${val}%** around **${dateStr}**.
             Explain drivers based on the news provided below.
+            ${extraContext}
 
             IMPORTANT CITATION RULE:
             Whenever you mention a specific event or data point from the news, immediately append the citation number in format [Number](Link) at the end of the sentence. 
@@ -3159,7 +3376,10 @@
             const groupSelect = document.getElementById('add-ticker-group-select');
             groupSelect.innerHTML = '';
             const groupKeys = ['equity-index', 'foundry', 'fabless', 'equipment', 'memory', 'backend', 'end-product'];
-            groupKeys.forEach(key => {
+            groupSelect.innerHTML += '<option value="equity-index" disabled>Benchmark</option>'; // Benchmarks are usually fixed
+            
+            const groupKeysForSelect = ['foundry', 'fabless', 'equipment', 'memory', 'backend', 'end-product'];
+            groupKeysForSelect.forEach(key => {
                 groupSelect.innerHTML += `<option value="${key}">${GROUP_DISPLAY_NAMES[key]}</option>`;
             });
 
@@ -3683,6 +3903,10 @@
             if (evt) evt.currentTarget.classList.add("active"); 
             if (tabName === 'data' && isDataPivoted && !jspreadsheetInstance) renderDataTab();
             if (tabName === 'market-cap') renderMarketCapTab();
+            // MOD: Trigger resize/redraw for News Analysis when tab becomes visible
+            if (tabName === 'news-analysis') {
+                setTimeout(() => updateNewsDashboard(), 100);
+            }
         }
         
         function initNewsResizer() {
@@ -3781,6 +4005,571 @@
                  } 
              });
         }
+
+        // --- NEWS DASHBOARD FUNCTIONALITY START ---
+
+        let ndCharts = {};
+        let ndTopPage = 0; // 0 for 1-10, 1 for 11-20
+        let ndSelectedSources = new Set();
+        let ndSourceCounts = {}; // Stores counts for the dropdown display
+        
+        // Use Sentiment library
+        let sentimentAnalyzer = null;
+
+        function initNewsDashboard() {
+            // Init Sentiment
+            if (typeof Sentiment !== 'undefined') {
+                sentimentAnalyzer = new Sentiment();
+            }
+
+            // Populate Groups
+            const groupSelect = document.getElementById('nd-group-filter');
+            groupSelect.innerHTML = '<option value="all">Group (All)</option>';
+            Object.keys(GROUP_DISPLAY_NAMES).forEach(key => {
+                if(key !== 'equity-index') {
+                    groupSelect.innerHTML += `<option value="${key}">${GROUP_DISPLAY_NAMES[key]}</option>`;
+                }
+            });
+            populateNdCompanyFilter();
+            
+            // Add click listener to close source dropdown
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.source-multiselect-container')) {
+                    document.getElementById('nd-source-dropdown').classList.remove('show');
+                }
+            });
+
+            // Initial Draw
+            updateNewsDashboard();
+        }
+
+        function populateNdCompanyFilter() {
+            const groupVal = document.getElementById('nd-group-filter').value;
+            const compSelect = document.getElementById('nd-company-filter');
+            compSelect.innerHTML = '<option value="all">Company (All)</option>';
+            
+            let tickersToShow = [];
+            if (groupVal === 'all') {
+                visibleTickers.forEach(t => tickersToShow.push(t));
+            } else {
+                tickersToShow = summaryTickersConfig[groupVal] || [];
+            }
+            
+            // Requirement 1: Exclude Benchmarks (start with dot)
+            tickersToShow = tickersToShow.filter(t => !t.startsWith('.'));
+            
+            // Requirement 6: Sort Companies by count in the current context is tricky because this is a static filter.
+            // However, we can sort them alphabetically or we would need to pre-calculate news count for ALL news to sort here.
+            // Let's sort alphabetically for finding easier, but if "Sort by Count" is strictly required for the FILTER list itself:
+            // Calculate global counts first
+            const globalCounts = {};
+            if(fullNewsList) {
+                fullNewsList.forEach(n => { globalCounts[n.ticker] = (globalCounts[n.ticker] || 0) + 1; });
+            }
+
+            tickersToShow = [...new Set(tickersToShow)].sort((a, b) => {
+                const countA = globalCounts[a] || 0;
+                const countB = globalCounts[b] || 0;
+                return countB - countA; // Descending
+            });
+            
+            tickersToShow.forEach(t => {
+                const name = TICKER_NAMES[t] || t;
+                const count = globalCounts[t] || 0;
+                compSelect.innerHTML += `<option value="${t}">${name} (${count})</option>`;
+            });
+        }
+
+        function toggleNdSourceDropdown() {
+            document.getElementById('nd-source-dropdown').classList.toggle('show');
+        }
+
+        function changeNdPageSelect(val) {
+            ndTopPage = parseInt(val);
+            renderTopCompaniesChart(ndTopPageDataCache);
+        }
+        
+        // Cache for pagination
+        let ndTopPageDataCache = []; 
+
+        function updateNewsDashboard() {
+            if (!fullNewsList || fullNewsList.length === 0) return;
+
+            // 1. Get Filters
+            const days = parseInt(document.getElementById('nd-date-range').value);
+            const groupFilter = document.getElementById('nd-group-filter').value;
+            const companyFilter = document.getElementById('nd-company-filter').value;
+            
+            // Date Calculation
+            const endDate = new Date(); // Now
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+
+            // 2. First Pass: Filter by Date, Group, Company
+            let filteredByScope = fullNewsList.filter(n => {
+                if (n.jsDate < startDate || n.jsDate > endDate) return false;
+                
+                // Requirement 1: Exclude Benchmarks
+                if (n.ticker.startsWith('.')) return false;
+
+                // Group/Company Logic
+                let matchesTicker = true;
+                if (companyFilter !== 'all') {
+                    matchesTicker = (n.ticker === companyFilter);
+                } else if (groupFilter !== 'all') {
+                    const groupTickers = summaryTickersConfig[groupFilter] || [];
+                    matchesTicker = groupTickers.includes(n.ticker);
+                }
+                return matchesTicker;
+            });
+
+            // 3. Update Source Dropdown & Counts (Requirement 6)
+            updateNdSourceDropdown(filteredByScope);
+
+            // 4. Second Pass: Filter by Selected Sources
+            const finalData = filteredByScope.filter(n => {
+                if (ndSelectedSources.size === 0) return true; // All selected if none explicitly selected
+                return ndSelectedSources.has(n.Source);
+            });
+
+            // 5. Render Charts
+            renderNdTrendChart(finalData, startDate, endDate);
+            ndTopPageDataCache = processTopCompaniesData(finalData);
+            
+            // Populate Select (Requirement 5)
+            updateTopCompaniesSelect(ndTopPageDataCache.length);
+            renderTopCompaniesChart(ndTopPageDataCache);
+            
+            renderNdWordCloudAndSentiment(finalData);
+        }
+
+        function updateNdSourceDropdown(data) {
+            // Count sources
+            const counts = {};
+            data.forEach(n => {
+                const s = n.Source || 'Unknown';
+                counts[s] = (counts[s] || 0) + 1;
+            });
+
+            const dropdown = document.getElementById('nd-source-dropdown');
+            // Requirement 6: Sort Sources by Count Descending
+            const sortedSources = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+            
+            dropdown.innerHTML = '';
+            
+            // "Select All" / Clear option
+            const allDiv = document.createElement('div');
+            allDiv.className = 'source-option';
+            allDiv.innerHTML = `<strong style="cursor:pointer; width:100%;">Clear / Select All</strong>`;
+            allDiv.onclick = () => {
+                ndSelectedSources.clear();
+                updateNewsDashboard();
+            };
+            dropdown.appendChild(allDiv);
+
+            sortedSources.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'source-option';
+                const isChecked = ndSelectedSources.has(s) ? 'checked' : '';
+                
+                div.innerHTML = `
+                    <input type="checkbox" ${isChecked} style="margin-right:8px;">
+                    <span style="flex:1;">${s}</span>
+                    <span style="font-size:0.8rem; background:#eee; padding:2px 6px; border-radius:10px;">${counts[s]}</span>
+                `;
+                
+                div.querySelector('input').onclick = (e) => {
+                    e.stopPropagation(); // prevent parent click
+                    if(e.target.checked) ndSelectedSources.add(s);
+                    else ndSelectedSources.delete(s);
+                    updateNewsDashboard();
+                };
+                div.onclick = (e) => {
+                    if (e.target.tagName !== 'INPUT') {
+                        const cb = div.querySelector('input');
+                        cb.checked = !cb.checked;
+                        if(cb.checked) ndSelectedSources.add(s);
+                        else ndSelectedSources.delete(s);
+                        updateNewsDashboard();
+                    }
+                };
+                dropdown.appendChild(div);
+            });
+
+            // Update Label
+            const label = document.getElementById('nd-source-label');
+            if (ndSelectedSources.size === 0) label.innerText = `Sources (All: ${data.length})`;
+            else label.innerText = `Sources (${ndSelectedSources.size} selected)`;
+        }
+
+        function renderNdTrendChart(data, startDate, endDate) {
+            const ctx = document.getElementById('nd-trend-chart').getContext('2d');
+            if (ndCharts['trend']) ndCharts['trend'].destroy();
+
+            // Aggregate by Date
+            const dateMap = {};
+            // Init all dates
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                dateMap[formatDateYYYYMMDD(d)] = 0;
+            }
+
+            data.forEach(n => {
+                const dStr = formatDateYYYYMMDD(n.jsDate);
+                if (dateMap.hasOwnProperty(dStr)) dateMap[dStr]++;
+            });
+
+            const labels = Object.keys(dateMap).sort();
+            const values = labels.map(d => dateMap[d]);
+
+            ndCharts['trend'] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'News Count',
+                        data: values,
+                        borderColor: '#4a90e2',
+                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: true, // Requirement 2: Tooltips
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { maxTicksLimit: 10, maxRotation: 0 },
+                            grid: { display: false }
+                        },
+                        y: { beginAtZero: true, grid: { borderDash: [2, 2] } }
+                    }
+                }
+            });
+        }
+
+        function processTopCompaniesData(data) {
+            const counts = {};
+            data.forEach(n => {
+                counts[n.ticker] = (counts[n.ticker] || 0) + 1;
+            });
+            return Object.entries(counts)
+                .map(([t, c]) => ({ ticker: t, name: TICKER_NAMES[t] || t, count: c }))
+                .sort((a, b) => b.count - a.count);
+        }
+        
+        function updateTopCompaniesSelect(totalItems) {
+            const select = document.getElementById('nd-top-page-select');
+            select.innerHTML = '';
+            const pageSize = 10;
+            const totalPages = Math.ceil(totalItems / pageSize);
+            
+            if (totalPages === 0) {
+                 select.innerHTML = '<option value="0">0-0</option>';
+                 return;
+            }
+            
+            for(let i=0; i<totalPages; i++) {
+                const start = i * pageSize + 1;
+                const end = Math.min((i+1)*pageSize, totalItems);
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = `Rank ${start}-${end}`;
+                if (i === ndTopPage) opt.selected = true;
+                select.appendChild(opt);
+            }
+        }
+
+        function renderTopCompaniesChart(sortedData) {
+            const ctx = document.getElementById('nd-top-chart').getContext('2d');
+            if (ndCharts['top']) ndCharts['top'].destroy();
+
+            // Pagination Logic
+            const pageSize = 10;
+            const maxPage = Math.ceil(sortedData.length / pageSize) - 1;
+            
+            if (ndTopPage > maxPage && maxPage >= 0) ndTopPage = maxPage;
+            // if list is empty
+            if (sortedData.length === 0) ndTopPage = 0;
+
+            const startIdx = ndTopPage * pageSize;
+            const pageData = sortedData.slice(startIdx, startIdx + pageSize);
+
+            ndCharts['top'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: pageData.map(d => d.name),
+                    datasets: [{
+                        label: 'News Count',
+                        data: pageData.map(d => d.count),
+                        backgroundColor: '#4a90e2',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, grid: { borderDash: [2, 2] } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        async function renderNdWordCloudAndSentiment(data) {
+            const container = document.getElementById('wc-container-inner');
+            const tableBody = document.querySelector('#nd-keyword-table tbody');
+            
+            // --- Helper: Clear Visuals ---
+            const clearVisuals = (isLoading = false) => {
+                 // Clear Table
+                 tableBody.innerHTML = isLoading ? '<tr><td colspan="2" style="text-align:center;">AI is analyzing news titles...</td></tr>' : '';
+                 
+                 // Clear Cloud Canvas
+                 const canvas = document.getElementById('wc-canvas');
+                 const ctx = canvas.getContext('2d');
+                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                 
+                 if(isLoading) {
+                     ctx.font = '16px Arial';
+                     ctx.fillStyle = '#666';
+                     ctx.textAlign = 'center';
+                     ctx.fillText('AI Processing...', canvas.width/2, canvas.height/2);
+                 }
+            };
+
+            // Check if AI API is available
+            if (aiConfig.apiKey && data.length > 0) {
+                 clearVisuals(true);
+                 
+                 // Limit to top 300 latest titles to avoid token limits/latency
+                 const limitedData = data.slice(0, 300);
+                 const titles = limitedData.map(n => n.Title).join("\n");
+                 
+                 const prompt = `
+                 Analyze the following news titles.
+                 Task 1: Extract top 50 keywords (entities, topics, themes). Ignore common words like 'market', 'stock', 'share', 'price', 'report', 'today', 'company'. Support both English and Traditional Chinese.
+                 Task 2: Analyze sentiment of each title. Count total Positive, Neutral, Negative.
+                 
+                 Return strict JSON format:
+                 {
+                    "keywords": [["word1", count], ["word2", count], ...],
+                    "sentiment": [positive_count, neutral_count, negative_count]
+                 }
+                 
+                 News Titles:
+                 ${titles}
+                 `;
+                 
+                 try {
+                     const aiData = await fetchGeminiJson(prompt);
+                     if (aiData && aiData.keywords && aiData.sentiment) {
+                         // Convert array format to object format for local compatibility if needed, 
+                         // but updateNdVisuals handles array of [word, count] for wordcloud2.js
+                         
+                         // Fix keyword format if AI returns object
+                         let kwList = aiData.keywords;
+                         if (!Array.isArray(kwList) && typeof kwList === 'object') {
+                             kwList = Object.entries(kwList);
+                         }
+                         
+                         // Fix sentiment format
+                         let sentCounts = { Positive: 0, Neutral: 0, Negative: 0 };
+                         if (Array.isArray(aiData.sentiment)) {
+                             sentCounts.Positive = aiData.sentiment[0] || 0;
+                             sentCounts.Neutral = aiData.sentiment[1] || 0;
+                             sentCounts.Negative = aiData.sentiment[2] || 0;
+                         } else if (typeof aiData.sentiment === 'object') {
+                             sentCounts = aiData.sentiment;
+                         }
+
+                         updateNdVisuals(kwList, sentCounts);
+                     } else {
+                         throw new Error("Invalid AI JSON");
+                     }
+                 } catch (e) {
+                     console.error("AI Analysis Failed, falling back to local.", e);
+                     calculateLocalStats(data);
+                 }
+
+            } else {
+                // Fallback / No Key
+                calculateLocalStats(data);
+            }
+        }
+        
+        function calculateLocalStats(data) {
+            const wordCounts = {};
+            let sentCounts = { Positive: 0, Negative: 0, Neutral: 0 };
+            
+            const blacklist = new Set([
+                'share', 'shares', 'stock', 'stocks', 'market', 'markets', 'price', 'prices',
+                'company', 'companies', 'today', 'yesterday', 'week', 'month', 'year',
+                'analyst', 'report', 'target', 'rating', 'investment', 'investor', 'trading',
+                'daily', 'breaking', 'news', 'update', 'sector', 'industry'
+            ]);
+            
+            Object.keys(TICKER_NAMES).forEach(k => {
+                blacklist.add(k.toLowerCase());
+                blacklist.add(TICKER_NAMES[k].toLowerCase());
+                TICKER_NAMES[k].toLowerCase().split(' ').forEach(w => blacklist.add(w));
+            });
+
+            data.forEach(n => {
+                const textForAnalysis = (n.Title || "").trim();
+                const textLower = textForAnalysis.toLowerCase();
+                
+                // Sentiment
+                if (sentimentAnalyzer) {
+                    const result = sentimentAnalyzer.analyze(textForAnalysis);
+                    if (result.score > 0) sentCounts.Positive++;
+                    else if (result.score < 0) sentCounts.Negative++;
+                    else sentCounts.Neutral++;
+                } else {
+                    let score = 0;
+                    const positive = ['growth', 'record', 'profit', 'up', 'high', 'jump', 'surge', 'gain', 'beat', 'bull', 'buy', 'strong', '飆升', '大漲', '新高', '獲利', '成長'];
+                    const negative = ['loss', 'down', 'low', 'drop', 'fall', 'plunge', 'miss', 'bear', 'sell', 'weak', 'risk', '重挫', '下跌', '虧損', '疲軟'];
+                    positive.forEach(w => { if(textLower.includes(w)) score++; });
+                    negative.forEach(w => { if(textLower.includes(w)) score--; });
+                    if (score > 0) sentCounts.Positive++; else if (score < 0) sentCounts.Negative++; else sentCounts.Neutral++;
+                }
+
+                // Keywords (Local Logic)
+                if (typeof nlp !== 'undefined') {
+                    let doc = nlp(textForAnalysis);
+                    let terms = doc.nouns().out('array');
+                    terms.forEach(t => {
+                        t = t.toLowerCase().replace(/[^\w\s]/g, '').trim();
+                        if (t.length > 3 && isNaN(t) && !blacklist.has(t)) {
+                             wordCounts[t] = (wordCounts[t] || 0) + 1;
+                        }
+                    });
+                } else {
+                    const tokens = textLower.replace(/[^\w\s]/g, '').split(/\s+/);
+                    tokens.forEach(t => {
+                        if (t.length > 3 && isNaN(t) && !blacklist.has(t)) wordCounts[t] = (wordCounts[t] || 0) + 1;
+                    });
+                }
+                
+                // Chinese Keywords Regex
+                const chineseMatches = textForAnalysis.match(/[\u4e00-\u9fa5]{2,}/g);
+                if (chineseMatches) {
+                    chineseMatches.forEach(t => {
+                        if (!blacklist.has(t)) {
+                            wordCounts[t] = (wordCounts[t] || 0) + 1;
+                        }
+                    });
+                }
+            });
+
+            const sortedWords = Object.entries(wordCounts).sort((a, b) => b[1] - a[1]);
+            updateNdVisuals(sortedWords, sentCounts);
+        }
+
+        function updateNdVisuals(wordList, sentCounts) {
+             // 1. Update Table (Top 10)
+             const top10Words = wordList.slice(0, 10);
+             const tbody = document.querySelector('#nd-keyword-table tbody');
+             tbody.innerHTML = '';
+             top10Words.forEach(([w, c]) => {
+                tbody.innerHTML += `<tr><td>${w}</td><td>${c}</td></tr>`;
+             });
+             
+             // 2. Render Cloud (Top 50)
+             const cloudWords = wordList.slice(0, 50);
+             const canvas = document.getElementById('wc-canvas');
+             const parent = canvas.parentElement;
+             
+             if (parent.offsetWidth > 0) {
+                 const newCanvas = document.createElement('canvas');
+                 newCanvas.id = 'wc-canvas';
+                 newCanvas.width = parent.offsetWidth;
+                 newCanvas.height = parent.offsetHeight;
+                 canvas.replaceWith(newCanvas);
+                 
+                 WordCloud(newCanvas, { 
+                    list: cloudWords, 
+                    gridSize: 8, 
+                    weightFactor: size => Math.max(10, (size / (cloudWords[0] ? cloudWords[0][1] : 1)) * 40), 
+                    fontFamily: 'Segoe UI, Microsoft JhengHei, sans-serif',
+                    color: 'random-dark',
+                    rotateRatio: 0,
+                    backgroundColor: 'transparent'
+                 });
+             }
+
+             // 3. Render Sentiment Chart
+             const sCtx = document.getElementById('nd-sentiment-chart').getContext('2d');
+             if (ndCharts['sentiment']) ndCharts['sentiment'].destroy();
+             
+             // Normalize sentCounts structure
+             let pos = sentCounts.Positive || 0;
+             let neu = sentCounts.Neutral || 0;
+             let neg = sentCounts.Negative || 0;
+             
+             // Handle if keys are lowercase (from AI possibly)
+             if(sentCounts.positive) pos = sentCounts.positive;
+             if(sentCounts.neutral) neu = sentCounts.neutral;
+             if(sentCounts.negative) neg = sentCounts.negative;
+
+             const totalSent = pos + neu + neg;
+             const sentData = [pos, neu, neg];
+             const sentLabels = ['Positive', 'Neutral', 'Negative'];
+            
+             ndCharts['sentiment'] = new Chart(sCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: sentLabels,
+                    datasets: [{
+                        data: sentData,
+                        backgroundColor: ['#28a745', '#999999', '#dc3545'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw;
+                                    const pct = totalSent > 0 ? ((val / totalSent) * 100).toFixed(1) + '%' : '0%';
+                                    return ` ${context.label}: ${val} (${pct})`;
+                                }
+                            }
+                        }
+                    }
+                }
+             });
+        }
+        
+        // Helper: Override/Hook into loadNews to init dashboard
+        const originalLoadNews = loadNews;
+        loadNews = async function() {
+            await originalLoadNews();
+            // After news loads, init dashboard
+            initNewsDashboard();
+        };
+
+        // --- NEWS DASHBOARD FUNCTIONALITY END ---
     </script>
 </body>
 </html>
