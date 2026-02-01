@@ -4332,20 +4332,16 @@
             });
         }
 
-        async function renderNdWordCloudAndSentiment(data) {
+async function renderNdWordCloudAndSentiment(data) {
             const container = document.getElementById('wc-container-inner');
             const tableBody = document.querySelector('#nd-keyword-table tbody');
             
             // --- Helper: Clear Visuals ---
             const clearVisuals = (isLoading = false) => {
-                 // Clear Table
-                 tableBody.innerHTML = isLoading ? '<tr><td colspan="2" style="text-align:center;">AI is analyzing news titles...</td></tr>' : '';
-                 
-                 // Clear Cloud Canvas
+                 tableBody.innerHTML = isLoading ? '<tr><td colspan="2" style="text-align:center;">AI is analyzing price action trends...</td></tr>' : '';
                  const canvas = document.getElementById('wc-canvas');
                  const ctx = canvas.getContext('2d');
                  ctx.clearRect(0, 0, canvas.width, canvas.height);
-                 
                  if(isLoading) {
                      ctx.font = '16px Arial';
                      ctx.fillStyle = '#666';
@@ -4358,14 +4354,22 @@
             if (aiConfig.apiKey && data.length > 0) {
                  clearVisuals(true);
                  
-                 // Limit to top 300 latest titles to avoid token limits/latency
+                 // Limit to top 300 latest titles
                  const limitedData = data.slice(0, 300);
                  const titles = limitedData.map(n => n.Title).join("\n");
                  
+                 // MODIFIED PROMPT: Focus on Price Action & Investment Impact
                  const prompt = `
-                 Analyze the following news titles.
-                 Task 1: Extract top 50 keywords (entities, topics, themes). Ignore common words like 'market', 'stock', 'share', 'price', 'report', 'today', 'company'. Support both English and Traditional Chinese.
-                 Task 2: Analyze sentiment of each title. Count total Positive, Neutral, Negative.
+                 Analyze the following financial news titles.
+                 
+                 Task 1: Extract top 50 keywords specifically related to **Stock Price Movements**, **Market Sentiment**, and **Financial Performance** (e.g., Surge, Plunge, Bullish, Bearish, Record High, Beat, Miss, Guidance, Revenue, 飆漲, 重挫, 獲利). 
+                 *Ignore generic entity names (like Apple, TSMC) unless they are used as a verb/adjective.*
+                 *Combine synonyms (e.g., 'Surge' and 'Jump', 'Fall' and 'Drop').*
+                 
+                 Task 2: Analyze sentiment based strictly on **Stock Price Implication**.
+                 * Positive = Bullish/Price likely to rise.
+                 * Negative = Bearish/Price likely to fall.
+                 * Neutral = Fact reporting without clear directional bias.
                  
                  Return strict JSON format:
                  {
@@ -4380,16 +4384,11 @@
                  try {
                      const aiData = await fetchGeminiJson(prompt);
                      if (aiData && aiData.keywords && aiData.sentiment) {
-                         // Convert array format to object format for local compatibility if needed, 
-                         // but updateNdVisuals handles array of [word, count] for wordcloud2.js
-                         
-                         // Fix keyword format if AI returns object
                          let kwList = aiData.keywords;
                          if (!Array.isArray(kwList) && typeof kwList === 'object') {
                              kwList = Object.entries(kwList);
                          }
                          
-                         // Fix sentiment format
                          let sentCounts = { Positive: 0, Neutral: 0, Negative: 0 };
                          if (Array.isArray(aiData.sentiment)) {
                              sentCounts.Positive = aiData.sentiment[0] || 0;
@@ -4418,70 +4417,108 @@
             const wordCounts = {};
             let sentCounts = { Positive: 0, Negative: 0, Neutral: 0 };
             
-            const blacklist = new Set([
-                'share', 'shares', 'stock', 'stocks', 'market', 'markets', 'price', 'prices',
-                'company', 'companies', 'today', 'yesterday', 'week', 'month', 'year',
-                'analyst', 'report', 'target', 'rating', 'investment', 'investor', 'trading',
-                'daily', 'breaking', 'news', 'update', 'sector', 'industry'
-            ]);
-            
-            Object.keys(TICKER_NAMES).forEach(k => {
-                blacklist.add(k.toLowerCase());
-                blacklist.add(TICKER_NAMES[k].toLowerCase());
-                TICKER_NAMES[k].toLowerCase().split(' ').forEach(w => blacklist.add(w));
-            });
+            // --- Financial Dictionary (Price Action & Sentiment) ---
+            // Key: Term (lowercase), Value: Sentiment Score (-5 to 5)
+            // 0 implies relevant to market but neutral/ambiguous context without NLP
+            const financialTerms = {
+                // English Positive
+                'surge': 4, 'soar': 4, 'jump': 3, 'rally': 3, 'gain': 2, 'rise': 1, 'up': 1,
+                'bull': 3, 'bullish': 3, 'beat': 4, 'profit': 3, 'growth': 2, 'record': 3,
+                'high': 2, 'strong': 2, 'buy': 2, 'upgrade': 3, 'outperform': 3, 'dividend': 1,
+                'rebound': 2, 'climb': 2, 'spike': 3, 'positive': 2, 'optimism': 2,
+                
+                // English Negative
+                'plunge': -4, 'dive': -4, 'crash': -5, 'slump': -3, 'drop': -2, 'fall': -1, 'down': -1,
+                'bear': -3, 'bearish': -3, 'miss': -4, 'loss': -3, 'cut': -2, 'weak': -2,
+                'low': -2, 'sell': -2, 'downgrade': -3, 'underperform': -3, 'warning': -3,
+                'retreat': -2, 'tumble': -3, 'negative': -2, 'risk': -1, 'fear': -2, 'fail': -3,
+
+                // English Neutral/Market Context (Score 0 means we count it as keyword but it doesn't sway sentiment alone)
+                'earnings': 0, 'revenue': 0, 'guidance': 0, 'report': 0, 'forecast': 0,
+                'volatility': 0, 'trade': 0, 'volume': 0, 'market': 0, 'target': 0,
+
+                // Chinese Positive (Traditional)
+                '飆': 4, '漲': 3, '揚': 2, '升': 2, '高': 2, '多頭': 3, '看多': 3,
+                '獲利': 3, '營收': 0, '成長': 2, '優於': 3, '新高': 4, '買進': 2,
+                '強勢': 3, '反彈': 2, '利多': 3, '噴': 4, '紅': 2, // 紅盤
+
+                // Chinese Negative (Traditional)
+                '跌': -3, '挫': -3, '崩': -5, '殺': -4, '低': -2, '空頭': -3, '看空': -3,
+                '虧損': -4, '衰退': -3, '低於': -3, '預警': -3, '賣出': -2,
+                '弱勢': -3, '重挫': -4, '破底': -4, '利空': -3, '黑': -2, // 黑盤
+                '砍': -3, '縮水': -2, '慘': -4
+            };
+
+            // Prepare custom sentiment analyzer if available
+            let customSentiment = null;
+            if (typeof Sentiment !== 'undefined') {
+                customSentiment = new Sentiment();
+                // Register extras (English only works directly, Chinese needs manual handling below)
+                // Filter out non-English keys for Sentiment.js
+                const extras = {};
+                Object.keys(financialTerms).forEach(k => {
+                    if (/^[a-z]+$/.test(k)) extras[k] = financialTerms[k];
+                });
+                // We use analyze with extras options
+            }
 
             data.forEach(n => {
-                const textForAnalysis = (n.Title || "").trim();
-                const textLower = textForAnalysis.toLowerCase();
+                const title = (n.Title || "").trim();
+                const titleLower = title.toLowerCase();
                 
-                // Sentiment
-                if (sentimentAnalyzer) {
-                    const result = sentimentAnalyzer.analyze(textForAnalysis);
-                    if (result.score > 0) sentCounts.Positive++;
-                    else if (result.score < 0) sentCounts.Negative++;
-                    else sentCounts.Neutral++;
-                } else {
-                    let score = 0;
-                    const positive = ['growth', 'record', 'profit', 'up', 'high', 'jump', 'surge', 'gain', 'beat', 'bull', 'buy', 'strong', '飆升', '大漲', '新高', '獲利', '成長'];
-                    const negative = ['loss', 'down', 'low', 'drop', 'fall', 'plunge', 'miss', 'bear', 'sell', 'weak', 'risk', '重挫', '下跌', '虧損', '疲軟'];
-                    positive.forEach(w => { if(textLower.includes(w)) score++; });
-                    negative.forEach(w => { if(textLower.includes(w)) score--; });
-                    if (score > 0) sentCounts.Positive++; else if (score < 0) sentCounts.Negative++; else sentCounts.Neutral++;
+                // 1. Calculate Sentiment Score
+                let score = 0;
+                
+                // A. English Sentiment via Library (with overrides)
+                if (customSentiment) {
+                    // Extract English-like parts to avoid noise
+                    const engResult = customSentiment.analyze(titleLower, { extras: financialTerms });
+                    score += engResult.score;
                 }
+                
+                // B. Chinese/Manual Sentiment Matching
+                // We scan the title for our keywords
+                Object.entries(financialTerms).forEach(([term, weight]) => {
+                    // Simple inclusion check
+                    if (titleLower.includes(term)) {
+                        score += weight;
+                        
+                        // 2. Count Keywords (Only count if it's in our financial dictionary)
+                        // Note: For English, we want to match whole words to avoid "sell" inside "reseller"
+                        let isMatch = false;
+                        if (/^[a-z]+$/.test(term)) {
+                            // Word boundary check for English
+                            const regex = new RegExp(`\\b${term}\\b`, 'i');
+                            if (regex.test(title)) isMatch = true;
+                        } else {
+                            // Direct substring match for Chinese
+                            isMatch = true; 
+                        }
 
-                // Keywords (Local Logic)
-                if (typeof nlp !== 'undefined') {
-                    let doc = nlp(textForAnalysis);
-                    let terms = doc.nouns().out('array');
-                    terms.forEach(t => {
-                        t = t.toLowerCase().replace(/[^\w\s]/g, '').trim();
-                        if (t.length > 3 && isNaN(t) && !blacklist.has(t)) {
-                             wordCounts[t] = (wordCounts[t] || 0) + 1;
+                        if (isMatch) {
+                            // Use the display term (capitalize first letter for English)
+                            const displayTerm = /^[a-z]+$/.test(term) 
+                                ? term.charAt(0).toUpperCase() + term.slice(1) 
+                                : term;
+                            wordCounts[displayTerm] = (wordCounts[displayTerm] || 0) + 1;
                         }
-                    });
-                } else {
-                    const tokens = textLower.replace(/[^\w\s]/g, '').split(/\s+/);
-                    tokens.forEach(t => {
-                        if (t.length > 3 && isNaN(t) && !blacklist.has(t)) wordCounts[t] = (wordCounts[t] || 0) + 1;
-                    });
-                }
-                
-                // Chinese Keywords Regex
-                const chineseMatches = textForAnalysis.match(/[\u4e00-\u9fa5]{2,}/g);
-                if (chineseMatches) {
-                    chineseMatches.forEach(t => {
-                        if (!blacklist.has(t)) {
-                            wordCounts[t] = (wordCounts[t] || 0) + 1;
-                        }
-                    });
-                }
+                    }
+                });
+
+                if (score > 0) sentCounts.Positive++;
+                else if (score < 0) sentCounts.Negative++;
+                else sentCounts.Neutral++;
             });
 
             const sortedWords = Object.entries(wordCounts).sort((a, b) => b[1] - a[1]);
+            
+            // If no specific financial words found, create a placeholder
+            if (sortedWords.length === 0) {
+                sortedWords.push(["No Price Action Words", 1]);
+            }
+            
             updateNdVisuals(sortedWords, sentCounts);
         }
-
         function updateNdVisuals(wordList, sentCounts) {
              // 1. Update Table (Top 10)
              const top10Words = wordList.slice(0, 10);
