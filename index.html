@@ -2399,22 +2399,17 @@
                     ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
                 </div>
                 
-                <div style="margin-bottom: 20px;">
+                <div style="margin-bottom: 10px;">
                     <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">
                         Read Original Article <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
                     </a>
                 </div>
 
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid var(--ai-btn-color);">
-                    <strong style="display:block; margin-bottom:10px; color:var(--ai-btn-color);">AI Summary</strong>
-                    ${item.AI_Summary || 'No AI Summary'}
-                </div>
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid var(--ai-btn-color);">${item.AI_Summary || 'No AI Summary'}</div>
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">
-                    ${item.Content || 'No content available.'}
-                </div>
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${item.Content || 'No content available.'}</div>
 				 `;
         }
         
