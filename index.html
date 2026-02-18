@@ -2330,12 +2330,12 @@
 		
 		function getSentimentLabel(score) {
             const s = Math.round(parseFloat(score));
-            if (s >= 2) return '😎';
-            if (s === 1) return '🙂';
-            if (s === 0) return '😐';
-            if (s === -1) return '😕';
-            if (s <= -2) return '😡';
-            return '😐';
+            if (s >= 2) return '⬆️';
+            if (s === 1) return '↗️';
+            if (s === 0) return '➡️';
+            if (s === -1) return '↘️';
+            if (s <= -2) return '⬇️';
+            return '➡️';
         }
 		
         function renderNewsList(items) {
@@ -2355,7 +2355,7 @@
                     let color = '#666';
                     //if(label.includes('Positive')) color = 'var(--positive-color)';
                     //else if(label.includes('Negative')) color = 'var(--negative-color)';
-                    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:${color};">Sentiment: ${label}</span>`;
+                    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:${color};">${label}</span>`;
                 }
 				
                 const lang = (n.Title.match(/[\u4e00-\u9fa5]/)) ? 'CH' : 'EN';
@@ -2398,10 +2398,24 @@
                 <div style="color:#666; margin-bottom:20px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
                     ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
                 </div>
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${item.AI_Summary || item.Content || 'No content available.'}</div>
-				<br>
-                <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold;">Read Original Article <i class="material-icons" style="font-size:12px;">open_in_new</i></a>
-            `;
+                
+                <div style="margin-bottom: 20px;">
+                    <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">
+                        Read Original Article <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
+                    </a>
+                </div>
+
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid var(--ai-btn-color);">
+                    <strong style="display:block; margin-bottom:10px; color:var(--ai-btn-color);">AI Summary</strong>
+                    ${item.AI_Summary || 'No AI Summary'}
+                </div>
+                
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">
+                    ${item.Content || 'No content available.'}
+                </div>
+				 `;
         }
         
         function analyzeSelectedNews() {
