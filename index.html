@@ -2172,6 +2172,7 @@
                 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/yahoo_news.json',
                 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/udn_news.json',
                 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/ltn_news.json'
+				'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/wsj_news.json'
             ];
             
             const results = await Promise.all(urls.map(u => fetchJsonWithRetry(u)));
@@ -2326,7 +2327,17 @@
                 renderNewsList(filtered);
             }
         }
-
+		
+		function getSentimentLabel(score) {
+            const s = Math.round(parseFloat(score));
+            if (s >= 2) return 'Very Positive';
+            if (s === 1) return 'Positive';
+            if (s === 0) return 'Neutral';
+            if (s === -1) return 'Negative';
+            if (s <= -2) return 'Very Negative';
+            return 'Neutral';
+        }
+		
         function renderNewsList(items) {
             const listEl = document.getElementById('news-list'); 
             items.slice(0, 100).forEach((n, idx) => {
@@ -2335,12 +2346,25 @@
                 div.dataset.id = n.id;
                 if(selectedNewsIds.has(n.id)) div.classList.add('selected-for-ai');
                 
+                let extraMeta = '';
+                if (n.Related_Score !== undefined) {
+                    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:#4a90e2;">Related_Score(${n.Related_Score}/5)</span>`;
+                }
+                if (n.Sentiment_Score !== undefined) {
+                    const label = getSentimentLabel(n.Sentiment_Score);
+                    let color = '#666';
+                    if(label.includes('Positive')) color = 'var(--positive-color)';
+                    else if(label.includes('Negative')) color = 'var(--negative-color)';
+                    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:${color};">Sentiment: ${label}</span>`;
+                }
+				
                 const lang = (n.Title.match(/[\u4e00-\u9fa5]/)) ? 'CH' : 'EN';
                 div.innerHTML = `
                     <div class="news-meta">
                         <span class="news-tag" style="background:${TICKER_COLORS[n.ticker]||'#ccc'}; color:white;">${TICKER_NAMES[n.ticker] || n.ticker}</span>
                         <span class="news-tag">${lang}</span>
                         <span>${n.Date} ${n.Time || ''}</span>
+						${extraMeta}
                         <span style="margin-left:auto;">${n.Source || 'Source'}</span>
                     </div>
                     <div class="news-title">${n.Title}</div>
@@ -2374,8 +2398,8 @@
                 <div style="color:#666; margin-bottom:20px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
                     ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
                 </div>
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${item.Content || 'No content available.'}</div>
-                <br>
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${item.AI_Summary || item.Content || 'No content available.'}</div>
+				<br>
                 <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold;">Read Original Article <i class="material-icons" style="font-size:12px;">open_in_new</i></a>
             `;
         }
