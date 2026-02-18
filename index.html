@@ -2330,8 +2330,8 @@
 		
 		function getSentimentLabel(score) {
             const s = Math.round(parseFloat(score));
-            if (s >= 2) return 'POS++';
-            if (s === 1) return 'POS';
+            if (s >= 2) return 'Pos++';
+            if (s === 1) return 'Pos';
             if (s === 0) return 'Neu';
             if (s === -1) return 'Neg';
             if (s <= -2) return 'Neg++';
@@ -2353,8 +2353,8 @@
                 if (n.Sentiment_Score !== undefined) {
                     const label = getSentimentLabel(n.Sentiment_Score);
                     let color = '#666';
-                    if(label.includes('Pos')) color = 'var(--pos-color)';
-                    else if(label.includes('Neg')) color = 'var(--neg-color)';
+                    if(label.includes('Pos')) color = 'var(--positive-color)';
+                    else if(label.includes('Neg')) color = 'var(--negative-color)';
                     extraMeta += `<span style="margin-left:8px; font-weight:bold; color:${color};">${label}</span>`;
                 }
 				
