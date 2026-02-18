@@ -2330,11 +2330,11 @@
 		
 		function getSentimentLabel(score) {
             const s = Math.round(parseFloat(score));
-            if (s >= 2) return 'Very Positive';
-            if (s === 1) return 'Positive';
-            if (s === 0) return 'Neutral';
-            if (s === -1) return 'Negative';
-            if (s <= -2) return 'Very Negative';
+            if (s >= 2) return 😎;
+            if (s === 1) return 🙂;
+            if (s === 0) return 😐;
+            if (s === -1) return 😕;
+            if (s <= -2) return 😡;
             return 'Neutral';
         }
 		
@@ -2347,14 +2347,14 @@
                 if(selectedNewsIds.has(n.id)) div.classList.add('selected-for-ai');
                 
                 let extraMeta = '';
-                if (n.Related_Score !== undefined) {
-                    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:#4a90e2;">Related_Score(${n.Related_Score}/5)</span>`;
-                }
+                //if (n.Related_Score !== undefined) {
+                //    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:#4a90e2;">Relation: (${n.Related_Score}/5)</span>`;
+                //}
                 if (n.Sentiment_Score !== undefined) {
                     const label = getSentimentLabel(n.Sentiment_Score);
                     let color = '#666';
-                    if(label.includes('Positive')) color = 'var(--positive-color)';
-                    else if(label.includes('Negative')) color = 'var(--negative-color)';
+                    //if(label.includes('Positive')) color = 'var(--positive-color)';
+                    //else if(label.includes('Negative')) color = 'var(--negative-color)';
                     extraMeta += `<span style="margin-left:8px; font-weight:bold; color:${color};">Sentiment: ${label}</span>`;
                 }
 				
