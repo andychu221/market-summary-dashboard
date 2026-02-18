@@ -2330,12 +2330,12 @@
 		
 		function getSentimentLabel(score) {
             const s = Math.round(parseFloat(score));
-            if (s >= 2) return 😎;
-            if (s === 1) return 🙂;
-            if (s === 0) return 😐;
-            if (s === -1) return 😕;
-            if (s <= -2) return 😡;
-            return 'Neutral';
+            if (s >= 2) return '😎';
+            if (s === 1) return '🙂';
+            if (s === 0) return '😐';
+            if (s === -1) return '😕';
+            if (s <= -2) return '😡';
+            return '😐';
         }
 		
         function renderNewsList(items) {
