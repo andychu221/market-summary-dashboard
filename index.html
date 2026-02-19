@@ -2348,9 +2348,9 @@
                 if(selectedNewsIds.has(n.id)) div.classList.add('selected-for-ai');
                 
                 let extraMeta = '';
-                //if (n.Related_Score !== undefined) {
-                //    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:#4a90e2;">Relation: (${n.Related_Score}/5)</span>`;
-                //}
+                if (n.Related_Score !== undefined) {
+                    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:#4a90e2;">Relevance: (${n.Related_Score}/5)</span>`;
+                }
                 if (n.Sentiment_Score !== undefined) {
                     const label = getSentimentLabel(n.Sentiment_Score);
                     let color = '#666';
