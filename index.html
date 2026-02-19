@@ -2172,7 +2172,8 @@
                 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/yahoo_news.json',
                 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/udn_news.json',
                 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/ltn_news.json',
-				'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/wsj_news.json'
+				'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/wsj_news.json',
+				'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/ft_news.json'
             ];
             
             const results = await Promise.all(urls.map(u => fetchJsonWithRetry(u)));
