@@ -2353,8 +2353,9 @@
                 if (n.Sentiment_Score !== undefined) {
                     const label = getSentimentLabel(n.Sentiment_Score);
                     let color = '#666';
-                    if(label.includes('Pos')) color = 'var(--positive-color)';
-                    else if(label.includes('Neg')) color = 'var(--negative-color)';
+                    if (label.includes('Pos')) color = 'var(--positive-color)'; // Green
+                    else if (label.includes('Neg')) color = 'var(--negative-color)'; // Red
+                    else if (label === 'Neu') color = '#4a90e2'; // Blue
                     extraMeta += `<span style="margin-left:8px; font-weight:bold; color:${color};">${label}</span>`;
                 }
 				
@@ -2405,12 +2406,12 @@
                     </a>
                 </div>
 
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid var(--ai-btn-color);">${item.AI_Summary || 'No AI Summary'}</div>
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary || 'No AI Summary'}</div>
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
                 <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${item.Content || 'No content available.'}</div>
-				 `;
+ 				 `;
         }
         
         function analyzeSelectedNews() {
