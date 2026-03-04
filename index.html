@@ -2443,7 +2443,7 @@
                 newsText += `## ${TICKER_NAMES[ticker] || ticker} (${ticker}) - ${tickerNews.length} articles\n`;
                 tickerNews.forEach((n, idx) => {
                     newsText += `[${idx + 1}] ${n.Date} - ${n.Title}\n`;
-                    newsText += `    ${n.Content.substring(0, 400)}...\n\n`;
+                    newsText += `    ${n.Content}\n\n`;
                 });
                 newsText += '\n';
             });
@@ -2502,7 +2502,7 @@
             let newsContext = "No specific news found.";
             if (relevantNews.length > 0) {
                 // Modified: Include Index and URL in context for citation
-                newsContext = relevantNews.map((n, i) => `[${i+1}] ${n.Date}: ${n.Title} (Link: ${n.URL})`).join('\n');
+                newsContext = relevantNews.map((n, i) => `[${i+1}] ${n.Date}: ${n.Title} (Link: ${n.URL})\n  Content: ${n.Content}`).join('\n\n');
             }
             
             let extraContext = "";
@@ -2542,7 +2542,7 @@
             const relevantNews = fullNewsList.filter(n => n.ticker === currentModalTicker && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 5);
             let newsText = "No recent news found.";
             if (relevantNews.length > 0) {
-                newsText = relevantNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+                newsText = relevantNews.map(n => `- ${n.Date}: ${n.Title}\n  Content: ${n.Content}`).join('\n\n');
             }
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
@@ -2583,7 +2583,7 @@
 				
                 const tNews = fullNewsList.filter(n => n.ticker === t && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 3);
                 if(tNews.length > 0) {
-                    allNewsText += `\nNews for ${TICKER_NAMES[t]||t}:\n` + tNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+                    allNewsText += `\nNews for ${TICKER_NAMES[t]||t}:\n` + tNews.map(n => `- ${n.Date}: ${n.Title}\n  Content: ${n.Content}`).join('\n\n');
                 }
             });
 
@@ -2665,7 +2665,7 @@
 
             let newsText = "No specific news found for this group in the last 7 days.";
             if (groupNews.length > 0) {
-                newsText = groupNews.map(n => `- [${n.Date}] ${TICKER_NAMES[n.ticker]||n.ticker}: ${n.Title}`).join('\n');
+                newsText = groupNews.map(n => `- [${n.Date}] ${TICKER_NAMES[n.ticker]||n.ticker}: ${n.Title}\n  Content: ${n.Content}`).join('\n\n');
             }
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
@@ -2717,7 +2717,7 @@
 
             const newsStart = new Date(summaryReferenceDate); newsStart.setDate(newsStart.getDate()-7);
             const recentNews = fullNewsList.filter(n => n.jsDate >= newsStart && n.jsDate <= summaryReferenceDate).slice(0, 8);
-             const newsText = recentNews.map(n => `- ${n.Date}: ${n.Title}`).join('\n');
+             const newsText = recentNews.map(n => `- ${n.Date}: ${n.Title}\n  Content: ${n.Content}`).join('\n\n');
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
