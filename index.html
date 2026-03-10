@@ -763,11 +763,19 @@
                                 <input type="text" id="news-company-search" class="controls-input" placeholder="Search Company..." 
                                     oninput="filterCompanyDropdown(); filterNews();" 
                                     onfocus="document.getElementById('news-company-dropdown').style.display='block'"
-                                    style="min-width: 180px; padding-right: 30px;">
+                                    style="width: 130px; padding-right: 30px;">
                                 <i class="material-icons" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; color: #999;">search</i>
                                 <div id="news-company-dropdown" class="date-range-content" style="min-width: 250px; max-height: 300px; overflow-y: auto;">
                                 </div>
                             </div>
+
+                            <select id="news-filter-relevance" class="controls-select" onchange="filterNews()" title="Filter news by relevance" style="min-width: 120px;">
+                                <option value="all">Relevance (All)</option>
+                                <option value="4" selected>4+</option>
+                                <option value="3">3+</option>
+                                <option value="2">2+</option>
+                                <option value="1">1+</option>
+                            </select>
                             
                             <select id="news-filter-source" class="controls-select" onchange="filterNews()" title="Filter news by source" style="min-width: 120px;">
                                 <option value="all">Source (All)</option>
@@ -2294,6 +2302,7 @@
             const tickerFilter = searchInput.dataset.selectedTicker || 'all';
             const keyword = searchInput.value.toLowerCase().trim();
             const sourceFilter = document.getElementById('news-filter-source').value;
+            const relevanceFilter = document.getElementById('news-filter-relevance').value;
 
             const listEl = document.getElementById('news-list');
             listEl.innerHTML = '';
@@ -2319,7 +2328,13 @@
                     const itemDate = new Date(n.Date);
                     matchesDate = itemDate <= newsSelectedRange.start && itemDate >= newsSelectedRange.end;
                 }
-                return matchesSearch && matchesSource && matchesDate;
+                
+                let matchesRelevance = true;
+                if (relevanceFilter !== 'all') {
+                    matchesRelevance = (n.Related_Score !== undefined && n.Related_Score >= parseInt(relevanceFilter));
+                }
+                
+                return matchesSearch && matchesSource && matchesDate && matchesRelevance;
             });
 
             if (filtered.length === 0) {
@@ -2395,6 +2410,13 @@
             const pane = document.getElementById('news-right-pane');
             if(!item) { pane.innerHTML = ''; return; }
             pane.scrollTop = 0;
+            
+            let displayContent = 'No content available.';
+            if (item.Content && item.Content.length > 0) {
+                const limit = Math.ceil(item.Content.length / 5);
+                displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
+            }
+
             pane.innerHTML = `
                 <h2 style="margin-bottom:10px;">${item.Title}</h2>
                 <div style="color:#666; margin-bottom:20px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
@@ -2402,8 +2424,8 @@
                 </div>
                 
                 <div style="margin-bottom: 10px;">
-                    <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">
-                        Read Original Article <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
+                    <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none; word-break: break-all;">
+                        Original URL: ${item.URL} <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
                     </a>
                 </div>
 
@@ -2411,7 +2433,7 @@
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${item.Content || 'No content available.'}</div>
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${displayContent}</div>
  				 `;
         }
         
