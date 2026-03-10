@@ -2413,8 +2413,8 @@
             
             let displayContent = 'No content available.';
             if (item.Content && item.Content.length > 0) {
-                const limit = Math.ceil(item.Content.length / 5);
-                displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
+                const limit = 0;//Math.ceil(item.Content.length / 5 );
+                displayContent = item.Content.substring(0, limit) + '<a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
             }
 
             pane.innerHTML = `
@@ -2423,11 +2423,6 @@
                     ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
                 </div>
                 
-                <div style="margin-bottom: 10px;">
-                    <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none; word-break: break-all;">
-                        Original URL: ${item.URL} <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
-                    </a>
-                </div>
 
                 <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary || 'No AI Summary'}</div>
                 
@@ -3154,7 +3149,7 @@
                 // Filter by Visibility and Search Term
                 tickers = tickers.filter(t => {
                      // Filter Logic
-                     if (group !== 'equity-index' && !visibleTickers.has(t)) return false;
+                     if (!visibleTickers.has(t)) return false;
                      
                      // Search Filter
                      if (searchTerm.length > 0) {
@@ -3327,7 +3322,9 @@
                 const cardTitle = table.closest('.summary-card').querySelector('.summary-card-label').innerText;
                 copyText += `[${cardTitle}]\n`;
                 
-                const headers = Array.from(table.querySelectorAll('th')).map(th => th.innerText.trim());
+                const headers = Array.from(table.querySelectorAll('th')).map(th => {
+                    return th.textContent.replace('edit', '').replace(' \u25B2', '').replace(' \u25BC', '').trim();
+                });
                 copyText += headers.join('\t') + '\n';
                 
                 const rows = table.querySelectorAll('tbody tr');
@@ -3463,13 +3460,32 @@
                 group.tickers.forEach(t => {
                     const item = document.createElement('label');
                     item.className = 'manage-ticker-item';
+                    item.style.display = 'flex';
+                    item.style.justifyContent = 'space-between';
+                    item.style.alignItems = 'center';
+                    
                     const isChecked = visibleTickers.has(t) ? 'checked' : '';
-                    item.innerHTML = `<input type="checkbox" value="${t}" ${isChecked}> ${TICKER_NAMES[t] || t}`;
+                    item.innerHTML = `
+                        <div><input type="checkbox" value="${t}" ${isChecked}> ${TICKER_NAMES[t] || t}</div>
+                        <i class="material-icons" style="font-size:16px; color:red; cursor:pointer;" onclick="deleteTickerFromManage('${group.id}', '${t}', event)">delete</i>
+                    `;
                     listContainer.appendChild(item);
                 });
             });
             const m = document.getElementById('manageTickerModal');
             m.style.display='block'; setTimeout(() => m.classList.add('show'), 10);
+        }
+
+        function deleteTickerFromManage(groupId, ticker, event) {
+            event.stopPropagation();
+            event.preventDefault();
+            const index = summaryTickersConfig[groupId].indexOf(ticker);
+            if (index > -1) {
+                summaryTickersConfig[groupId].splice(index, 1);
+            }
+            visibleTickers.delete(ticker);
+            openManageTickerModal();
+            renderSummaryTab();
         }
         
         function updateGroupName(groupId, newName) {
