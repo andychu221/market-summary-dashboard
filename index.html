@@ -2413,7 +2413,7 @@
             
             let displayContent = 'No content available.';
             if (item.Content && item.Content.length > 0) {
-                const limit = Math.ceil(item.Content.length / 5 * 5);
+                const limit = Math.ceil(item.Content.length / 5 * 2);
                 displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
             }
 
@@ -2425,7 +2425,7 @@
                 
                 <div style="margin-bottom: 10px;">
                     <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none; word-break: break-all;">
-                        URL: ${item.URL} <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
+                        ${item.URL} <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
                     </a>
                 </div>
 
