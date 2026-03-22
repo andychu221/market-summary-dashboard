@@ -701,7 +701,7 @@
         const TICKER_NAMES = {
             '2330.TW': 'TSMC', 'TSM': 'TSMC ADR', 'TSM.N': 'TSMC ADR',
             '.TWII': 'TWSE', '.SOX': 'SOX', '.SPX': 'S&P 500', 
-            '^IXIC': 'Nasdaq', '^N225': 'Nikkei 225', '^KS11': 'KOSPI', '000001.SS': 'Shanghai',
+            '.IXIC': 'Nasdaq', '.N225': 'Nikkei 225', '.KS11': 'KOSPI', '.SSEC': 'Shanghai',
             'NVDA': 'Nvidia', 'NVDA.O': 'Nvidia', 
             'AAPL': 'Apple', 'AAPL.O': 'Apple', 
             'AVGO': 'Broadcom', 'AVGO.O': 'Broadcom',
@@ -746,7 +746,7 @@
             '005930.KS': 'samsung.com',
             '2303.TW': 'umc.com', '0981.HK': 'smics.com', '688981.SS': 'smics.com', 'GFS': 'gf.com',
             '.TWII': 'taiwan.gov.tw', '.SOX': 'nasdaq.com', '.SPX': 'spglobal.com',
-            '.IXIC': 'nasdaq.com', '.N225': 'jpx.co.jp', '.KS11': 'krx.co.kr', '.SSE': 'sse.com.cn',
+            '.IXIC': 'nasdaq.com', '.N225': 'jpx.co.jp', '.KS11': 'krx.co.kr', '.SSEC': 'sse.com.cn',
             'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com', 'META': 'meta.com', 'TSLA': 'tesla.com',
             'AMAT': 'appliedmaterials.com', 'KLAC': 'kla.com', 'CSCO': 'cisco.com', 'BTDR': 'bitdeer.com',
             'SIMO': 'siliconmotion.com', 'ASML.AS': 'asml.com', '5347.TWO': 'vis.com', '3443.TW': 'guc-asic.com',
@@ -764,7 +764,7 @@
         let TICKER_COLORS = {
             '2330.TW': '#8b0000', 'TSM': '#a52a2a', 'TSM.N': '#a52a2a', 
             '.TWII': '#000000', '.SOX': '#008080', '.SPX': '#555555',
-            '^IXIC': '#0099CC', '^N225': '#FF0000', '^KS11': '#0000FF', '000001.SS': '#CC0000',
+            '.IXIC': '#0099CC', '.N225': '#FF0000', '.KS11': '#0000FF', '.SSEC': '#CC0000',
             'NVDA': '#76b900', 'NVDA.O': '#76b900',
             'AAPL': '#A2AAAD', 'AAPL.O': '#A2AAAD',
             'AVGO': '#CC092F', 'AVGO.O': '#CC092F',
@@ -789,7 +789,7 @@
         };
 
         let summaryTickersConfig = {
-            'equity-index': ['.TWII', '.SOX', '.SPX', '.IXIC', '.N225', '.KS11', '.SSEC'],
+            'equity-index': ['.TWII', '.SOX',  '.IXIC','.SPX', '.N225', '.KS11', '.SSEC'],
             'foundry': [
                 '2330.TW', 'TSM', 'INTC', '2303.TW', '0981.HK', '688981.SS', 'GFS'
             ],
