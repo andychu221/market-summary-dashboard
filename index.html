@@ -1642,23 +1642,28 @@
             }
 
             pane.innerHTML = `
-                <h2 style="margin-bottom:10px;">${item.Title}</h2>
-                <div style="color:#666; margin-bottom:20px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
-                    ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
-                </div>
-                
-                <div style="margin-bottom: 10px;">
-                    <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none; word-break: break-all;">
-                        ${item.URL} <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
-                    </a>
-                </div>
+                <div style="display: flex; flex-direction: column; height: 100%;">
+                    <h2 style="margin-bottom:10px;">${item.Title}</h2>
+                    <div style="color:#666; margin-bottom:10px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
+                        ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
+                    </div>
 
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary || 'No AI Summary'}</div>
-                
-                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                    <div style="margin-bottom: 10px;">
+                        <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none; word-break: break-all;">
+                            ${item.URL} <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
+                        </a>
+                    </div>
 
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${displayContent}</div>
- 				 `;
+                    ${item.AI_Summary ? `<div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 10px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary}</div>` : ''}
+
+                    <iframe src="${item.URL}" style="width: 100%; flex-grow: 1; border: 1px solid #e0e0e0; border-radius: 8px; background: white; min-height: 500px; margin-bottom: 20px;" title="News Content"></iframe>
+
+                    <details style="margin-bottom: 20px;">
+                        <summary style="cursor: pointer; font-weight: bold; color: var(--primary-color); margin-bottom: 10px;">Fallback Content (if page fails to load)</summary>
+                        <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${displayContent}</div>
+                    </details>
+                </div>
+            `;
         }
         
         function analyzeSelectedNews() {
