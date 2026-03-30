@@ -1637,28 +1637,34 @@
             
             let displayContent = 'No content available.';
             if (item.Content && item.Content.length > 0) {
-                //const limit = Math.ceil(item.Content.length / 5 * 0.5);
-                //displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
-            	displayContent = item.Content
+                const limit = item.Content.length'//Math.ceil(item.Content.length / 5 * 0.5);
+                displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
+            	//displayContent = item.Content
 			}
-
+				
+			// <div style="margin-bottom: 10px;">
+   //                  <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none; word-break: break-all;">
+   //                      ${item.URL} <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
+   //                  </a>
+   //          </div>
+			
             pane.innerHTML = `
                 <h2 style="margin-bottom:10px;">${item.Title}</h2>
                 <div style="color:#666; margin-bottom:20px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
                     ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
                 </div>
                 
-                <div style="margin-bottom: 10px;">
-                    <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none; word-break: break-all;">
-                        ${item.URL} <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
-                    </a>
-                </div>
+                
 
                 <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary || 'No AI Summary'}</div>
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333;">${displayContent}</div>
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px;">${displayContent}</div>
+
+                <div style="color: #999; font-size: 0.75rem; text-align: left; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
+                    本文內容由 AI 技術輔助整理自外部新聞來源，僅供研究參考。AI 摘要可能存在理解偏差或資訊遺漏，內容不代表原始媒體之立場，請務必點擊原始連結核實。 原始新聞內容之著作權均歸原媒體所有。本摘要僅為導讀用途，不構成對原文的替代。
+                </div>
  				 `;
         }
         
@@ -1689,8 +1695,8 @@
                 const tickerNews = newsByTicker[ticker];
                 newsText += `## ${TICKER_NAMES[ticker] || ticker} (${ticker}) - ${tickerNews.length} articles\n`;
                 tickerNews.forEach((n, idx) => {
-                    newsText += `[${idx + 1}] ${n.Date} - ${n.Title}\n`;
-                    newsText += `    ${n.Content.substring(0, 4000)}...\n\n`;
+                    newsText += `[${idx + 1}] ${n.Date}\n`;
+                    newsText += `    ${n.AI_Summary || 'No AI Summary'}\n\n`;
                 });
                 newsText += '\n';
             });
@@ -1713,7 +1719,7 @@
         function explainVolatility(ticker, val, dateStr, periodType = '1W') {
             const targetDate = new Date(dateStr);
             let startDate, endDate;
-            let maxItems = 50;
+            let maxItems = 20;
             
             // MOD: Use SPX news for SOX or ^IXIC if they need explanation
             let searchTicker = ticker;
@@ -1725,13 +1731,11 @@
                 startDate = new Date(targetDate);
                 startDate.setDate(startDate.getDate() - 1); // Look back 1 day
                 endDate = new Date(targetDate);
-                maxItems = 30;
             } else {
                 // 1W or default
                 startDate = new Date(targetDate);
-                startDate.setDate(startDate.getDate() - 7); // Look back 7 days
+                startDate.setDate(startDate.getDate() - 5); // Look back 5 days
                 endDate = new Date(targetDate);
-                maxItems = 50;
             }
             
             const relevantNews = fullNewsList.filter(n => {
@@ -1743,7 +1747,7 @@
             let newsContext = "No specific news found.";
             if (relevantNews.length > 0) {
                 // Modified: Include Index and URL in context for citation
-                newsContext = relevantNews.map((n, i) => `[${i+1}] ${n.Date}: ${n.Title} (Link: ${n.URL})\n  Content: ${n.Content}`).join('\n\n');
+                newsContext = relevantNews.map((n, i) => `[${i+1}] ${n.Date} (Link: ${n.URL})\n  AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
             }
             
             let extraContext = "";
@@ -1778,12 +1782,12 @@
             const recentData = data.slice(-30).map(d => `${d.date.toISOString().split('T')[0]}: ${d.price}`).join('\n');
 			            
             const endDate = summaryReferenceDate;
-            const startDate = new Date(endDate); startDate.setDate(startDate.getDate() - 30);
+            const startDate = new Date(endDate); startDate.setDate(startDate.getDate() - 5);
             
-            const relevantNews = fullNewsList.filter(n => n.ticker === currentModalTicker && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 5);
+            const relevantNews = fullNewsList.filter(n => n.ticker === currentModalTicker && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 20);
             let newsText = "No recent news found.";
             if (relevantNews.length > 0) {
-                newsText = relevantNews.map(n => `- ${n.Date}: ${n.Title} \n Content: ${n.Content}`).join('\n\n');
+                newsText = relevantNews.map(n => `- ${n.Date}\n AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
             }
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
@@ -1822,9 +1826,11 @@
                     perfSummary += `${TICKER_NAMES[t]||t}: ${chg.toFixed(2)}%\n`;
                 }
 				
-                const tNews = fullNewsList.filter(n => n.ticker === t && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 3);
+                const newsStartDate = new Date(endDate);
+                newsStartDate.setDate(newsStartDate.getDate() - 5);
+                const tNews = fullNewsList.filter(n => n.ticker === t && n.jsDate >= newsStartDate && n.jsDate <= endDate).slice(0, 20);
                 if(tNews.length > 0) {
-                    allNewsText += `\nNews for ${TICKER_NAMES[t]||t}:\n` + tNews.map(n => `- ${n.Date}: ${n.Title} \n Content: ${n.Content}`).join('\n\n');
+                    allNewsText += `\nNews for ${TICKER_NAMES[t]||t}:\n` + tNews.map(n => `- ${n.Date}\n AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
                 }
             });
 
@@ -1894,19 +1900,19 @@
 
             const dataText = getDataStr(tickers);
 
-            // 2. Gather News specific to this group (Lookback 7 days)
+            // 2. Gather News specific to this group (Lookback 5 days)
             const newsStart = new Date(summaryReferenceDate); 
-            newsStart.setDate(summaryReferenceDate.getDate() - 7);
+            newsStart.setDate(summaryReferenceDate.getDate() - 5);
             
             const groupNews = fullNewsList.filter(n => 
                 tickers.includes(n.ticker) && 
                 n.jsDate >= newsStart && 
                 n.jsDate <= summaryReferenceDate
-            ).slice(0, 15);
+            ).slice(0, 20);
 
-            let newsText = "No specific news found for this group in the last 7 days.";
+            let newsText = "No specific news found for this group in the last 5 days.";
             if (groupNews.length > 0) {
-                newsText = groupNews.map(n => `- [${n.Date}] ${TICKER_NAMES[n.ticker]||n.ticker}: ${n.Title}\n Content: ${n.Content}`).join('\n\n');
+                newsText = groupNews.map(n => `- [${n.Date}] ${TICKER_NAMES[n.ticker]||n.ticker}\n AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
             }
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
@@ -1918,7 +1924,7 @@
             Market Data (As of ${formatDateYYYYMMDD(summaryReferenceDate)}):
             ${dataText}
             
-            Recent News for ${groupName} (Last 7 Days):
+            Recent News for ${groupName} (Last 5 Days):
             ${newsText}
             
             Provide a concise summary covering:
@@ -1956,9 +1962,9 @@
                 tableData += `${TICKER_NAMES[t]||t} | ${getRet('1-Week')} | ${getRet('1-Month')} | ${getRet('YTD')} | ${getRet('1-Year')}\n`;
             });
 
-            const newsStart = new Date(summaryReferenceDate); newsStart.setDate(newsStart.getDate()-7);
-            const recentNews = fullNewsList.filter(n => n.jsDate >= newsStart && n.jsDate <= summaryReferenceDate).slice(0, 8);
-             const newsText = recentNews.map(n => `- ${n.Date}: ${n.Title} \n Content: ${n.Content}`).join('\n\n');
+            const newsStart = new Date(summaryReferenceDate); newsStart.setDate(newsStart.getDate()-5);
+            const recentNews = fullNewsList.filter(n => n.jsDate >= newsStart && n.jsDate <= summaryReferenceDate).slice(0, 20);
+             const newsText = recentNews.map(n => `- ${n.Date}\n AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
