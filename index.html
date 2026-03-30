@@ -1637,7 +1637,7 @@
             
             let displayContent = 'No content available.';
             if (item.Content && item.Content.length > 0) {
-                const limit = item.Content.length'//Math.ceil(item.Content.length / 5 * 0.5);
+                const limit = item.Content.length;//Math.ceil(item.Content.length / 5 * 0.5);
                 displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
             	//displayContent = item.Content
 			}
