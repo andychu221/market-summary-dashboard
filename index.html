@@ -1637,9 +1637,10 @@
             
             let displayContent = 'No content available.';
             if (item.Content && item.Content.length > 0) {
-                const limit = Math.ceil(item.Content.length / 5 * 0.5);
-                displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
-            }
+                //const limit = Math.ceil(item.Content.length / 5 * 0.5);
+                //displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
+            	displayContent = item.Content
+			}
 
             pane.innerHTML = `
                 <h2 style="margin-bottom:10px;">${item.Title}</h2>
