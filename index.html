@@ -1637,23 +1637,16 @@
             
             let displayContent = 'No content available.';
             if (item.Content && item.Content.length > 0) {
-                const limit = item.Content.length;//Math.ceil(item.Content.length / 5 * 0.5);
+                const limit = Math.ceil(item.Content.length);
                 displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
             	//displayContent = item.Content
 			}
-				
-			// <div style="margin-bottom: 10px;">
-   //                  <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none; word-break: break-all;">
-   //                      ${item.URL} <i class="material-icons" style="font-size:12px; vertical-align: middle;">open_in_new</i>
-   //                  </a>
-   //          </div>
-			
+
             pane.innerHTML = `
                 <h2 style="margin-bottom:10px;">${item.Title}</h2>
                 <div style="color:#666; margin-bottom:20px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
                     ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
                 </div>
-                
                 
 
                 <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary || 'No AI Summary'}</div>
@@ -1662,7 +1655,7 @@
 
                 <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px;">${displayContent}</div>
 
-                <div style="color: #999; font-size: 0.75rem; text-align: left; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
+                <div style="color: #999; font-size: 0.9rem; text-align: left; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
                     本文內容由 AI 技術輔助整理自外部新聞來源，僅供研究參考。AI 摘要可能存在理解偏差或資訊遺漏，內容不代表原始媒體之立場，請務必點擊原始連結核實。 原始新聞內容之著作權均歸原媒體所有。本摘要僅為導讀用途，不構成對原文的替代。
                 </div>
  				 `;
@@ -2439,7 +2432,10 @@
 
                         switch(col.id) {
                             case 'Name': 
-                                val = `<div style="display:flex; align-items:center;">${getLogoHtml(t)}${perfData.name}</div>`; 
+                                val = `<div style="display:flex; align-items:center; width:100%; justify-content:space-between;">
+                                         <div style="display:flex; align-items:center;">${getLogoHtml(t)}${perfData.name}</div>
+                                         <i class="material-icons" style="font-size:16px; color:#999; cursor:pointer;" onclick="event.stopPropagation(); analyzeTickerChart('${t}')" title="AI Summary for ${perfData.name}">auto_awesome</i>
+                                       </div>`; 
                                 break;
                             case 'Ticker': val = t; break;
                             case 'Date': val = formatDateDDMMM(currPoint.date); break; 
