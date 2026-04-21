@@ -238,21 +238,22 @@
         .search-mode .summary-card-label { display: none; }
         .search-mode #summary-content-container { gap: 0; }
 
-        #news-container { display: flex; height: 75vh; width: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: 8px; }
-        #news-left-pane { flex: 0 0 50%; min-width: 350px; display: flex; flex-direction: column; background: var(--bg-color); border-right: 1px solid var(--border-color); }
-        #news-resizer { width: 5px; cursor: col-resize; background: #ddd; transition: background 0.2s; }
-        #news-resizer:hover { background: var(--primary-color); }
-        #news-right-pane { flex: 1; min-width: 0px; padding: 20px; background-color: var(--hover-bg); overflow-y: auto; }
+        /* Unified Split Pane Styles for News and Earnings */
+        #news-container, #earnings-container { display: flex; height: 75vh; width: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: 8px; }
+        #news-left-pane, #earnings-left-pane { flex: 0 0 50%; min-width: 350px; display: flex; flex-direction: column; background: var(--bg-color); border-right: 1px solid var(--border-color); }
+        #news-resizer, #earnings-resizer { width: 5px; cursor: col-resize; background: #ddd; transition: background 0.2s; }
+        #news-resizer:hover, #earnings-resizer:hover { background: var(--primary-color); }
+        #news-right-pane, #earnings-right-pane { flex: 1; min-width: 0px; padding: 20px; background-color: var(--hover-bg); overflow-y: auto; }
         
-        .news-item { padding: 12px 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; position: relative; }
-        .news-item:hover { background-color: var(--hover-bg); }
-        .news-item.active { background-color: var(--button-active-bg); border-left: 4px solid var(--primary-color); }
-        .news-item.selected-for-ai { background-color: #e8eaf6; border-right: 4px solid var(--ai-btn-color); } 
-        .news-meta { display: flex; gap: 8px; font-size: 0.8rem; color: #666; margin-bottom: 4px; flex-wrap: wrap; align-items: center; }
-        .news-tag { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
-        .news-title { font-weight: 600; font-size: 0.95rem; line-height: 1.4; }
+        .news-item, .earnings-item { padding: 12px 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s; position: relative; }
+        .news-item:hover, .earnings-item:hover { background-color: var(--hover-bg); }
+        .news-item.active, .earnings-item.active { background-color: var(--button-active-bg); border-left: 4px solid var(--primary-color); }
+        .news-item.selected-for-ai, .earnings-item.selected-for-ai { background-color: #e8eaf6; border-right: 4px solid var(--ai-btn-color); } 
+        .news-meta, .earnings-meta { display: flex; gap: 8px; font-size: 0.8rem; color: #666; margin-bottom: 4px; flex-wrap: wrap; align-items: center; }
+        .news-tag, .earnings-tag { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; }
+        .news-title, .earnings-title { font-weight: 600; font-size: 0.95rem; line-height: 1.4; }
         
-        #news-filters {
+        #news-filters, #earnings-filters {
             padding: 10px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -419,7 +420,7 @@
 <body>
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <p id="loading-text">Loading latest data from GitHub...</p>
+        <p id="loading-text">Loading latest data...</p>
     </div>
 
     <div class="container">
@@ -429,6 +430,7 @@
                     <div class="tab-link active" onclick="openTab(event, 'summary')"><i class="material-icons">dashboard</i> Summary</div>
                     <div class="tab-link" onclick="openTab(event, 'chart-main')"><i class="material-icons">show_chart</i> Chart</div>
                     <div class="tab-link" onclick="openTab(event, 'news')"><i class="material-icons">article</i> News</div>
+                    <div class="tab-link" onclick="openTab(event, 'earnings')"><i class="material-icons">record_voice_over</i> Earnings Call</div>
                     
                     <div class="tab-right-controls">
                          <button class="icon-btn" onclick="openAiSettings()" title="AI Settings">
@@ -438,6 +440,7 @@
                 </div>
             </div>
 
+            <!-- Summary Tab -->
             <div id="summary" class="tab-content active">
                 <div class="summary-header">
                     <div class="summary-header-left">
@@ -473,6 +476,7 @@
                 </p>
             </div>
 
+            <!-- Chart Tab -->
             <div id="chart-main" class="tab-content">
                 <div class="chart-sub-tabs">
                      <div class="chart-sub-tab-link active" onclick="openChartSubTab(event, 'chart-grid')">Performance Report</div>
@@ -535,6 +539,7 @@
                 </div>
             </div>
 
+            <!-- News Tab -->
             <div id="news" class="tab-content">
                 <div id="news-container">
                     <div id="news-left-pane">
@@ -591,6 +596,50 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Earnings Call Tab -->
+            <div id="earnings" class="tab-content">
+                <div id="earnings-container">
+                    <div id="earnings-left-pane">
+                        <div id="earnings-filters">
+                            <div style="position: relative; display: inline-block;">
+                                <input type="text" id="earnings-company-search" class="controls-input" placeholder="Search Company..." 
+                                    oninput="filterEarningsCompanyDropdown(); filterEarnings();" 
+                                    onfocus="document.getElementById('earnings-company-dropdown').style.display='block'"
+                                    style="width: 140px; padding-right: 30px;">
+                                <i class="material-icons" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; color: #999;">search</i>
+                                <div id="earnings-company-dropdown" class="date-range-content" style="min-width: 250px; max-height: 300px; overflow-y: auto;">
+                                </div>
+                            </div>
+
+                            <select id="earnings-filter-year" class="controls-select" onchange="filterEarnings()" title="Filter by Year" style="min-width: 100px;">
+                                <option value="all">Year (All)</option>
+                            </select>
+                            
+                            <select id="earnings-filter-quarter" class="controls-select" onchange="filterEarnings()" title="Filter by Quarter" style="min-width: 110px;">
+                                <option value="all">Quarter (All)</option>
+                                <option value="Q1">Q1</option>
+                                <option value="Q2">Q2</option>
+                                <option value="Q3">Q3</option>
+                                <option value="Q4">Q4</option>
+                            </select>
+                            
+                            <button class="ai-action-btn" onclick="analyzeSelectedEarnings()" title="Analyze Selected Earnings (Ctrl+Click)" style="margin-left:auto;">
+                                <i class="material-icons">auto_awesome</i>
+                            </button>
+                        </div>
+                         
+                         <div id="earnings-list" style="overflow-y:auto; flex:1;"></div>
+                    </div>
+                    <div id="earnings-resizer"></div>
+                    <div id="earnings-right-pane">
+                        <div style="text-align:center; color:#999; margin-top:50px;">
+                            Select an earnings call (Ctrl+Click to multi-select) then click the AI icon to analyze key highlights.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -685,7 +734,7 @@
     <div id="aiResultModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('aiResultModal')">&times;</span>
-            <h2 style="display:flex; align-items:center; gap:10px;">
+            <h2 id="aiModalTitle" style="display:flex; align-items:center; gap:10px;">
                 <i class="material-icons" style="color:var(--ai-btn-color);">auto_awesome</i>
                 AI Analysis
             </h2>
@@ -782,7 +831,7 @@
 			'2388.TW': '#F4A460', '2379.TW': '#8A2BE2', 'STM': '#20B2AA', 'NOD.OL': '#FFD700', 'CRUS': '#FF69B4',
             '108320.KS': '#CD5C5C', '688099.SS': '#4B0082', '688213.SS': '#556B2F', '000063.SZ': '#8B4513', '688220.SS': '#4682B4',
             '2344.TW': '#B0C4DE', '2408.TW': '#4682B4', 'SNDK': '#5F9EA0', 'SNDK.O': '#D2691E',
-            // SOXX Additions - Arbitrary distinct colors
+            // SOXX Additions
             'TXN': '#CC0000', 'MRVL': '#FF4500', 'ON': '#2E8B57', 'MCHP': '#DC143C',
             'TER': '#4682B4', 'SWKS': '#191970', 'MPWR': '#800080',
             'ENTG': '#708090', 'QRVO': '#00CED1', 'WOLF': '#A52A2A', 'ENPH': '#FF8C00'
@@ -797,11 +846,11 @@
                 'NVDA', 'AMD', 'AVGO', 'QCOM', '2454.TW', 'ADI', '6723.T', 'NXPI', 'STM', 
                 '2379.TW', '3661.TW', '6526.T', 'SIMO', 'NOD.OL', 'CRUS', 
                 '108320.KS', '688099.SS', '688213.SS', '688220.SS', '000063.SZ', '603501.SS',
-                'TXN', 'MRVL', 'MCHP', 'ON', 'MPWR', 'SWKS', 'QRVO', 'WOLF', 'ENPH' // SOXX Additions
+                'TXN', 'MRVL', 'MCHP', 'ON', 'MPWR', 'SWKS', 'QRVO', 'WOLF', 'ENPH'
             ],
             'equipment': [
                 'ASML.AS', 'AMAT', 'KLAC', 'LRCX', '8035.T',
-                'TER', 'ENTG' // SOXX Additions
+                'TER', 'ENTG'
             ],
             'memory': [
                 '000660.KS', 'MU', '005930.KS', 'SNDK',
@@ -880,13 +929,22 @@
         let summaryReferenceDate = null;
         let activeCharts = {};
         let tickerMetadata = {};
+        
+        // News State
         let newsSources = new Set();
         let loadedNewsTickers = new Set();
         let fullNewsList = []; 
         let newsSelectedRange = { start: null, end: null };
+        let selectedNewsIds = new Set(); 
+        
+        // Earnings State
+        let loadedEarningsTickers = new Set();
+        let earningsYears = new Set();
+        let fullEarningsList = [];
+        let selectedEarningsIds = new Set();
+
         let customPeriodState = { start: null, end: null };
         let currentModalTicker = null;
-        let selectedNewsIds = new Set(); 
 
         let aiConfig = {
             apiKey: '',
@@ -897,8 +955,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadAiSettings();
             initNewsResizer();
+            initEarningsResizer();
             loadAllDataFromGitHub();
             populateSummaryControls();
+            
             document.addEventListener('click', (e) => {
                if (!e.target.closest('.date-range-dropdown')) {
                    const menu = document.getElementById('news-date-range-content');
@@ -907,16 +967,18 @@
                if (!e.target.closest('.multi-select-container')) {
                    document.querySelectorAll('.multi-select-content').forEach(el => el.classList.remove('show'));
                }
-               // Requirement 4: Search dropdown should close when clicking outside
                if (!e.target.closest('#news-filters')) {
                    document.getElementById('news-company-dropdown').style.display='none';
                }
+               if (!e.target.closest('#earnings-filters')) {
+                   document.getElementById('earnings-company-dropdown').style.display='none';
+               }
             });
             
-            // Requirement 4: Close search dropdown on ESC
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     document.getElementById('news-company-dropdown').style.display='none';
+                    document.getElementById('earnings-company-dropdown').style.display='none';
                     document.getElementById('news-date-range-content').classList.remove('show');
                 }
             });
@@ -924,11 +986,10 @@
 
         function populateSummaryControls() {
             const groupSelect = document.getElementById('summary-group-filter');
-            // Retain "all" option
             groupSelect.innerHTML = '<option value="all">Filter Group (All)</option>';
             
             Object.keys(GROUP_DISPLAY_NAMES).forEach(key => {
-                if (key !== 'equity-index') { // Don't filter by benchmark usually
+                if (key !== 'equity-index') { 
                     groupSelect.innerHTML += `<option value="${key}">${GROUP_DISPLAY_NAMES[key]}</option>`;
                 }
             });
@@ -966,7 +1027,11 @@
             const loading = document.getElementById('ai-loading');
             const content = document.getElementById('ai-content');
             const modal = document.getElementById('aiResultModal');
+            const titleEl = document.getElementById('aiModalTitle');
             
+            // 恢復原本的 AI Analysis 標題
+            titleEl.innerHTML = `<i class="material-icons" style="color:var(--ai-btn-color);">auto_awesome</i> AI Analysis`;
+
             modal.style.display='block'; setTimeout(()=>modal.classList.add('show'), 10);
             loading.style.display = 'block';
             content.innerHTML = '';
@@ -985,7 +1050,7 @@
                 const data = await response.json();
                 const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
                 
-                content.innerHTML = marked.parse(rawText);
+                content.innerHTML = marked.parse(rawText, { breaks: true });
             } catch (error) {
                 content.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
             } finally {
@@ -1035,10 +1100,8 @@
                     });
                 });
 
-                // Calculate latestDataDate
                 let maxDate = 0;
                 Object.keys(dataByTicker).forEach(t => {
-                    // Sorting happens here to ensure latest date is correct
                     dataByTicker[t].sort((a,b) => a.date - b.date);
                     if (dataByTicker[t].length) {
                         const d = dataByTicker[t][dataByTicker[t].length-1].date.getTime();
@@ -1058,19 +1121,16 @@
 
                 document.getElementById('summary-as-of-date').value = formatDateYYYYMMDD(latestDataDate);
                 
-                // Default Custom Period (Req 2: From 2020-01-01)
                 customPeriodState.start = new Date('2020-01-01');
                 customPeriodState.end = latestDataDate;
 
-                // Requirement 3: Rebase TRI to 2020-01-01 = 100
                 rebaseTriData();
-
                 processPerformanceData();
                 renderSummaryTab();
                 renderChartTab();
                 
-                status.innerText = "Loading News...";
-                await loadNews();
+                status.innerText = "Loading News & Earnings...";
+                await Promise.all([loadNews(), loadEarnings()]);
 
                 loading.style.display = 'none';
 
@@ -1079,6 +1139,287 @@
                 console.error(e);
             }
         }
+
+        // ====== Earnings Call Functions ====== //
+        
+        async function loadEarnings() {
+            const listEl = document.getElementById('earnings-list'); 
+            listEl.innerHTML = '<p style="padding:10px;">Loading Earnings Calls...</p>';
+            let allEarnings = [];
+            loadedEarningsTickers = new Set();
+            earningsYears = new Set();
+            
+            const url = 'https://raw.githubusercontent.com/andychu221/Earnings-Call-Transcripts/refs/heads/main/earnings_transcripts.json';
+            const json = await fetchJsonWithRetry(url);
+
+            if (json) {
+                Object.values(json).forEach(companyData => {
+                    if (companyData.transcripts && Array.isArray(companyData.transcripts)) {
+                        companyData.transcripts.forEach((t, idx) => {
+                            t.id = `earn_${t.ticker}_${idx}_${Math.random().toString(36).substr(2,9)}`; 
+                            t.jsDate = new Date(t.published_date);
+                            
+                            loadedEarningsTickers.add(t.ticker);
+                            if (t.fiscal_year) earningsYears.add(t.fiscal_year.toString());
+                            allEarnings.push(t);
+                        });
+                    }
+                });
+            }
+
+            // 按時間倒序排列
+            allEarnings.sort((a,b) => b.jsDate - a.jsDate); 
+            fullEarningsList = allEarnings; 
+            
+            populateEarningsFilters();
+            filterEarnings();
+            
+            const firstEarn = document.querySelector('.earnings-item');
+            if(firstEarn) firstEarn.click();
+        }
+
+        function populateEarningsFilters() {
+            const searchInput = document.getElementById('earnings-company-search');
+            searchInput.value = '';
+            searchInput.dataset.selectedTicker = 'all';
+            filterEarningsCompanyDropdown();
+            
+            const yearSelect = document.getElementById('earnings-filter-year');
+            yearSelect.innerHTML = '<option value="all">Year (All)</option>';
+            Array.from(earningsYears).sort((a,b) => b - a).forEach(y => {
+                yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
+            });
+        }
+
+        function filterEarningsCompanyDropdown() {
+            const searchTerm = document.getElementById('earnings-company-search').value.toLowerCase();
+            const dropdown = document.getElementById('earnings-company-dropdown');
+            dropdown.innerHTML = '';
+            
+            if(searchTerm !== "") {
+                document.getElementById('earnings-company-search').dataset.selectedTicker = 'all';
+            }
+    
+            Array.from(loadedEarningsTickers).sort().forEach(t => {
+                const name = TICKER_NAMES[t] || t;
+                const matchTicker = t.toLowerCase().includes(searchTerm);
+                const matchName = name.toLowerCase().includes(searchTerm);
+                if (searchTerm === '' || matchTicker || matchName) {
+                    dropdown.innerHTML += `<div class="date-option" onclick="selectEarningsCompanyFilter('${t}')">${name} (${t})</div>`;
+                }
+            });
+        }
+
+        function selectEarningsCompanyFilter(ticker) {
+            const searchInput = document.getElementById('earnings-company-search');
+            const dropdown = document.getElementById('earnings-company-dropdown');
+            if (ticker === 'all') {
+                searchInput.value = '';
+                searchInput.dataset.selectedTicker = 'all';
+            } else {
+                const name = TICKER_NAMES[ticker] || ticker;
+                searchInput.value = `${name} (${ticker})`;
+                searchInput.dataset.selectedTicker = ticker;
+            }    
+            dropdown.style.display = 'none';
+            filterEarnings();
+        }
+
+        function filterEarnings() {
+            if (!fullEarningsList) return;
+            const searchInput = document.getElementById('earnings-company-search');
+            const tickerFilter = searchInput.dataset.selectedTicker || 'all';
+            const keyword = searchInput.value.toLowerCase().trim();
+            const yearFilter = document.getElementById('earnings-filter-year').value;
+            const quarterFilter = document.getElementById('earnings-filter-quarter').value;
+
+            const listEl = document.getElementById('earnings-list');
+            listEl.innerHTML = '';
+
+            const filtered = fullEarningsList.filter(t => {
+                let matchesSearch = true;
+                if (tickerFilter !== 'all') {
+                    matchesSearch = t.ticker === tickerFilter;
+                } else if (keyword !== "") {
+                    const name = (TICKER_NAMES[t.ticker] || "").toLowerCase();
+                    matchesSearch = t.ticker.toLowerCase().includes(keyword) || 
+                                    name.includes(keyword) || 
+                                    (t.title && t.title.toLowerCase().includes(keyword));
+                }
+
+                const matchesYear = yearFilter === 'all' || (t.fiscal_year && t.fiscal_year.toString() === yearFilter);
+                const matchesQuarter = quarterFilter === 'all' || (t.quarter && t.quarter.toUpperCase() === quarterFilter.toUpperCase());
+                
+                return matchesSearch && matchesYear && matchesQuarter;
+            });
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<p style="padding:10px; color:#666;">No earnings transcripts found matching filters.</p>';
+            } else {
+                renderEarningsList(filtered);
+            }
+        }
+
+        function renderEarningsList(items) {
+            const listEl = document.getElementById('earnings-list'); 
+            items.slice(0, 100).forEach((t, idx) => {
+                const div = document.createElement('div'); 
+                div.className = 'earnings-item';
+                div.dataset.id = t.id;
+                if(selectedEarningsIds.has(t.id)) div.classList.add('selected-for-ai');
+                
+                const fYear = t.fiscal_year || '';
+                const fQuarter = t.quarter || '';
+                
+                div.innerHTML = `
+                    <div class="earnings-meta">
+                        <span class="earnings-tag" style="background:${TICKER_COLORS[t.ticker]||'#ccc'}; color:white;">${TICKER_NAMES[t.ticker] || t.ticker}</span>
+                        <span class="earnings-tag" style="background:#f0f0f0; color:#333; font-weight:bold;">${fYear} ${fQuarter}</span>
+                        <span>${t.published_date}</span>
+                    </div>
+                    <div class="earnings-title">${t.title || `${t.ticker} Earnings Call`}</div>
+                `;
+                
+                div.onclick = (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        if (selectedEarningsIds.has(t.id)) {
+                            selectedEarningsIds.delete(t.id);
+                            div.classList.remove('selected-for-ai');
+                        } else {
+                            selectedEarningsIds.add(t.id);
+                            div.classList.add('selected-for-ai');
+                        }
+                    } else {
+                        document.querySelectorAll('.earnings-item').forEach(el => el.classList.remove('active'));
+                        div.classList.add('active');
+                        showEarningsContent(t);
+                    }
+                };
+                listEl.appendChild(div);
+            });
+        }
+
+        function showEarningsContent(item) {
+            const pane = document.getElementById('earnings-right-pane');
+            if(!item) { pane.innerHTML = ''; return; }
+            pane.scrollTop = 0;
+            
+            let displayContent = 'No content available.';
+            if (item.content && item.content.length > 0) {
+                displayContent = item.content;
+            }
+
+            pane.innerHTML = `
+                <h2 style="margin-bottom:10px;">${item.title || `${item.ticker} Earnings Call`}</h2>
+                <div style="color:#666; margin-bottom:20px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
+                    ${TICKER_NAMES[item.ticker] || item.ticker} | Fiscal: ${item.fiscal_year} ${item.quarter} | ${item.published_date}
+                    ${item.url ? ` | <a href="${item.url}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Source</a>` : ''}
+                </div>
+                
+                <!-- Added AI Summary for Earnings Call -->
+                <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary ? marked.parse(item.AI_Summary, { breaks: true }) : '目前這份財報會議沒有 AI 摘要。'}</div>
+                
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px;">${displayContent}</div>
+
+                <div style="color: #999; font-size: 0.9rem; text-align: left; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
+                    本文內容擷取自公開的 Earnings Call 逐字稿，僅供研究參考。
+                </div>
+            `;
+        }
+
+        function analyzeSelectedEarnings() {
+            const activeItem = document.querySelector('.earnings-item.active');
+            if (activeItem && activeItem.dataset.id) {
+                selectedEarningsIds.add(activeItem.dataset.id);
+            }
+
+            if (selectedEarningsIds.size === 0) {
+                alert('Please Ctrl+Click to select earnings transcripts first.');
+                return;
+            }
+
+            const selectedItems = fullEarningsList.filter(t => selectedEarningsIds.has(t.id));
+            
+            let transcriptText = `Total ${selectedItems.length} transcripts selected:\n\n`;
+            
+            selectedItems.forEach((t, idx) => {
+                transcriptText += `## ${TICKER_NAMES[t.ticker] || t.ticker} (${t.fiscal_year} ${t.quarter})\n`;
+                // Limit content to avoid massive context blowouts if too many selected, though Gemini 2.5 Flash is highly capable
+                const limitContent = t.content ? t.content.substring(0, 15000) + '...[truncated]' : 'No content';
+                transcriptText += `Transcript:\n${limitContent}\n\n`;
+            });
+
+            const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
+            
+            const prompt = `
+            Act as an equity research analyst.
+            Summarize the key takeaways from these earnings call transcripts.
+            Focus on:
+            1. Financial Performance & Key Metrics
+            2. Guidance / Future Outlook
+            3. Key Business Drivers, New Products, or Macro Challenges mentioned.
+            
+            Output in ${lang}, well-structured with bullet points.
+            
+            Transcripts:
+            ${transcriptText}
+            `;
+            
+            callGemini(prompt);
+        }
+        
+        // ====== New Function for Displaying Latest Earnings Summary Modal ====== //
+        function showLatestEarningsSummary(ticker) {
+            // 模糊匹配：取得小數點前面的部分，例如 '2330.TW' -> '2330', 'TSM.N' -> 'TSM'
+            const baseTicker = ticker.split('.')[0];
+            
+            const latestEarn = fullEarningsList.find(e => {
+                const eBase = e.ticker.split('.')[0];
+                return eBase === baseTicker || e.ticker === ticker;
+            });
+
+            const modal = document.getElementById('aiResultModal');
+            const loading = document.getElementById('ai-loading');
+            const content = document.getElementById('ai-content');
+            const titleEl = document.getElementById('aiModalTitle');
+            
+            titleEl.innerHTML = `<i class="material-icons" style="color:var(--ai-btn-color);">record_voice_over</i> Latest Earnings Call AI Summary - ${TICKER_NAMES[ticker] || ticker}`;
+
+            modal.style.display = 'block'; 
+            setTimeout(()=>modal.classList.add('show'), 10);
+            loading.style.display = 'none';
+            
+            if (latestEarn) {
+                const subtitle = `<div style="color:#666; margin-bottom:15px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
+                    Ticker: ${latestEarn.ticker} | Fiscal: ${latestEarn.fiscal_year || ''} ${latestEarn.quarter || ''} | Published: ${latestEarn.published_date || ''}
+                </div>`;
+                const summaryText = latestEarn.AI_Summary ? latestEarn.AI_Summary : 'No Data。';
+                content.innerHTML = subtitle + marked.parse(summaryText, { breaks: true });
+            } else {
+                content.innerHTML = `<p style="color:#666; padding:20px 0; text-align:center; font-size:1.1rem;">No Earnings Call AI Summary Data。</p>`;
+            }
+        }
+
+        function initEarningsResizer() {
+            const resizer = document.getElementById('earnings-resizer'); 
+            const leftPane = document.getElementById('earnings-left-pane'); 
+            let isResizing = false;
+            if(!resizer) return;
+            
+            resizer.addEventListener('mousedown', (e) => { isResizing = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; });
+            document.addEventListener('mousemove', (e) => { 
+                if (!isResizing) return; 
+                const containerOffset = document.getElementById('earnings-container').getBoundingClientRect().left; 
+                const newWidth = e.clientX - containerOffset; 
+                if (newWidth > 200 && newWidth < document.body.clientWidth - 200) { leftPane.style.flex = `0 0 ${newWidth}px`; } 
+            });
+            document.addEventListener('mouseup', () => { isResizing = false; document.body.style.cursor = 'default'; document.body.style.userSelect = ''; });
+        }
+
+
+        // ====== Generic Chart / Utility Functions ====== //
 
         function initChartSelectors() {
             renderMultiSelect('perf-ticker-select-container', allAvailableTickers, selectedPerfTickers, () => {
@@ -1140,7 +1481,6 @@
             TICKER_COLORS[ticker] = newColor;
         }
 
-        // Requirement 3: Ensure TRI works for indices using fallback
         function processTickerData(ticker, raw, market) {
             if (!raw || !raw.date || !raw.close) return;
             
@@ -1154,7 +1494,6 @@
             const dailyRets = raw.dailyTotalReturn || []; 
             
             const cleanData = [];
-            
             let currentTri = 100;
             
             dates.forEach((dStr, i) => {
@@ -1169,7 +1508,6 @@
                     if (dailyRets[i] !== undefined && dailyRets[i] !== null) {
                         ret = dailyRets[i];
                     } else if (closes[i-1]) {
-                        // Fallback proxy logic for indices
                         ret = (price / closes[i-1]) - 1;
                     }
                     currentTri = currentTri * (1 + ret);
@@ -1186,20 +1524,17 @@
             allData = allData.concat(cleanData);
         }
 
-        // Requirement 3: Rebase TRI to 2020-01-01 = 100
         function rebaseTriData() {
             const baseDate = new Date('2020-01-01');
             Object.keys(dataByTicker).forEach(t => {
                 const data = dataByTicker[t];
                 if (!data || data.length === 0) return;
                 
-                // Find index of first date >= 2020-01-01
                 let baseIndex = data.findIndex(d => d.date >= baseDate);
-                // Fallback: if data ends before 2020 (unlikely) or starts way after, use index 0
                 if (baseIndex === -1) baseIndex = 0;
                 
                 const baseVal = data[baseIndex].tri;
-                if (baseVal === 0) return; // avoid div by zero
+                if (baseVal === 0) return; 
 
                 for (let i = 0; i < data.length; i++) {
                     data[i].tri = (data[i].tri / baseVal) * 100;
@@ -1364,11 +1699,9 @@
                 return null;
             };
 
-            // Requirement 2: Find next data if missing
             const findTriOnOrAfter = (date) => {
                 if (!date) return null;
                 const target = date.getTime();
-                // tickerData is sorted ascending
                 for (let i = 0; i < tickerData.length; i++) {
                     if (tickerData[i].date.getTime() >= target) return tickerData[i].tri;
                 }
@@ -1399,7 +1732,6 @@
             newsSources = new Set();
             loadedNewsTickers = new Set();
             
-            // 使用單一來源 (注意：GitHub blob 連結需轉換為 raw 連結)
             const urls = [
                 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/yahoo_news.json',
                 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/udn_news.json',
@@ -1424,7 +1756,6 @@
                 }
             });
 
-            // 按時間倒序排列
             allNews.sort((a,b) => b.jsDate - a.jsDate); 
             fullNewsList = allNews; 
             
@@ -1451,7 +1782,6 @@
             const dropdown = document.getElementById('news-company-dropdown');
             dropdown.innerHTML = '';
             
-            // If user types, reset the locked selection so keyword search works
             if(searchTerm !== "") {
                 document.getElementById('news-company-search').dataset.selectedTicker = 'all';
             }
@@ -1532,13 +1862,10 @@
             listEl.innerHTML = '';
 
             const filtered = fullNewsList.filter(n => {
-                // Ticker / Keyword Filter Logic
                 let matchesSearch = true;
                 if (tickerFilter !== 'all') {
-                    // Strict ticker match from dropdown selection
                     matchesSearch = n.ticker === tickerFilter;
                 } else if (keyword !== "") {
-                    // Free text search in Ticker, Name, or Title
                     const name = (TICKER_NAMES[n.ticker] || "").toLowerCase();
                     matchesSearch = n.ticker.toLowerCase().includes(keyword) || 
                                     name.includes(keyword) || 
@@ -1639,7 +1966,6 @@
             if (item.Content && item.Content.length > 0) {
                 const limit = Math.ceil(item.Content.length);
                 displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
-            	//displayContent = item.Content
 			}
 
             pane.innerHTML = `
@@ -1649,7 +1975,7 @@
                 </div>
                 
 
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary || 'No AI Summary'}</div>
+                <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary ? marked.parse(item.AI_Summary, { breaks: true }) : 'No AI Summary'}</div>
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
@@ -1662,10 +1988,8 @@
         }
         
         function analyzeSelectedNews() {
-			// Check for active item that might not be in selection set
             const activeItem = document.querySelector('.news-item.active');
             if (activeItem && activeItem.dataset.id) {
-                // If user is viewing an item, likely wants it included if hitting AI button
                 selectedNewsIds.add(activeItem.dataset.id);
             }
 
@@ -1714,7 +2038,6 @@
             let startDate, endDate;
             let maxItems = 20;
             
-            // MOD: Use SPX news for SOX or ^IXIC if they need explanation
             let searchTicker = ticker;
             if (ticker === '.SOX' || ticker === '.IXIC') {
                 searchTicker = '.SPX';
@@ -1722,12 +2045,11 @@
 
             if (periodType === '1D') {
                 startDate = new Date(targetDate);
-                startDate.setDate(startDate.getDate() - 1); // Look back 1 day
+                startDate.setDate(startDate.getDate() - 1); 
                 endDate = new Date(targetDate);
             } else {
-                // 1W or default
                 startDate = new Date(targetDate);
-                startDate.setDate(startDate.getDate() - 5); // Look back 5 days
+                startDate.setDate(startDate.getDate() - 5); 
                 endDate = new Date(targetDate);
             }
             
@@ -1739,7 +2061,6 @@
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             let newsContext = "No specific news found.";
             if (relevantNews.length > 0) {
-                // Modified: Include Index and URL in context for citation
                 newsContext = relevantNews.map((n, i) => `[${i+1}] ${n.Date} (Link: ${n.URL})\n  AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
             }
             
@@ -1844,20 +2165,17 @@
             callGemini(prompt);
         }
 
-        // Updated Analyze Group Function
         function analyzeGroup(group) {
             let groupName = "";
             let tickers = [];
 
             if (group === 'all-stocks') {
                 groupName = "All Stocks";
-                // Get all visible tickers excluding equity index
                 Object.keys(summaryTickersConfig).forEach(g => {
                     if (g !== 'equity-index') {
                         tickers = tickers.concat(summaryTickersConfig[g]);
                     }
                 });
-                // Filter to visible only and unique
                 tickers = [...new Set(tickers)].filter(t => visibleTickers.has(t));
             } else {
                 groupName = GROUP_DISPLAY_NAMES[group];
@@ -1869,7 +2187,6 @@
                 return;
             }
 
-            // 1. Gather Performance Data
             const getDataStr = (list) => {
                 return list.map(t => {
                     const perf = allPerformanceData.get(t);
@@ -1893,7 +2210,6 @@
 
             const dataText = getDataStr(tickers);
 
-            // 2. Gather News specific to this group (Lookback 5 days)
             const newsStart = new Date(summaryReferenceDate); 
             newsStart.setDate(summaryReferenceDate.getDate() - 5);
             
@@ -2256,26 +2572,22 @@
             const searchTerm = document.getElementById('summary-search').value.toLowerCase();
             const container = document.getElementById('summary-content-container');
             
-            container.innerHTML = ''; // Clear existing content
+            container.innerHTML = ''; 
 
-            // Logic to determine which groups to render
             let groupsToRender = [];
 
-            // Always render Benchmark first unless filtered out
             if (groupFilter === 'all' || groupFilter === 'equity-index') {
                 groupsToRender.push('equity-index');
             }
 
             if (viewMode === 'categorized') {
-                // Add regular groups based on filter
                 Object.keys(summaryTickersConfig).forEach(g => {
-                    if (g === 'equity-index') return; // Already handled
+                    if (g === 'equity-index') return; 
                     if (groupFilter === 'all' || groupFilter === g) {
                         groupsToRender.push(g);
                     }
                 });
             } else {
-                // Consolidated Mode
                 if (groupFilter !== 'equity-index') {
                     groupsToRender.push('all-stocks');
                 }
@@ -2286,19 +2598,15 @@
             const endStr = customPeriodState.end ? formatDateSlash(customPeriodState.end) : '...';
 
             groupsToRender.forEach(group => {
-                // Generate Card ID
                 const cardId = `summary-${group}`;
                 
-                // Determine Tickers for this group
                 let tickers = [];
                 if (group === 'all-stocks') {
-                    // Combine all non-index groups
                     Object.keys(summaryTickersConfig).forEach(g => {
                         if (g !== 'equity-index') {
                             tickers = tickers.concat(summaryTickersConfig[g]);
                         }
                     });
-                    // Filter duplicate tickers and apply group filter if not 'all'
                     if (groupFilter !== 'all' && groupFilter !== 'equity-index') {
                          tickers = summaryTickersConfig[groupFilter] || [];
                     }
@@ -2307,12 +2615,8 @@
                     tickers = [...summaryTickersConfig[group]];
                 }
 
-                // Filter by Visibility and Search Term
                 tickers = tickers.filter(t => {
-                     // Filter Logic
                      if (!visibleTickers.has(t)) return false;
-                     
-                     // Search Filter
                      if (searchTerm.length > 0) {
                          const name = TICKER_NAMES[t] || '';
                          if (!t.toLowerCase().includes(searchTerm) && !name.toLowerCase().includes(searchTerm)) return false;
@@ -2320,15 +2624,12 @@
                      return true;
                 });
 
-                // Skip empty groups if searching/filtering
                 if (tickers.length === 0) return;
 
-                // Create Card Element
                 const card = document.createElement('div');
                 card.id = cardId;
                 card.className = 'summary-card';
                 
-                // Header
                 const groupName = group === 'all-stocks' ? 'All Watchlist' : GROUP_DISPLAY_NAMES[group];
                 const headerHtml = `
                     <div class="summary-card-label">
@@ -2344,7 +2645,6 @@
                 card.innerHTML = headerHtml;
                 container.appendChild(card);
 
-                // Sorting
                 const sortSettings = tableSortState[group] || tableSortState['equity-index'];
                 if (sortSettings.column) {
                     tickers.sort((a, b) => {
@@ -2354,7 +2654,6 @@
                     });
                 }
 
-                // Table Render
                 const groupColumns = summaryColumnsState.filter(col => {
                     if (!col.visible) return false;
                     if (group === 'equity-index' && col.id === 'MarketCap') return false;
@@ -2387,7 +2686,6 @@
                 
                 let tbodyHtml = '<tbody>';
                 
-                // --- Requirement 1: Benchmark Highlight Threshold ---
                 let threshold = (group === 'equity-index') ? 3 : 5;
 
                 tickers.forEach((t) => {
@@ -2413,11 +2711,8 @@
                             else if (pd === 'YTD') d = new Date(d.getFullYear(), 0, 1);
                             else if (pd === 'Custom') d = customPeriodState.start;
 
-                            // Standard logic: try to find value on or before the calculated date
                             let res = perfData.findTriOnOrBefore(d);
                             
-                            // Fallback logic: If calculated date is too far back (before IPO/data start),
-                            // try to find the earliest value AFTER that date.
                             if (res === null && d) {
                                 res = perfData.findTriOnOrAfter(d);
                             }
@@ -2434,7 +2729,7 @@
                             case 'Name': 
                                 val = `<div style="display:flex; align-items:center; width:100%; justify-content:space-between;">
                                          <div style="display:flex; align-items:center;">${getLogoHtml(t)}${perfData.name}</div>
-                                         <i class="material-icons" style="font-size:16px; color:#999; cursor:pointer;" onclick="event.stopPropagation(); analyzeTickerChart('${t}')" title="AI Summary for ${perfData.name}">auto_awesome</i>
+                                         <i class="material-icons" style="font-size:16px; color:#999; cursor:pointer;" onclick="event.stopPropagation(); showLatestEarningsSummary('${t}')" title="Latest Earnings Summary for ${perfData.name}">record_voice_over</i>
                                        </div>`; 
                                 break;
                             case 'Ticker': val = t; break;
@@ -2451,7 +2746,6 @@
                                     val = formatNumberWithCommas(ret, 2) + '%';
                                     css = ret >= 0 ? 'text-positive' : 'text-negative';
                                     
-                                    // --- Highlight Logic & AI Period passing ---
                                     if (col.id === '1-Day' && Math.abs(ret) > threshold) {
                                         css += ret > 0 ? ' cell-pos-light' : ' cell-neg-light';
                                         cellExtra = `<div class="volatility-icon" onclick="event.stopPropagation(); explainVolatility('${t}', '${ret.toFixed(2)}', '${formatDateYYYYMMDD(currPoint.date)}', '1D')">?</div>`;
@@ -2514,7 +2808,6 @@
                 current.direction = 'desc'; 
                 if(colId === 'Name' || colId === 'Ticker') current.direction = 'asc';
             }
-            // Ensure state is saved if it was undefined
             tableSortState[group] = current;
             renderSummaryTab();
         }
@@ -2551,7 +2844,6 @@
                 case 'Price': return price;
                 case 'MarketCap': return calculateMarketCapNumeric(ticker, price, anchorDate);
                 default: 
-                    // Use TRI for sort
                     let compareVal = currPoint.tri;
                     if (colId === 'Custom' && customPeriodState.end) {
                          const endPoint = perfData.findTriOnOrBefore(customPeriodState.end);
@@ -2582,7 +2874,7 @@
             const groupSelect = document.getElementById('add-ticker-group-select');
             groupSelect.innerHTML = '';
             const groupKeys = ['equity-index', 'foundry', 'fabless', 'equipment', 'memory', 'backend', 'end-product'];
-            groupSelect.innerHTML += '<option value="equity-index" disabled>Benchmark</option>'; // Benchmarks are usually fixed
+            groupSelect.innerHTML += '<option value="equity-index" disabled>Benchmark</option>'; 
             
             const groupKeysForSelect = ['foundry', 'fabless', 'equipment', 'memory', 'backend', 'end-product'];
             groupKeysForSelect.forEach(key => {
@@ -2606,7 +2898,6 @@
                 groupHeader.style.justifyContent = 'space-between';
                 groupHeader.style.alignItems = 'center';
 
-                // Editable Group Name
                 groupHeader.innerHTML = `
                     <span>${group.name}</span>
                     <input type="text" class="controls-input" value="${group.name}" 
@@ -2649,12 +2940,11 @@
         function updateGroupName(groupId, newName) {
             if(newName && newName.trim() !== "") {
                 GROUP_DISPLAY_NAMES[groupId] = newName.trim();
-                populateSummaryControls(); // Update dropdown
-                renderSummaryTab(); // Updates the main tab labels
+                populateSummaryControls(); 
+                renderSummaryTab(); 
             }
         }
 
-        // Requirement 1: Select Group when adding
         function addNewTickerToManage() {
             const input = document.getElementById('add-ticker-input');
             const groupSelect = document.getElementById('add-ticker-group-select');
@@ -2667,13 +2957,11 @@
             if (dataByTicker[ticker]) {
                 if (!visibleTickers.has(ticker)) {
                     visibleTickers.add(ticker);
-                    // Add to config if not present in any group
                     let found = false;
                     Object.values(summaryTickersConfig).forEach(arr => { if(arr.includes(ticker)) found = true; });
                     if(!found) {
                         summaryTickersConfig[targetGroupId].push(ticker);
                     } else {
-                        // If already in another group, strict move.
                         Object.keys(summaryTickersConfig).forEach(k => {
                             const idx = summaryTickersConfig[k].indexOf(ticker);
                             if(idx > -1) summaryTickersConfig[k].splice(idx, 1);
@@ -2716,9 +3004,8 @@
 
         function applyColumnChanges() { summaryColumnsState.forEach((col, idx) => { col.visible = document.getElementById(`col-chk-${idx}`).checked; }); closeModal('columnModal'); renderSummaryTab(); }
         
-        // Requirement 1: Default to 2020-01-01 in Modal inputs
         function openCustomPeriodModal() {
-             document.getElementById('modal-custom-start').value = '2020-01-01'; // Default fixed
+             document.getElementById('modal-custom-start').value = '2020-01-01'; 
              document.getElementById('modal-custom-end').value = formatDateYYYYMMDD(summaryReferenceDate);
              const m = document.getElementById('customPeriodModal');
              m.style.display='block'; setTimeout(() => m.classList.add('show'), 10);
@@ -2745,10 +3032,12 @@
         
         function initNewsResizer() {
             const resizer = document.getElementById('news-resizer'); const leftPane = document.getElementById('news-left-pane'); let isResizing = false;
+            if(!resizer) return;
             resizer.addEventListener('mousedown', (e) => { isResizing = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; });
             document.addEventListener('mousemove', (e) => { if (!isResizing) return; const containerOffset = document.getElementById('news-container').getBoundingClientRect().left; const newWidth = e.clientX - containerOffset; if (newWidth > 200 && newWidth < document.body.clientWidth - 200) { leftPane.style.flex = `0 0 ${newWidth}px`; } });
             document.addEventListener('mouseup', () => { isResizing = false; document.body.style.cursor = 'default'; document.body.style.userSelect = ''; });
         }
+        
         function updateSummaryReferenceDate(val) { summaryReferenceDate = new Date(val); processPerformanceData(); renderSummaryTab(); renderChartTab(); }
         function closeModal(id) { document.getElementById(id).classList.remove('show'); setTimeout(() => document.getElementById(id).style.display='none', 300); }
         function formatNumberWithCommas(x, decimals) { if (x == null) return '-'; return x.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); }
