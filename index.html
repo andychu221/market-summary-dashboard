@@ -415,6 +415,98 @@
             width: 100%;
         }
         .multi-select-item:hover { color: var(--primary-color); }
+
+        /* ======== Earnings Calendar Styles ======== */
+        .calendar-table {
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0; 
+            text-align: left; 
+            background: var(--bg-color); 
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .calendar-table th, .calendar-table td {
+            padding: 10px; 
+            border-right: 1px solid var(--border-color); 
+            border-bottom: 1px solid var(--border-color); 
+            vertical-align: top;
+            min-width: 140px;
+        }
+        .calendar-table th:last-child, .calendar-table td:last-child {
+            border-right: none;
+        }
+        .calendar-table tr:last-child td {
+            border-bottom: none;
+        }
+        .calendar-table th {
+            background: var(--header-bg);
+            font-weight: 600;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        .calendar-today {
+            /* 根據需求，取消 Today 的特別紅框與底色 */
+        }
+        .calendar-ticker {
+            background: var(--button-bg);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-color);
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: help;
+            position: relative; /* Added for tooltip positioning */
+        }
+        .calendar-ticker:hover {
+            background: var(--hover-bg);
+        }
+
+        /* 瞬間顯示的自訂 Tooltip 樣式 */
+        .custom-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.8);
+            color: #fff;
+            text-align: center;
+            padding: 6px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            z-index: 100;
+            font-size: 0.85rem;
+            transition: none; /* 移除動畫，使其瞬間顯示 */
+            margin-bottom: 6px;
+            pointer-events: none;
+            line-height: 1.4;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-weight: normal;
+        }
+        .custom-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(0,0,0,0.8) transparent transparent transparent;
+        }
+        .calendar-ticker:hover .custom-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 移除原本複雜的 this-week 分格框線，改用直接 outline */
+
     </style>
 </head>
 <body>
@@ -599,42 +691,57 @@
 
             <!-- Earnings Call Tab -->
             <div id="earnings" class="tab-content">
-                <div id="earnings-container">
-                    <div id="earnings-left-pane">
-                        <div id="earnings-filters">
-                            <div style="position: relative; display: inline-block;">
-                                <input type="text" id="earnings-company-search" class="controls-input" placeholder="Search Company..." 
-                                    oninput="filterEarningsCompanyDropdown(); filterEarnings();" 
-                                    onfocus="document.getElementById('earnings-company-dropdown').style.display='block'"
-                                    style="width: 140px; padding-right: 30px;">
-                                <i class="material-icons" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; color: #999;">search</i>
-                                <div id="earnings-company-dropdown" class="date-range-content" style="min-width: 250px; max-height: 300px; overflow-y: auto;">
-                                </div>
-                            </div>
+                <div class="chart-sub-tabs">
+                     <div class="chart-sub-tab-link active" onclick="openEarningsSubTab(event, 'earnings-calendar-view')">Calendar</div>
+                     <div class="chart-sub-tab-link" onclick="openEarningsSubTab(event, 'earnings-transcripts-view')">Transcripts</div>
+                </div>
 
-                            <select id="earnings-filter-year" class="controls-select" onchange="filterEarnings()" title="Filter by Year" style="min-width: 100px;">
-                                <option value="all">Year (All)</option>
-                            </select>
-                            
-                            <select id="earnings-filter-quarter" class="controls-select" onchange="filterEarnings()" title="Filter by Quarter" style="min-width: 110px;">
-                                <option value="all">Quarter (All)</option>
-                                <option value="Q1">Q1</option>
-                                <option value="Q2">Q2</option>
-                                <option value="Q3">Q3</option>
-                                <option value="Q4">Q4</option>
-                            </select>
-                            
-                            <button class="ai-action-btn" onclick="analyzeSelectedEarnings()" title="Analyze Selected Earnings (Ctrl+Click)" style="margin-left:auto;">
-                                <i class="material-icons">auto_awesome</i>
-                            </button>
-                        </div>
-                         
-                         <div id="earnings-list" style="overflow-y:auto; flex:1;"></div>
+                <!-- Earnings Calendar Sub-Tab -->
+                <div id="earnings-calendar-view" class="view-content active" style="padding-top:20px;">
+                    <div id="calendar-tab-content" style="padding: 10px;">
+                        <!-- Javascript 將在此渲染 3 週的行事曆資料 -->
                     </div>
-                    <div id="earnings-resizer"></div>
-                    <div id="earnings-right-pane">
-                        <div style="text-align:center; color:#999; margin-top:50px;">
-                            Select an earnings call (Ctrl+Click to multi-select) then click the AI icon to analyze key highlights.
+                </div>
+
+                <!-- Earnings Transcripts Sub-Tab -->
+                <div id="earnings-transcripts-view" class="view-content" style="padding-top:20px;">
+                    <div id="earnings-container">
+                        <div id="earnings-left-pane">
+                            <div id="earnings-filters">
+                                <div style="position: relative; display: inline-block;">
+                                    <input type="text" id="earnings-company-search" class="controls-input" placeholder="Search Company..." 
+                                        oninput="filterEarningsCompanyDropdown(); filterEarnings();" 
+                                        onfocus="document.getElementById('earnings-company-dropdown').style.display='block'"
+                                        style="width: 140px; padding-right: 30px;">
+                                    <i class="material-icons" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; color: #999;">search</i>
+                                    <div id="earnings-company-dropdown" class="date-range-content" style="min-width: 250px; max-height: 300px; overflow-y: auto;">
+                                    </div>
+                                </div>
+
+                                <select id="earnings-filter-year" class="controls-select" onchange="filterEarnings()" title="Filter by Year" style="min-width: 100px;">
+                                    <option value="all">Year (All)</option>
+                                </select>
+                                
+                                <select id="earnings-filter-quarter" class="controls-select" onchange="filterEarnings()" title="Filter by Quarter" style="min-width: 110px;">
+                                    <option value="all">Quarter (All)</option>
+                                    <option value="Q1">Q1</option>
+                                    <option value="Q2">Q2</option>
+                                    <option value="Q3">Q3</option>
+                                    <option value="Q4">Q4</option>
+                                </select>
+                                
+                                <button class="ai-action-btn" onclick="analyzeSelectedEarnings()" title="Analyze Selected Earnings (Ctrl+Click)" style="margin-left:auto;">
+                                    <i class="material-icons">auto_awesome</i>
+                                </button>
+                            </div>
+                             
+                             <div id="earnings-list" style="overflow-y:auto; flex:1;"></div>
+                        </div>
+                        <div id="earnings-resizer"></div>
+                        <div id="earnings-right-pane">
+                            <div style="text-align:center; color:#999; margin-top:50px;">
+                                Select an earnings call (Ctrl+Click to multi-select) then click the AI icon to analyze key highlights.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -705,6 +812,21 @@
                 <button class="email-report-btn" onclick="applyCustomPeriod()" style="width:100%;">
                     Update Table
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增的 Ticker Notes 筆記本 Modal -->
+    <div id="tickerNotesModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close" onclick="closeModal('tickerNotesModal')">&times;</span>
+            <h2 id="notesModalTitle" style="display:flex; align-items:center; gap:10px;">
+                <i class="material-icons" style="color:var(--ai-btn-color);">assignment</i>
+                Ticker Notes
+            </h2>
+            <div id="notes-content" class="markdown-content" style="padding:20px 0; min-height: 100px;"></div>
+            <div style="height: 350px; width: 100%; margin-top:10px; border-top: 1px solid #eee; padding-top: 20px;">
+                <canvas id="notesChartCanvas"></canvas>
             </div>
         </div>
     </div>
@@ -909,7 +1031,8 @@
             { id: '3-Month', label: '3M', visible: true },
             { id: '1-Year', label: '1Y', visible: true },
             { id: 'YTD', label: 'YTD', visible: true },
-            { id: 'Custom', label: 'Custom', visible: true } 
+            { id: 'Custom', label: 'Custom', visible: true },
+            { id: 'NextEarning', label: 'Next Earning', visible: true } 
         ];
         
         let allAvailableTickers = [];
@@ -944,6 +1067,10 @@
         let earningsYears = new Set();
         let fullEarningsList = [];
         let selectedEarningsIds = new Set();
+        let globalNextEarnings = {}; // 儲存每個 Ticker 最新的 Earning Date
+
+        let globalEarningsCalendarData = null;
+        let calendarWeekOffset = 0;
 
         let customPeriodState = { start: null, end: null };
         let currentModalTicker = null;
@@ -1128,11 +1255,13 @@
 
                 rebaseTriData();
                 processPerformanceData();
+                
+                status.innerText = "Loading News, Earnings & Calendar...";
+                // 加載日曆、新聞、財報資料 (在 Render 之前先等待資料，確保 NextEarning 抓得到)
+                await Promise.all([loadNews(), loadEarnings(), loadEarningsCalendar()]);
+
                 renderSummaryTab();
                 renderChartTab();
-                
-                status.innerText = "Loading News & Earnings...";
-                await Promise.all([loadNews(), loadEarnings()]);
 
                 loading.style.display = 'none';
 
@@ -1140,6 +1269,186 @@
                 status.innerText = "Error loading data: " + e.message;
                 console.error(e);
             }
+        }
+
+        // ====== Earnings Calendar Function ====== //
+        function getLocalYYYYMMDD(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        async function loadEarningsCalendar() {
+            try {
+                const url = 'https://raw.githubusercontent.com/andychu221/Earnings-Call-Transcripts/main/earnings_calendar.json';
+                const data = await fetchJsonWithRetry(url);
+                if (!data || !Array.isArray(data)) return;
+
+                globalEarningsCalendarData = data;
+
+                data.forEach(item => {
+                    if (!item["Earnings Date"]) return;
+                    const dateStr = item["Earnings Date"].split(" ")[0]; 
+                    
+                    // --- Added for Next Earnings Column ---
+                    const baseTicker = item.Symbol.split('.')[0];
+                    const eDate = new Date(dateStr);
+                    if (!globalNextEarnings[baseTicker]) {
+                        globalNextEarnings[baseTicker] = eDate;
+                    } else if (eDate < globalNextEarnings[baseTicker]) {
+                        globalNextEarnings[baseTicker] = eDate;
+                    }
+                    // --------------------------------------
+                });
+
+                renderEarningsCalendar();
+            } catch(e) {
+                console.error("Error loading earnings calendar", e);
+            }
+        }
+
+        function renderEarningsCalendar() {
+            if (!globalEarningsCalendarData) return;
+            const data = globalEarningsCalendarData;
+            const today = new Date();
+            const currentDay = today.getDay(); 
+            
+            const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+            const actualThisMonday = new Date(today);
+            actualThisMonday.setDate(today.getDate() + diffToMonday);
+            actualThisMonday.setHours(0,0,0,0);
+
+            const baseMonday = new Date(actualThisMonday);
+            baseMonday.setDate(actualThisMonday.getDate() + (calendarWeekOffset * 7));
+
+            const lastMonday = new Date(baseMonday);
+            lastMonday.setDate(baseMonday.getDate() - 7);
+
+            const nextMonday = new Date(baseMonday);
+            nextMonday.setDate(baseMonday.getDate() + 7);
+
+            const earningsByDate = {};
+            data.forEach(item => {
+                if (!item["Earnings Date"]) return;
+                const dateStr = item["Earnings Date"].split(" ")[0]; 
+                if (!earningsByDate[dateStr]) earningsByDate[dateStr] = [];
+                earningsByDate[dateStr].push(item);
+            });
+
+            // 設定三週的起始日與是否為實際的本週
+            const weeks = [
+                { date: lastMonday, isThisWeek: lastMonday.getTime() === actualThisMonday.getTime() },
+                { date: baseMonday, isThisWeek: baseMonday.getTime() === actualThisMonday.getTime() },
+                { date: nextMonday, isThisWeek: nextMonday.getTime() === actualThisMonday.getTime() }
+            ];
+
+            let hasData = false;
+            weeks.forEach(week => {
+                for (let i = 0; i < 5; i++) {
+                    const d = new Date(week.date);
+                    d.setDate(d.getDate() + i);
+                    if (earningsByDate[getLocalYYYYMMDD(d)]?.length > 0) hasData = true;
+                }
+            });
+            
+            const container = document.getElementById('calendar-tab-content');
+            
+            let html = `
+            <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom: 15px; gap: 10px;">
+                <button class="controls-input" onclick="changeCalendarWeek(-1)" title="Previous Week"><i class="material-icons">chevron_left</i></button>
+                <button class="controls-input" onclick="changeCalendarWeek(0)" style="font-weight:bold;">Week</button>
+                <button class="controls-input" onclick="changeCalendarWeek(1)" title="Next Week"><i class="material-icons">chevron_right</i></button>
+            </div>
+            `;
+
+            if (!hasData) {
+                html += '<p style="padding:20px; text-align:center; color:#666;">No earnings data available for these 3 weeks.</p>';
+                container.innerHTML = html;
+                container.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'block';
+
+            const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            
+            html += '<div style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 15px;">';
+            
+            weeks.forEach((week) => {
+                const weekDates = [];
+                for (let i = 0; i < 5; i++) { 
+                    const d = new Date(week.date);
+                    d.setDate(week.date.getDate() + i);
+                    weekDates.push(d);
+                }
+
+                // 針對實際本週的表格加上 outline
+                const tableStyle = week.isThisWeek 
+                    ? 'table-layout: fixed; width: 100%; outline: 3px solid #e74c3c; outline-offset: 1px; border-radius: 4px; position: relative; z-index: 1;' 
+                    : 'table-layout: fixed; width: 100%;';
+                
+                html += `<table class="calendar-table" style="${tableStyle}">`;
+                
+                // 渲染表頭
+                html += '<thead><tr>';
+                weekDates.forEach((d) => {
+                    const dayStr = `${d.getMonth()+1}/${d.getDate()}(${daysOfWeek[d.getDay()]})`;
+                    html += `<th>${dayStr}</th>`;
+                });
+                html += '</tr></thead>';
+
+                // 渲染內容
+                html += '<tbody><tr>';
+                weekDates.forEach((d) => {
+                    const dateStr = getLocalYYYYMMDD(d);
+                    const items = earningsByDate[dateStr] || [];
+                    
+                    html += `<td><div style="display:flex; gap: 8px; flex-wrap: wrap;">`;
+                    
+                    for (let i = 0; i < items.length; i += 3) {
+                        const chunk = items.slice(i, i + 3);
+                        html += '<div style="display:flex; flex-direction:column; gap:4px;">';
+                        chunk.forEach(item => {
+                            const sym = item.Symbol;
+                            const baseTicker = sym.split('.')[0]; 
+                            const color = TICKER_COLORS[baseTicker] || TICKER_COLORS[sym] || 'var(--primary-color)';
+                            
+                            const est = item["EPS Estimate"] || '-';
+                            const act = item["Reported EPS"] || '-';
+                            const tooltipHtml = `<div class="custom-tooltip">EPS Est: ${est}<br>Actual: ${act}</div>`;
+                            
+                            const logoHtml = getLogoHtml(baseTicker) || getLogoHtml(sym);
+                            const companyName = TICKER_NAMES[baseTicker] || TICKER_NAMES[sym] || baseTicker;
+                            
+                            html += `<div class="calendar-ticker" style="border-left: 3px solid ${color};">
+                                        ${logoHtml}<span>${companyName}</span>
+                                        ${tooltipHtml}
+                                     </div>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    if (items.length === 0) {
+                        html += '<span style="color:#bbb; font-size:0.85rem; padding:4px;">No events</span>';
+                    }
+                    
+                    html += '</div></td>';
+                });
+                html += '</tr></tbody></table>';
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function changeCalendarWeek(direction) {
+            if (direction === 0) {
+                calendarWeekOffset = 0;
+            } else {
+                calendarWeekOffset += direction;
+            }
+            renderEarningsCalendar();
         }
 
         // ====== Earnings Call Functions ====== //
@@ -1372,37 +1681,124 @@
             callGemini(prompt);
         }
         
-        // ====== New Function for Displaying Latest Earnings Summary Modal ====== //
-        function showLatestEarningsSummary(ticker) {
-            // 模糊匹配：取得小數點前面的部分，例如 '2330.TW' -> '2330', 'TSM.N' -> 'TSM'
+        // ====== New Function for Displaying Ticker Notes (Replaced old Earnings Modal) ====== //
+        function showTickerNotes(ticker) {
             const baseTicker = ticker.split('.')[0];
-            
             const latestEarn = fullEarningsList.find(e => {
                 const eBase = e.ticker.split('.')[0];
                 return eBase === baseTicker || e.ticker === ticker;
             });
 
-            const modal = document.getElementById('aiResultModal');
-            const loading = document.getElementById('ai-loading');
-            const content = document.getElementById('ai-content');
-            const titleEl = document.getElementById('aiModalTitle');
+            const modal = document.getElementById('tickerNotesModal');
+            const content = document.getElementById('notes-content');
+            const titleEl = document.getElementById('notesModalTitle');
             
-            titleEl.innerHTML = `<i class="material-icons" style="color:var(--ai-btn-color);">record_voice_over</i> Latest Earnings Call AI Summary - ${TICKER_NAMES[ticker] || ticker}`;
+            titleEl.innerHTML = `<i class="material-icons" style="color:var(--ai-btn-color);">assignment</i> Ticker Notes - ${TICKER_NAMES[ticker] || ticker}`;
 
             modal.style.display = 'block'; 
             setTimeout(()=>modal.classList.add('show'), 10);
-            loading.style.display = 'none';
             
             if (latestEarn) {
                 const subtitle = `<div style="color:#666; margin-bottom:15px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
                     Ticker: ${latestEarn.ticker} | Fiscal: ${latestEarn.fiscal_year || ''} ${latestEarn.quarter || ''} | Published: ${latestEarn.published_date || ''}
                 </div>`;
-                const summaryText = latestEarn.AI_Summary ? latestEarn.AI_Summary : 'No Data。';
+                const summaryText = latestEarn.AI_Summary ? latestEarn.AI_Summary : 'No AI Summary data。';
                 content.innerHTML = subtitle + marked.parse(summaryText, { breaks: true });
             } else {
                 content.innerHTML = `<p style="color:#666; padding:20px 0; text-align:center; font-size:1.1rem;">No Earnings Call AI Summary Data。</p>`;
             }
+
+            // Determine Benchmark for Chart
+            let bench = '.SPX';
+            if (ticker.endsWith('.TW') || ticker.endsWith('.TWO') || ticker === '2330.TW') bench = '.TWII';
+            else if (ticker.endsWith('.T')) bench = '.N225';
+            else if (ticker.endsWith('.KS')) bench = '.KS11';
+            else if (ticker.endsWith('.SS') || ticker.endsWith('.SZ') || ticker.endsWith('.HK')) bench = '.SSEC';
+            
+            if (ticker === 'TSM' || ticker === 'TSM.N') bench = '.SPX'; // TSMC ADR is US listed
+            
+            const chartTickers = [ticker, bench, '.SOX'];
+            
+            // Draw Chart
+            renderNotesChart('notesChartCanvas', chartTickers);
         }
+
+        function renderNotesChart(canvasId, tickers) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (activeCharts['notes']) {
+                 activeCharts['notes'].destroy();
+                 activeCharts['notes'] = null;
+            }
+
+            const endDate = summaryReferenceDate;
+            const startDate = new Date(new Date(endDate).setFullYear(endDate.getFullYear() - 1)); // 1-Year Period
+
+            const validTickers = tickers.filter(t => dataByTicker[t]);
+
+            const datasets = validTickers.map(t => {
+                const tData = dataByTicker[t].filter(pt => pt.date >= startDate && pt.date <= endDate);
+                if (tData.length === 0) return null;
+                const baseVal = tData[0].tri; 
+                const dataPoints = tData.map(pt => ({
+                    x: pt.date,
+                    y: ((pt.tri / baseVal) - 1) * 100
+                }));
+                return { 
+                    label: TICKER_NAMES[t] || t, 
+                    data: dataPoints, 
+                    borderColor: TICKER_COLORS[t] || '#999', 
+                    borderWidth: 2, 
+                    pointRadius: 0, 
+                    tension: 0.1, 
+                    spanGaps: true 
+                };
+            }).filter(Boolean);
+
+            const gridColor = 'rgba(0, 0, 0, 0.1)';
+            const textColor = '#555';
+
+            activeCharts['notes'] = new Chart(ctx, {
+                type: 'line', 
+                data: { datasets },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        x: {
+                            type: 'time', 
+                            min: startDate,
+                            max: endDate,
+                            time: {
+                                unit: 'month',
+                                displayFormats: { month: "MMM''yy" },
+                                parser: 'yyyy-MM-dd'
+                            },
+                            ticks: { color: textColor, maxRotation: 0, autoSkip: true },
+                            grid: { color: gridColor, drawTicks: true }
+                        },
+                        y: { title: { display: true, text: '%' }, ticks: { color: textColor }, grid: { color: gridColor } } 
+                    }, 
+                    plugins: { 
+                        title: { display: true, text: `1-Year Performance vs Benchmark & SOX`, color: textColor, font: { size: 14, weight: 'bold' }, align: 'start' },
+                        legend: { 
+                            display: true, position: 'top', align: 'start',
+                            labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true }
+                        },
+                        tooltip: { 
+                            mode: 'index', 
+                            intersect: false,
+                            callbacks: {
+                                title: function(context) {
+                                    const date = new Date(context[0].parsed.x);
+                                    return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
+                                }
+                            }
+                        }
+                    } 
+                }
+            });
+        }
+
 
         function initEarningsResizer() {
             const resizer = document.getElementById('earnings-resizer'); 
@@ -1848,7 +2244,7 @@
             if (!newsSelectedRange.start) {
                 btn.textContent = 'Date Range (All) \u25BE';
             } else {
-                btn.textContent = `${formatDateYYYYMMDD(newsSelectedRange.end)} - ${formatDateYYYYMMDD(newsSelectedRange.start)} \u25BE`;
+                btn.textContent = `${newsSelectedRange.end.getMonth()+1}/${newsSelectedRange.end.getDate()} - ${newsSelectedRange.start.getMonth()+1}/${newsSelectedRange.start.getDate()} \u25BE`;
             }
         }
         
@@ -2312,9 +2708,14 @@
         }
 
         function getLogoHtml(ticker) {
-            const domain = TICKER_DOMAINS[ticker];
+            let domain = TICKER_DOMAINS[ticker];
+            if (!domain) {
+                // 退回使用小數點前面的 baseTicker 尋找 (如 AAPL.O 退回 AAPL)
+                const base = ticker.split('.')[0];
+                domain = TICKER_DOMAINS[base];
+            }
             if (!domain) return '';
-            return `<img src="https://getlogo.dev/logos/${domain}?token=pub_97e0e4df192f20dd2626307d2148f88d" style="width:20px; height:20px; vertical-align:middle; margin-right:8px; border-radius:50%; object-fit:contain; background:white;" onerror="this.style.display='none'">`;
+            return `<img src="https://getlogo.dev/logos/${domain}?token=pub_97e0e4df192f20dd2626307d2148f88d" style="width:20px; height:20px; vertical-align:middle; margin-right:6px; border-radius:50%; object-fit:contain; background:white;" onerror="this.style.display='none'">`;
         }
 
         function renderLineChartWithCustomTicks(canvasId, tickers, periodName) {
@@ -2376,7 +2777,7 @@
                             max: endDate,
                             time: {
                                 unit: unit,
-                                displayFormats: { day: 'dd/MMM', week: 'dd/MMM', month: 'MMM' },
+                                displayFormats: { day: 'd/MMM', week: 'd/MMM', month: 'MMM' },
                                 parser: 'yyyy-MM-dd'
                             },
                             ticks: { color: textColor, maxRotation: 0, autoSkip: true },
@@ -2396,7 +2797,7 @@
                                   callbacks: {
                                     title: function(context) {
                                     const date = new Date(context[0].parsed.x);
-                                    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                                    return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
                                     }
                                     }
                                  }
@@ -2499,7 +2900,7 @@
                              callbacks: {
         title: function(context) {
             const date = new Date(context[0].parsed.x);
-            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
         }
     }
 }
@@ -2596,8 +2997,8 @@
             }
 
             const customHeader = 'Custom';
-            const startStr = customPeriodState.start ? formatDateSlash(customPeriodState.start) : '...';
-            const endStr = customPeriodState.end ? formatDateSlash(customPeriodState.end) : '...';
+            const startStr = customPeriodState.start ? formatDateDDMMM(customPeriodState.start) : '...';
+            const endStr = customPeriodState.end ? formatDateDDMMM(customPeriodState.end) : '...';
 
             groupsToRender.forEach(group => {
                 const cardId = `summary-${group}`;
@@ -2730,9 +3131,8 @@
                         switch(col.id) {
                            case 'Name': 
     							let earningsIcon = '';
-    							// 檢查是否為 Benchmark (equity-index)，如果不是才顯示財報圖示
    								if (!summaryTickersConfig['equity-index'].includes(t)) {
-        							earningsIcon = `<i class="material-icons" style="font-size:16px; color:#999; cursor:pointer;" onclick="event.stopPropagation(); showLatestEarningsSummary('${t}')" title="Latest Earnings Summary for ${perfData.name}">record_voice_over</i>`;
+        							earningsIcon = `<i class="material-icons" style="font-size:16px; color:var(--ai-btn-color); cursor:pointer;" onclick="event.stopPropagation(); showTickerNotes('${t}')" title="Ticker Notes for ${perfData.name}">auto_awesome</i>`;
     								}
     
     							val = `<div style="display:flex; align-items:center; width:100%; justify-content:space-between;">
@@ -2746,6 +3146,10 @@
                                 val = calculateMarketCap(t, price, currPoint.date); 
                                 break;
                             case 'Price': val = formatNumberWithCommas(price, 2); break; 
+                            case 'NextEarning': 
+                                let nDate = globalNextEarnings[t.split('.')[0]] || globalNextEarnings[t];
+                                val = nDate ? `${nDate.getMonth()+1}/${nDate.getDate()}` : '-';
+                                break;
                             default: 
                                 let startVal = getP(col.id);
                                 
@@ -2851,6 +3255,9 @@
                 case 'Date': return currPoint.date.getTime();
                 case 'Price': return price;
                 case 'MarketCap': return calculateMarketCapNumeric(ticker, price, anchorDate);
+                case 'NextEarning': 
+                    let nDate = globalNextEarnings[ticker.split('.')[0]] || globalNextEarnings[ticker];
+                    return nDate ? nDate.getTime() : -999999999;
                 default: 
                     let compareVal = currPoint.tri;
                     if (colId === 'Custom' && customPeriodState.end) {
@@ -3037,6 +3444,16 @@
             document.getElementById(tabName).classList.add("active"); 
             if (evt) evt.currentTarget.classList.add("active"); 
         }
+
+        // 新增控制 Earnings 子分頁的 function
+        function openEarningsSubTab(evt, tabName) {
+            const container = document.getElementById('earnings');
+            container.querySelectorAll('.chart-sub-tab-link').forEach(el => el.classList.remove('active'));
+            container.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            if (evt) evt.currentTarget.classList.add('active');
+        }
         
         function initNewsResizer() {
             const resizer = document.getElementById('news-resizer'); const leftPane = document.getElementById('news-left-pane'); let isResizing = false;
@@ -3050,7 +3467,8 @@
         function closeModal(id) { document.getElementById(id).classList.remove('show'); setTimeout(() => document.getElementById(id).style.display='none', 300); }
         function formatNumberWithCommas(x, decimals) { if (x == null) return '-'; return x.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); }
         function formatDateYYYYMMDD(date) { return date.toISOString().split('T')[0]; }
-        function formatDateDDMMM(date) { const month = date.toLocaleString('en-US', { month: 'short' }); const day = String(date.getDate()).padStart(2, '0'); return `${day}/${month}`; }
+        // 改為只顯示 M/D 格式，例如 4/27
+        function formatDateDDMMM(date) { return `${date.getMonth()+1}/${date.getDate()}`; }
         function formatDateSlash(date) { const m = date.getMonth()+1; const d = date.getDate(); return `${date.getFullYear()}/${m}/${d}`; }
         
         function openTickerModal(ticker) {
@@ -3128,7 +3546,7 @@
         intersect: false,
         callbacks: {title: function(context) {
                 const date = new Date(context[0].parsed.x);
-                return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
             }
         }
     }
