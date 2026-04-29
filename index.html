@@ -459,7 +459,7 @@
             white-space: nowrap;
             color: var(--text-primary);
             font-weight: 600;
-            cursor: pointer;
+            cursor: default;
             position: relative; /* Added for tooltip positioning */
         }
         .calendar-ticker:hover {
@@ -2819,6 +2819,19 @@
         }
 
         function getLogoHtml(ticker) {
+			const indexFlags = {
+                '.TWII': '🇹🇼',
+                '.SOX': '🇺🇸',
+				'.IXIC': '🇺🇸',
+                '.SPX': '🇺🇸',
+                '.N225': '🇯🇵',
+				'.KS11': '🇰🇷',
+				'.SSEC': '🇨🇳'
+			};
+			if (indexFlags[ticker]) {
+                return `<span style="font-size: 18px; margin-right: 6px; vertical-align: middle; line-height: 1;">${indexFlags[ticker]}</span>`;
+            }
+				
             let domain = TICKER_DOMAINS[ticker];
             if (!domain) {
                 // 退回使用小數點前面的 baseTicker 尋找 (如 AAPL.O 退回 AAPL)
