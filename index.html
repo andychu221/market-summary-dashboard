@@ -10,7 +10,6 @@
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons" />
     
-    <!-- Marked.js for Markdown rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
@@ -460,7 +459,7 @@
             white-space: nowrap;
             color: var(--text-primary);
             font-weight: 600;
-            cursor: help;
+            cursor: pointer;
             position: relative; /* Added for tooltip positioning */
         }
         .calendar-ticker:hover {
@@ -519,9 +518,9 @@
         <div class="main-content">
             <div class="header-bar">
                 <div class="tabs">
-                    <div class="tab-link active" onclick="openTab(event, 'summary')"><i class="material-icons">dashboard</i> Summary</div>
+                    <div class="tab-link active" onclick="openTab(event, 'summary')"><i class="material-icons">dashboard</i> Performance</div>
                     <div class="tab-link" onclick="openTab(event, 'chart-main')"><i class="material-icons">show_chart</i> Chart</div>
-                    <div class="tab-link" onclick="openTab(event, 'news')"><i class="material-icons">article</i> News</div>
+                    <div class="tab-link" onclick="openTab(event, 'news')"><i class="material-icons">article</i> AI News</div>
                     <div class="tab-link" onclick="openTab(event, 'earnings')"><i class="material-icons">record_voice_over</i> Earnings Call</div>
                     
                     <div class="tab-right-controls">
@@ -532,7 +531,6 @@
                 </div>
             </div>
 
-            <!-- Summary Tab -->
             <div id="summary" class="tab-content active">
                 <div class="summary-header">
                     <div class="summary-header-left">
@@ -542,8 +540,7 @@
                         
                         <select id="summary-group-filter" class="controls-select" onchange="renderSummaryTab()">
                             <option value="all">Filter Group (All)</option>
-                            <!-- Dynamically populated -->
-                        </select>
+                            </select>
 
                         <select id="summary-view-mode" class="controls-select" onchange="renderSummaryTab()">
                             <option value="categorized">General View</option>
@@ -560,15 +557,13 @@
                 </div>
                 
                 <div id="summary-content-container">
-                    <!-- Dynamic Content -->
-                </div>
+                    </div>
                 
                 <p style="margin-top:10px; color:var(--text-secondary); font-size:0.9rem;">
                     <i class="material-icons" style="font-size:14px; vertical-align:middle;">info</i> Tip: Click on column headers to sort.
                 </p>
             </div>
 
-            <!-- Chart Tab -->
             <div id="chart-main" class="tab-content">
                 <div class="chart-sub-tabs">
                      <div class="chart-sub-tab-link active" onclick="openChartSubTab(event, 'chart-grid')">Performance Report</div>
@@ -631,7 +626,6 @@
                 </div>
             </div>
 
-            <!-- News Tab -->
             <div id="news" class="tab-content">
                 <div id="news-container">
                     <div id="news-left-pane">
@@ -689,21 +683,17 @@
                 </div>
             </div>
 
-            <!-- Earnings Call Tab -->
             <div id="earnings" class="tab-content">
                 <div class="chart-sub-tabs">
                      <div class="chart-sub-tab-link active" onclick="openEarningsSubTab(event, 'earnings-calendar-view')">Calendar</div>
                      <div class="chart-sub-tab-link" onclick="openEarningsSubTab(event, 'earnings-transcripts-view')">Transcripts</div>
                 </div>
 
-                <!-- Earnings Calendar Sub-Tab -->
                 <div id="earnings-calendar-view" class="view-content active" style="padding-top:20px;">
                     <div id="calendar-tab-content" style="padding: 10px;">
-                        <!-- Javascript 將在此渲染 3 週的行事曆資料 -->
-                    </div>
+                        </div>
                 </div>
 
-                <!-- Earnings Transcripts Sub-Tab -->
                 <div id="earnings-transcripts-view" class="view-content" style="padding-top:20px;">
                     <div id="earnings-container">
                         <div id="earnings-left-pane">
@@ -750,7 +740,6 @@
         </div>
     </div>
 
-    <!-- Modals -->
     <div id="columnModal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close" onclick="closeModal('columnModal')">&times;</span>
@@ -767,8 +756,7 @@
             <div style="display: flex; gap: 10px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; align-items: center;">
                 <input type="text" id="add-ticker-input" class="controls-input" placeholder="Enter Ticker (e.g. MSFT)" style="flex:1;">
                 <select id="add-ticker-group-select" class="controls-select">
-                    <!-- Options populated dynamically -->
-                </select>
+                    </select>
                 <button class="controls-input" onclick="addNewTickerToManage()">Add</button>
             </div>
             <div id="manage-ticker-list" class="manage-ticker-list"></div>
@@ -777,25 +765,55 @@
     </div>
     
     <div id="tickerModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 1200px; width: 95%;">
             <span class="close" onclick="closeModal('tickerModal')">&times;</span>
-            <div style="display:flex; justify-content:flex-start; align-items:center; gap: 20px;">
+            <div style="display:flex; justify-content:flex-start; align-items:center; gap: 20px; margin-bottom: 15px;">
                 <h2 id="modalTickerName"></h2>
-                <div class="chart-controls" style="margin-bottom:0;">
-                    <button class="chart-period-btn" onclick="updateModalChart('1M')">1M</button>
-                    <button class="chart-period-btn" onclick="updateModalChart('3M')">3M</button>
-                    <button class="chart-period-btn" onclick="updateModalChart('6M')">6M</button>
-                    <button class="chart-period-btn" onclick="updateModalChart('YTD')">YTD</button>
-                    <button class="chart-period-btn" onclick="updateModalChart('1Y')">1Y</button>
-                    <button class="chart-period-btn" onclick="updateModalChart('ALL')">All</button>
+                <div class="chart-sub-tabs" style="margin-bottom:0; border-bottom:none;">
+                    <div class="chart-sub-tab-link active" onclick="openTickerModalTab(event, 'modal-tab-chart')">Chart</div>
+                    <div class="chart-sub-tab-link" onclick="openTickerModalTab(event, 'modal-tab-news')">News</div>
+                    <div class="chart-sub-tab-link" id="modal-tab-link-earnings" onclick="openTickerModalTab(event, 'modal-tab-earnings')">Earnings Call</div>
                 </div>
-                <button class="ai-action-btn" title="AI Technical Analysis" onclick="analyzeTickerChart()">
-                    <i class="material-icons">auto_awesome</i>
-                    <span class="ai-label">AI Summary</span>
-                </button>
             </div>
-            <div style="height: 400px; width: 100%; margin-top:15px;">
-                <canvas id="individualTickerChart"></canvas>
+            
+            <div id="modal-tab-chart" class="view-content active">
+                <div style="display:flex; justify-content:flex-start; align-items:center; gap: 20px;">
+                    <div class="chart-controls" style="margin-bottom:0;">
+                        <button class="chart-period-btn" onclick="updateModalChart('1M')">1M</button>
+                        <button class="chart-period-btn" onclick="updateModalChart('3M')">3M</button>
+                        <button class="chart-period-btn" onclick="updateModalChart('6M')">6M</button>
+                        <button class="chart-period-btn" onclick="updateModalChart('YTD')">YTD</button>
+                        <button class="chart-period-btn" onclick="updateModalChart('1Y')">1Y</button>
+                        <button class="chart-period-btn" onclick="updateModalChart('ALL')">All</button>
+                    </div>
+                    <button class="ai-action-btn" title="AI Technical Analysis" onclick="analyzeTickerChart()">
+                        <i class="material-icons">auto_awesome</i>
+                        <span class="ai-label">AI Summary</span>
+                    </button>
+                </div>
+                <div style="height: 400px; width: 100%; margin-top:15px;">
+                    <canvas id="individualTickerChart"></canvas>
+                </div>
+            </div>
+
+            <div id="modal-tab-news" class="view-content">
+                <div style="display: flex; height: 500px; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <div id="modal-news-left" style="flex: 0 0 40%; overflow-y: auto; border-right: 1px solid var(--border-color); background: var(--bg-color);"></div>
+                    <div id="modal-news-right" style="flex: 1; padding: 15px; overflow-y: auto; background: var(--hover-bg);"></div>
+                </div>
+            </div>
+
+            <div id="modal-tab-earnings" class="view-content">
+                <div style="display: flex; height: 500px; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <div style="flex: 1; border-right: 1px solid var(--border-color); padding: 15px; overflow-y: auto; background: var(--bg-color);">
+                        <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Previous Earnings Call AI Summary</h3>
+                        <div id="modal-earnings-prev" class="markdown-content"></div>
+                    </div>
+                    <div style="flex: 1; padding: 15px; overflow-y: auto; background: var(--bg-color);">
+                        <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Latest Earnings Call AI Summary</h3>
+                        <div id="modal-earnings-latest" class="markdown-content"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -816,7 +834,6 @@
         </div>
     </div>
 
-    <!-- 新增的 Ticker Notes 筆記本 Modal -->
     <div id="tickerNotesModal" class="modal">
         <div class="modal-content" style="max-width: 900px;">
             <span class="close" onclick="closeModal('tickerNotesModal')">&times;</span>
@@ -896,7 +913,7 @@
             '2344.TW': 'Winbond', '2408.TW': 'Nanya', 'SNDK': 'Sandisk','SNDK.O': 'Sandisk',
             // SOXX Additions
             'TXN': 'TI', 'MRVL': 'Marvell', 'ON': 'ON Semi', 'MCHP': 'Microchip',
-            'TER': 'Teradyne', 'SWKS': 'Skyworks', 'MPWR': 'Monolithic Power',
+            'TER': 'Teradyne', 'SWKS': 'Skyworks', 'MPWR': 'MPWR',
             'ENTG': 'Entegris', 'QRVO': 'Qorvo', 'WOLF': 'Wolfspeed', 'ENPH': 'Enphase'
         };
 
@@ -918,7 +935,7 @@
             '005930.KS': 'samsung.com',
             '2303.TW': 'umc.com', '0981.HK': 'smics.com', '688981.SS': 'smics.com', 'GFS': 'gf.com',
             '.TWII': 'taiwan.gov.tw', '.SOX': 'nasdaq.com', '.SPX': 'spglobal.com',
-            '.IXIC': 'nasdaq.com', '.N225': 'jpx.co.jp', '.KS11': 'krx.co.kr', '.SSEC': 'china.gov.cn',//'sse.com.cn',
+            '.IXIC': 'nasdaq.com', '.N225': 'jpx.co.jp', '.KS11': 'krx.co.kr', '.SSEC': 'cdb.com.cn',//'sse.com.cn',
             'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com', 'META': 'meta.com', 'TSLA': 'tesla.com',
             'AMAT': 'appliedmaterials.com', 'KLAC': 'kla.com', 'CSCO': 'cisco.com', 'BTDR': 'bitdeer.com',
             'SIMO': 'siliconmotion.com', 'ASML.AS': 'asml.com', '5347.TWO': 'vis.com', '3443.TW': 'guc-asic.com',
@@ -1071,6 +1088,8 @@
 
         let globalEarningsCalendarData = null;
         let calendarWeekOffset = 0;
+        
+        let globalHolidays = {}; // Holidays Cache
 
         let customPeriodState = { start: null, end: null };
         let currentModalTicker = null;
@@ -1278,9 +1297,44 @@
             const day = String(d.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
+        
+        async function loadHolidays(year) {
+            if (globalHolidays[`${year}-01-01`] !== undefined) return;
+            globalHolidays[`${year}-01-01`] = []; // cache marker
+            
+            try {
+                const twRes = await fetchJsonWithRetry(`https://raw.githubusercontent.com/ruyut/TaiwanCalendar/master/data/${year}.json`);
+                if (twRes && Array.isArray(twRes)) {
+                    twRes.forEach(d => {
+                        if (d.isHoliday) {
+                            const dateStr = `${d.date.substring(0,4)}-${d.date.substring(4,6)}-${d.date.substring(6,8)}`;
+                            if (!globalHolidays[dateStr]) globalHolidays[dateStr] = [];
+                            if (!globalHolidays[dateStr].includes('TW')) globalHolidays[dateStr].push('TW');
+                        }
+                    });
+                }
+            } catch(e) { console.error('TW holiday fetch error', e); }
+
+            const countries = ['US', 'JP', 'KR', 'CN'];
+            for (let c of countries) {
+                try {
+                    const res = await fetchJsonWithRetry(`https://date.nager.at/api/v3/PublicHolidays/${year}/${c}`);
+                    if (res && Array.isArray(res)) {
+                        res.forEach(d => {
+                            const dateStr = d.date; 
+                            if (!globalHolidays[dateStr]) globalHolidays[dateStr] = [];
+                            if (!globalHolidays[dateStr].includes(c)) globalHolidays[dateStr].push(c);
+                        });
+                    }
+                } catch(e) { console.error(`${c} holiday fetch error`, e); }
+            }
+        }
 
         async function loadEarningsCalendar() {
             try {
+                await loadHolidays(new Date().getFullYear());
+                await loadHolidays(new Date().getFullYear() + 1);
+
                 const url = 'https://raw.githubusercontent.com/andychu221/Earnings-Call-Transcripts/main/earnings_calendar.json';
                 const data = await fetchJsonWithRetry(url);
                 if (!data || !Array.isArray(data)) return;
@@ -1372,6 +1426,7 @@
             container.style.display = 'block';
 
             const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            const flagMap = { 'US': '🇺🇸', 'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'TW': '🇹🇼' };
             
             html += '<div style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 15px;">';
             
@@ -1393,8 +1448,11 @@
                 // 渲染表頭
                 html += '<thead><tr>';
                 weekDates.forEach((d) => {
+                    const dateStr = getLocalYYYYMMDD(d);
+                    const holidays = globalHolidays[dateStr] || [];
+                    const flagsHtml = holidays.map(c => flagMap[c] || '').join('');
                     const dayStr = `${d.getMonth()+1}/${d.getDate()}(${daysOfWeek[d.getDay()]})`;
-                    html += `<th>${dayStr}</th>`;
+                    html += `<th>${dayStr} <span style="font-size:1.1rem; margin-left:4px;">${flagsHtml}</span></th>`;
                 });
                 html += '</tr></thead>';
 
@@ -1404,10 +1462,11 @@
                     const dateStr = getLocalYYYYMMDD(d);
                     const items = earningsByDate[dateStr] || [];
                     
-                    html += `<td><div style="display:flex; gap: 8px; flex-wrap: wrap;">`;
+                    html += `<td><div style="display:flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px;">`;
+                    //html += `<td><div style="display:flex; gap: 8px; flex-wrap: wrap;">`;
                     
-                    for (let i = 0; i < items.length; i += 3) {
-                        const chunk = items.slice(i, i + 3);
+                    for (let i = 0; i < items.length; i += 5) {
+                        const chunk = items.slice(i, i + 5);
                         html += '<div style="display:flex; flex-direction:column; gap:4px;">';
                         chunk.forEach(item => {
                             const sym = item.Symbol;
@@ -1627,7 +1686,6 @@
                     ${item.url ? ` | <a href="${item.url}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Source</a>` : ''}
                 </div>
                 
-                <!-- Added AI Summary for Earnings Call -->
                 <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary ? marked.parse(item.AI_Summary, { breaks: true }) : '目前這份財報會議沒有 AI 摘要。'}</div>
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
@@ -1665,12 +1723,11 @@
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
             const prompt = `
-            Act as an equity research analyst.
-            Summarize the key takeaways from these earnings call transcripts.
-            Focus on:
-            1. Financial Performance & Key Metrics
-            2. Guidance / Future Outlook
-            3. Key Business Drivers, New Products, or Macro Challenges mentioned.
+            Act as an equity analyst.
+            Review the following earnings call transcripts and focus on:
+            1. Similarities and differences between these transcripts.
+            2. If multiple transcripts are from the same company, highlight the shift in tone, guidance, and strategic focus.
+            3. If transcripts are from different companies, highlight common industry trends and differentiations in their strategies or outlook.
             
             Output in ${lang}, well-structured with bullet points.
             
@@ -2122,6 +2179,26 @@
             
             return { ticker, name: TICKER_NAMES[ticker] || ticker, currency, findPriceOnOrBefore, findTriOnOrBefore, findTriOnOrAfter, findActualDataPoint, calcPerf };
         }
+        
+        function getTickerPerformanceStr(ticker) {
+            const perf = allPerformanceData.get(ticker);
+            if (!perf) return 'No performance data.';
+            const currPoint = perf.findActualDataPoint(summaryReferenceDate);
+            if (!currPoint) return 'No performance data.';
+            
+            const getP = (pd) => {
+                let d = new Date(currPoint.date);
+                if (pd === '1D') d.setDate(d.getDate() - 1);
+                else if (pd === '1W') d.setDate(d.getDate() - 7);
+                else if (pd === '1M') d.setMonth(d.getMonth() - 1);
+                else if (pd === '1Y') d.setFullYear(d.getFullYear() - 1);
+                else if (pd === 'YTD') d = new Date(d.getFullYear(), 0, 1);
+                let res = perf.findTriOnOrBefore(d) || perf.findTriOnOrAfter(d);
+                if(res) return (((currPoint.tri / res) - 1) * 100).toFixed(2) + '%';
+                return 'N/A';
+            };
+            return `Performance Profile: 1-Day: ${getP('1D')}, 1-Week: ${getP('1W')}, 1-Month: ${getP('1M')}, YTD: ${getP('YTD')}, 1-Year: ${getP('1Y')}`;
+        }
 
 		async function loadNews() {
             const listEl = document.getElementById('news-list'); 
@@ -2324,10 +2401,22 @@
                     extraMeta += `<span style="margin-left:8px; font-weight:bold; color:${color};">${label}</span>`;
                 }
 				
+                let rawTicker = n.ticker || '';
+                let tickerArr = rawTicker.split(',').map(t => t.trim());
+                let displayTickerStr = '';
+                let fullTickerNameStr = tickerArr.map(t => TICKER_NAMES[t] || t).join(', ');
+                
+                if (tickerArr.length > 2) {
+                    displayTickerStr = (TICKER_NAMES[tickerArr[0]] || tickerArr[0]) + ', ' +
+                                       (TICKER_NAMES[tickerArr[1]] || tickerArr[1]) + '...';
+                } else {
+                    displayTickerStr = fullTickerNameStr;
+                }
+
                 const lang = (n.Title.match(/[\u4e00-\u9fa5]/)) ? 'CH' : 'EN';
                 div.innerHTML = `
                     <div class="news-meta">
-                        <span class="news-tag" style="background:${TICKER_COLORS[n.ticker]||'#ccc'}; color:white;">${TICKER_NAMES[n.ticker] || n.ticker}</span>
+                        <span class="news-tag" style="background:${TICKER_COLORS[tickerArr[0]]||'#ccc'}; color:white;" title="${fullTickerNameStr}">${displayTickerStr}</span>
                         <span class="news-tag">${lang}</span>
                         <span>${n.Date} ${n.Time || ''}</span>
 						${extraMeta}
@@ -2467,9 +2556,20 @@
                 extraContext = `Note: As specific news for ${ticker} may be limited, news for ${searchTicker} is provided as a market proxy.`;
             }
 
+            const perfStr = getTickerPerformanceStr(ticker);
+            const baseTicker = ticker.split('.')[0];
+            const latestEarn = fullEarningsList.find(e => e.ticker.split('.')[0] === baseTicker || e.ticker === ticker);
+            const earnSummary = latestEarn && latestEarn.AI_Summary ? latestEarn.AI_Summary : 'No recent earnings summary available.';
+
             const prompt = `
-            Act as a stock analyst.
-            ${TICKER_NAMES[ticker] || ticker} moved by **${val}%** around **${dateStr}**.
+            Act as a financial journalist.
+            ${TICKER_NAMES[ticker] || ticker} moved by **${val}%** .
+            
+            ${perfStr}
+            
+            Latest Earnings Call AI Summary:
+            ${earnSummary}
+
             Explain drivers based on the news provided below.
             ${extraContext}
 
@@ -2504,11 +2604,22 @@
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
 
+            const perfStr = getTickerPerformanceStr(currentModalTicker);
+            const baseTicker = currentModalTicker.split('.')[0];
+            const latestEarn = fullEarningsList.find(e => e.ticker.split('.')[0] === baseTicker || e.ticker === currentModalTicker);
+            const earnSummary = latestEarn && latestEarn.AI_Summary ? latestEarn.AI_Summary : 'No recent earnings summary available.';
+
             const prompt = `
-            Technical analysis for **${TICKER_NAMES[currentModalTicker] || currentModalTicker}**.
+            Technical and Fundamental analysis for **${TICKER_NAMES[currentModalTicker] || currentModalTicker}**.
+            
+            ${perfStr}
+            
             Last 30 days prices:
             ${recentData}
 			
+            Latest Earnings Call AI Summary:
+            ${earnSummary}
+
             Recent News (Last 30 days):
             ${newsText}
 
@@ -3059,7 +3170,7 @@
 
                 const groupColumns = summaryColumnsState.filter(col => {
                     if (!col.visible) return false;
-                    if (group === 'equity-index' && col.id === 'MarketCap') return false;
+                    if (group === 'equity-index' && (col.id === 'MarketCap' || col.id === 'NextEarning')) return false;
                     return true;
                 });
 
@@ -3445,13 +3556,21 @@
             if (evt) evt.currentTarget.classList.add("active"); 
         }
 
-        // 新增控制 Earnings 子分頁的 function
         function openEarningsSubTab(evt, tabName) {
             const container = document.getElementById('earnings');
             container.querySelectorAll('.chart-sub-tab-link').forEach(el => el.classList.remove('active'));
             container.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
             
             document.getElementById(tabName).classList.add('active');
+            if (evt) evt.currentTarget.classList.add('active');
+        }
+
+        function openTickerModalTab(evt, tabId) {
+            const modal = document.getElementById('tickerModal');
+            modal.querySelectorAll('.view-content').forEach(el => el.style.display = 'none');
+            modal.querySelectorAll('.chart-sub-tab-link').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).style.display = 'block';
             if (evt) evt.currentTarget.classList.add('active');
         }
         
@@ -3473,9 +3592,82 @@
         
         function openTickerModal(ticker) {
             currentModalTicker = ticker;
-            const modal = document.getElementById('tickerModal'); document.getElementById('modalTickerName').innerText = TICKER_NAMES[ticker] || ticker;
-            modal.style.display = 'block'; setTimeout(() => modal.classList.add('show'), 10);
+            const modal = document.getElementById('tickerModal'); 
+            document.getElementById('modalTickerName').innerText = TICKER_NAMES[ticker] || ticker;
+            
+            // Handle Tabs visibility
+            const earningsTabLink = document.getElementById('modal-tab-link-earnings');
+            if (summaryTickersConfig['equity-index'].includes(ticker)) {
+                earningsTabLink.style.display = 'none';
+            } else {
+                earningsTabLink.style.display = 'flex';
+            }
+            
+            // Reset to first tab
+            openTickerModalTab(null, 'modal-tab-chart');
+            document.querySelector('#tickerModal .chart-sub-tab-link').classList.add('active');
+
+            // Render Chart
             updateModalChart('1Y'); 
+
+            // Render News
+            const modalNewsLeft = document.getElementById('modal-news-left');
+            const modalNewsRight = document.getElementById('modal-news-right');
+            modalNewsLeft.innerHTML = '';
+            modalNewsRight.innerHTML = '<div style="color:#999; text-align:center; margin-top:20px;">Select a news item.</div>';
+            
+            const recentNews = fullNewsList.filter(n => n.ticker && n.ticker.includes(ticker)).slice(0, 20);
+            if (recentNews.length === 0) {
+                modalNewsLeft.innerHTML = '<p style="padding:15px; color:#666;">No recent news.</p>';
+            } else {
+                recentNews.forEach((n, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'news-item';
+                    div.innerHTML = `<div class="news-meta"><span>${n.Date}</span></div><div class="news-title" style="font-size:0.85rem;">${n.Title}</div>`;
+                    div.onclick = () => {
+                        modalNewsLeft.querySelectorAll('.news-item').forEach(el => el.classList.remove('active'));
+                        div.classList.add('active');
+                        modalNewsRight.innerHTML = `
+                            <h3 style="margin-bottom:10px; font-size:1.1rem;">${n.Title}</h3>
+                            <div style="font-size:0.8rem; color:#666; margin-bottom:15px;">${n.Date} | ${n.Source}</div>
+                            <div class="markdown-content" style="background:#f9f9f9; padding:10px; border-radius:6px; margin-bottom:15px;">
+                                <strong>AI Summary:</strong><br>${n.AI_Summary ? marked.parse(n.AI_Summary) : 'No AI Summary.'}
+                            </div>
+                            <div style="font-size:0.9rem; line-height:1.6;">${(n.Content || '').substring(0, 500)}... <a href="${n.URL}" target="_blank">Read More</a></div>
+                        `;
+                    };
+                    modalNewsLeft.appendChild(div);
+                    if (idx === 0) div.click(); // Auto-select first
+                });
+            }
+
+            // Render Earnings
+            const baseTicker = ticker.split('.')[0];
+            const tickerEarnings = fullEarningsList.filter(e => e.ticker.split('.')[0] === baseTicker || e.ticker === ticker)
+                                                   .sort((a,b) => b.jsDate - a.jsDate);
+            
+            const prevContainer = document.getElementById('modal-earnings-prev');
+            const latestContainer = document.getElementById('modal-earnings-latest');
+            
+            if (tickerEarnings.length > 0) {
+                const latest = tickerEarnings[0];
+                latestContainer.innerHTML = `<div style="color:#666; font-size:0.85rem; margin-bottom:10px;">Fiscal: ${latest.fiscal_year} ${latest.quarter} | ${latest.published_date}</div>` + 
+                                            (latest.AI_Summary ? marked.parse(latest.AI_Summary) : 'No AI Summary.');
+                                            
+                if (tickerEarnings.length > 1) {
+                    const prev = tickerEarnings[1];
+                    prevContainer.innerHTML = `<div style="color:#666; font-size:0.85rem; margin-bottom:10px;">Fiscal: ${prev.fiscal_year} ${prev.quarter} | ${prev.published_date}</div>` + 
+                                              (prev.AI_Summary ? marked.parse(prev.AI_Summary) : 'No AI Summary.');
+                } else {
+                    prevContainer.innerHTML = '<p style="color:#666;">No previous earnings call found.</p>';
+                }
+            } else {
+                latestContainer.innerHTML = '<p style="color:#666;">No earnings call found.</p>';
+                prevContainer.innerHTML = '<p style="color:#666;">No earnings call found.</p>';
+            }
+
+            modal.style.display = 'block'; 
+            setTimeout(() => modal.classList.add('show'), 10);
         }
 
         function updateModalChart(period) {
