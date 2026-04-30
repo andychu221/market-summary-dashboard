@@ -904,7 +904,8 @@
     		{ id: 'MA50', label: '50MA', visible: true },
    			{ id: 'MA100', label: '100MA', visible: true },
 			{ id: 'MA200', label: '200MA', visible: true },
-    		{ id: 'MA500', label: '500MA', visible: true }
+    		{ id: '1YHigh', label: '1Y High', visible: true },
+    		{ id: '1YLow', label: '1Y Low', visible: true }}
 		];
 		
         const TICKER_NAMES = {
@@ -1776,6 +1777,25 @@
     		if (idx < period - 1) return null;
 			const slice = data.slice(idx - period + 1, idx + 1);
     		return slice.reduce((acc, d) => acc + d.price, 0) / period;
+		}
+		
+		function calculate1YHighLow(ticker, refDate) {
+    		const data = dataByTicker[ticker];
+    		if (!data) return { high: null, low: null };
+			
+			let startDate = new Date(refDate);
+    		startDate.setFullYear(startDate.getFullYear() - 1);
+
+			const periodData = data.filter(d => d.date >= startDate && d.date <= refDate);
+    		if (periodData.length === 0) return { high: null, low: null };
+
+			let high = -Infinity;
+    		let low = Infinity;
+    		periodData.forEach(d => {
+				if (d.price > high) high = d.price;
+       			 if (d.price < low) low = d.price;
+   			 });
+			return { high, low };
 		}
 
         // ====== New Function for Displaying Ticker Notes (Replaced old Earnings Modal) ====== //
@@ -3316,7 +3336,7 @@
                                 let nDate = globalNextEarnings[t.split('.')[0]] || globalNextEarnings[t];
                                 val = nDate ? `${nDate.getMonth()+1}/${nDate.getDate()}` : '-';
                                 break;
-                            case 'MA5': case 'MA10': case 'MA20': case 'MA50': case 'MA100': case 'MA200': case 'MA500':
+                            case 'MA5': case 'MA10': case 'MA20': case 'MA50': case 'MA100': case 'MA200':
                                 const period = parseInt(col.id.replace('MA', ''));
 								const maVal = calculateMA(t, period, anchorDate);
                                 if (maVal) {
@@ -3326,6 +3346,22 @@
                                     val = '-';
                                 }
 								break;
+							case '1YHigh':
+							case '1YLow':
+								const hlData = calculate1YHighLow(t, anchorDate);
+                                const targetVal = (col.id === '1YHigh') ? hlData.high : hlData.low;
+								if (targetVal) {
+                                    // 計算距離現價的百分比：(現價 / 高低點 - 1) * 100
+                                    const diffPct = ((price / targetVal) - 1) * 100;
+									const sign = diffPct > 0 ? '+' : '';
+                                    
+                                    // 組合字串：數值 (百分比%)
+									val = `${formatNumberWithCommas(targetVal, 2)} <span style="color:#888; font-size:0.85em;">(${sign}${diffPct.toFixed(2)}%)</span>`;
+                                    css = ''; // 刻意清空 css，不套用紅綠底色
+                                } else {
+									al = '-';
+                                }
+                                break;
 							default: 
                                 let startVal = getP(col.id);
                                 
