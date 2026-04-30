@@ -210,7 +210,7 @@
             border-radius: 12px; width: 90%; max-width: 1000px; box-shadow: var(--shadow-strong);
             position: relative; transform: translateY(-50px); transition: transform 0.3s ease-out;
         }
-        .modal-sm { max-width: 400px; margin-top: 15%; }
+        .modal-sm { max-width: 75vw; width: 75vw;height: 75vh;display: flex;flex-direction: column;margin-top: 10vh;}
         .close { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
         
         #summary { padding: 10px 0; }
@@ -2820,18 +2820,18 @@
 
         function getLogoHtml(ticker) {
 			const indexFlags = {
-                '.TWII': '🇹🇼',
+                '.TWII': 'tw',
                 '.SOX': '🇺🇸',
 				'.IXIC': '🇺🇸',
                 '.SPX': '🇺🇸',
-                '.N225': '🇯🇵',
-				'.KS11': '🇰🇷',
-				'.SSEC': '🇨🇳'
+                '.N225': 'jp',
+				'.KS11': 'kr',
+				'.SSEC': 'cn'
 			};
 			if (indexFlags[ticker]) {
-                return `<span style="font-size: 18px; margin-right: 6px; vertical-align: middle; line-height: 1;">${indexFlags[ticker]}</span>`;
+				return `<img src="https://flagcdn.com/24x18/${indexFlags[ticker]}.png" style="width:18px; height:13px; vertical-align:middle; margin-right:6px; border-radius:2px;" onerror="this.style.display='none'">`;
             }
-				
+			if (!ticker) return '';
             let domain = TICKER_DOMAINS[ticker];
             if (!domain) {
                 // 退回使用小數點前面的 baseTicker 尋找 (如 AAPL.O 退回 AAPL)
