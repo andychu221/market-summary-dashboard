@@ -904,8 +904,7 @@
     		{ id: 'MA50', label: '50MA', visible: true },
    			{ id: 'MA100', label: '100MA', visible: true },
 			{ id: 'MA200', label: '200MA', visible: true },
-    		{ id: '1YHigh', label: '1Y High', visible: true },
-    		{ id: '1YLow', label: '1Y Low', visible: true }
+    		{ id: '1YRange', label: '1Y Range', visible: true }
 		];
 		
         const TICKER_NAMES = {
@@ -3346,20 +3345,51 @@
                                     val = '-';
                                 }
 								break;
-							case '1YHigh':
-							case '1YLow':
-								const hlData = calculate1YHighLow(t, anchorDate);
-                                const targetVal = (col.id === '1YHigh') ? hlData.high : hlData.low;
-								if (targetVal) {
-                                    // 計算距離現價的百分比：(現價 / 高低點 - 1) * 100
-                                    const diffPct = ((price / targetVal) - 1) * 100;
-									const sign = diffPct > 0 ? '+' : '';
+								//const period = parseInt(col.id.replace('MA', ''));
+                                //const maVal = calculateMA(t, period, anchorDate);
+                                //if (maVal) {
+                                    // 計算距離 MA 的百分比
+                                //    const diffPct = ((price / maVal) - 1) * 100;
+                                //    const sign = diffPct > 0 ? '+' : '';
                                     
-                                    // 組合字串：數值 (百分比%)
-									val = `${formatNumberWithCommas(targetVal, 2)} <span style="color:#888; font-size:0.85em;">(${sign}${diffPct.toFixed(2)}%)</span>`;
-                                    css = ''; // 刻意清空 css，不套用紅綠底色
+                                    // 組合數值與淺灰色括號百分比
+                                //    val = `${formatNumberWithCommas(maVal, 2)} <span style="color:#aaa; font-size:0.85em; margin-left:4px;">(${sign}${diffPct.toFixed(2)}%)</span>`;
+                                //    css = price > maVal ? 'cell-pos-light' : 'cell-neg-light';
+                                //} else {
+                                //    val = '-';
+                                //}
+                                //break;
+							case '1YRange':
+                                const hlData = calculate1YHighLow(t, anchorDate);
+                                if (hlData.high && hlData.low && hlData.high !== hlData.low) {
+                                    // 計算左右百分比
+                                    const lowDiff = ((price / hlData.low) - 1) * 100;
+                                    const highDiff = ((price / hlData.high) - 1) * 100;
+                                    const lowSign = lowDiff > 0 ? '+' : '';
+                                    const highSign = highDiff > 0 ? '+' : '';
+                                    
+                                    // 計算現在價格在區間中的相對位置 (0% ~ 100%)
+                                    let posPct = ((price - hlData.low) / (hlData.high - hlData.low)) * 100;
+                                    posPct = Math.max(0, Math.min(100, posPct)); // 防呆，限制在 0-100% 內
+                                    
+                                    // 繪製 CSS 圖形化 Bar
+                                    const barHtml = `
+                                        <div style="display:inline-block; width:100px; height:4px; background:#ddd; position:relative; vertical-align:middle; margin:0 8px; border-radius:2px;">
+                                            <div style="position:absolute; left:${posPct}%; top:-4px; width:12px; height:12px; background:var(--primary-color); border-radius:50%; transform:translateX(-50%); border:2px solid white; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>
+                                        </div>
+                                    `;
+
+                                    // 組合最終 HTML： (低點距離%) 低點 [圖形Bar] 高點 (高點距離%)
+                                    val = `<div style="display:flex; align-items:center; justify-content:flex-end; font-size:0.95em; white-space:nowrap;">
+                                              <span style="color:#aaa; margin-right:6px;">(${lowSign}${lowDiff.toFixed(2)}%)</span>
+                                              ${formatNumberWithCommas(hlData.low, 2)} 
+                                              ${barHtml}
+                                              ${formatNumberWithCommas(hlData.high, 2)}
+                                              <span style="color:#aaa; margin-left:6px;">(${highSign}${highDiff.toFixed(2)}%)</span>
+                                           </div>`;
+                                    css = ''; // 圖形化不需額外加紅綠底色
                                 } else {
-								    val = '-';
+                                    val = '-';
                                 }
                                 break;
 							default: 
