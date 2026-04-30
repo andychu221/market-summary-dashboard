@@ -210,7 +210,8 @@
             border-radius: 12px; width: 90%; max-width: 1000px; box-shadow: var(--shadow-strong);
             position: relative; transform: translateY(-50px); transition: transform 0.3s ease-out;
         }
-        .modal-sm { max-width: 75vw; width: 75vw;height: 75vh;display: flex;flex-direction: column;margin-top: 10vh;}
+        .modal-sm { margin-top: 15%;}
+		.modal-xl { max-width: 75vw; width: 75vw;height: 75vh;display: flex;flex-direction: column;margin-top: 10vh;}
         .close { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
         
         #summary { padding: 10px 0; }
@@ -765,7 +766,7 @@
     </div>
     
     <div id="tickerModal" class="modal">
-        <div class="modal-content" style="max-width: 1200px; width: 95%;">
+        <div class="modal-content modal-xl" style="max-width: 1200px; width: 95%;">
             <span class="close" onclick="closeModal('tickerModal')">&times;</span>
             <div style="display:flex; justify-content:flex-start; align-items:center; gap: 20px; margin-bottom: 15px;">
                 <h2 id="modalTickerName"></h2>
@@ -1426,7 +1427,7 @@
             container.style.display = 'block';
 
             const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-            const flagMap = { 'US': '🇺🇸', 'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'TW': '🇹🇼' };
+           // const flagMap = { 'US': '🇺🇸', 'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'TW': '🇹🇼' };
             
             html += '<div style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 15px;">';
             
@@ -1450,7 +1451,11 @@
                 weekDates.forEach((d) => {
                     const dateStr = getLocalYYYYMMDD(d);
                     const holidays = globalHolidays[dateStr] || [];
-                    const flagsHtml = holidays.map(c => flagMap[c] || '').join('');
+                    const flagsHtml = holidays.map(cc => {
+    					if (!cc) return '';
+						const code = cc.toLowerCase();
+						return `<img src="https://flagcdn.com/24x18/${code}.png" style="width:16px; height:11px; vertical-align:middle; margin-left:4px; border-radius:2px;" title="${cc} Holiday">`;
+					}).join(' ');
                     const dayStr = `${d.getMonth()+1}/${d.getDate()}(${daysOfWeek[d.getDay()]})`;
                     html += `<th>${dayStr} <span style="font-size:1.1rem; margin-left:4px;">${flagsHtml}</span></th>`;
                 });
@@ -2821,9 +2826,9 @@
         function getLogoHtml(ticker) {
 			const indexFlags = {
                 '.TWII': 'tw',
-                '.SOX': '🇺🇸',
-				'.IXIC': '🇺🇸',
-                '.SPX': '🇺🇸',
+                '.SOX': 'US',
+				'.IXIC': 'US',
+                '.SPX': 'US',
                 '.N225': 'jp',
 				'.KS11': 'kr',
 				'.SSEC': 'cn'
