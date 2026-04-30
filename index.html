@@ -550,6 +550,11 @@
 
                         <button class="controls-input" onclick="openManageTickerModal()"><i class="material-icons">list</i> Manage Tickers</button>
                         <button class="controls-input" onclick="openColumnModal()"><i class="material-icons">view_column</i> Custom Column</button>
+
+						<button id="toggle-view-btn" class="controls-input" onclick="toggleSummaryViewMode()">
+							<i class="material-icons">show_chart</i> <span id="toggle-view-text">Technical View</span>
+						</button>
+						
                     </div>
                     
                     <button class="controls-input" onclick="copySummaryTables()" title="Copy all tables to clipboard for Excel">
