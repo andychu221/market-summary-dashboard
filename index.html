@@ -211,8 +211,16 @@
             position: relative; transform: translateY(-50px); transition: transform 0.3s ease-out;
         }
         .modal-sm { margin-top: 15%;}
-		.modal-xl { max-width: 75vw; width: 75vw;height: 75vh;display: flex;flex-direction: column;margin-top: 10vh;}
-        .close { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+		.modal-xl { 
+            max-width: 75vw !important; 
+            width: 75vw !important; 
+            height: 75vh !important; 
+            display: flex; 
+            flex-direction: column; 
+            margin: 12.5vh auto; 
+            overflow: hidden; 
+        }
+        .close { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; z-index: 10; }
         
         #summary { padding: 10px 0; }
         .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
@@ -505,8 +513,6 @@
             opacity: 1;
         }
 
-        /* 移除原本複雜的 this-week 分格框線，改用直接 outline */
-
     </style>
 </head>
 <body>
@@ -523,6 +529,7 @@
                     <div class="tab-link" onclick="openTab(event, 'chart-main')"><i class="material-icons">show_chart</i> Chart</div>
                     <div class="tab-link" onclick="openTab(event, 'news')"><i class="material-icons">article</i> AI News</div>
                     <div class="tab-link" onclick="openTab(event, 'earnings')"><i class="material-icons">record_voice_over</i> Earnings Call</div>
+                    <div class="tab-link" onclick="openTab(event, 'calendar')"><i class="material-icons">calendar_month</i> Calendar</div>
                     
                     <div class="tab-right-controls">
                          <button class="icon-btn" onclick="openAiSettings()" title="AI Settings">
@@ -690,56 +697,49 @@
             </div>
 
             <div id="earnings" class="tab-content">
-                <div class="chart-sub-tabs">
-                     <div class="chart-sub-tab-link active" onclick="openEarningsSubTab(event, 'earnings-calendar-view')">Calendar</div>
-                     <div class="chart-sub-tab-link" onclick="openEarningsSubTab(event, 'earnings-transcripts-view')">Transcripts</div>
-                </div>
-
-                <div id="earnings-calendar-view" class="view-content active" style="padding-top:20px;">
-                    <div id="calendar-tab-content" style="padding: 10px;">
-                        </div>
-                </div>
-
-                <div id="earnings-transcripts-view" class="view-content" style="padding-top:20px;">
-                    <div id="earnings-container">
-                        <div id="earnings-left-pane">
-                            <div id="earnings-filters">
-                                <div style="position: relative; display: inline-block;">
-                                    <input type="text" id="earnings-company-search" class="controls-input" placeholder="Search Company..." 
-                                        oninput="filterEarningsCompanyDropdown(); filterEarnings();" 
-                                        onfocus="document.getElementById('earnings-company-dropdown').style.display='block'"
-                                        style="width: 140px; padding-right: 30px;">
-                                    <i class="material-icons" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; color: #999;">search</i>
-                                    <div id="earnings-company-dropdown" class="date-range-content" style="min-width: 250px; max-height: 300px; overflow-y: auto;">
-                                    </div>
+                <div id="earnings-container">
+                    <div id="earnings-left-pane">
+                        <div id="earnings-filters">
+                            <div style="position: relative; display: inline-block;">
+                                <input type="text" id="earnings-company-search" class="controls-input" placeholder="Search Company..." 
+                                    oninput="filterEarningsCompanyDropdown(); filterEarnings();" 
+                                    onfocus="document.getElementById('earnings-company-dropdown').style.display='block'"
+                                    style="width: 140px; padding-right: 30px;">
+                                <i class="material-icons" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; color: #999;">search</i>
+                                <div id="earnings-company-dropdown" class="date-range-content" style="min-width: 250px; max-height: 300px; overflow-y: auto;">
                                 </div>
+                            </div>
 
-                                <select id="earnings-filter-year" class="controls-select" onchange="filterEarnings()" title="Filter by Year" style="min-width: 100px;">
-                                    <option value="all">Year (All)</option>
-                                </select>
-                                
-                                <select id="earnings-filter-quarter" class="controls-select" onchange="filterEarnings()" title="Filter by Quarter" style="min-width: 110px;">
-                                    <option value="all">Quarter (All)</option>
-                                    <option value="Q1">Q1</option>
-                                    <option value="Q2">Q2</option>
-                                    <option value="Q3">Q3</option>
-                                    <option value="Q4">Q4</option>
-                                </select>
-                                
-                                <button class="ai-action-btn" onclick="analyzeSelectedEarnings()" title="Analyze Selected Earnings (Ctrl+Click)" style="margin-left:auto;">
-                                    <i class="material-icons">auto_awesome</i>
-                                </button>
-                            </div>
-                             
-                             <div id="earnings-list" style="overflow-y:auto; flex:1;"></div>
+                            <select id="earnings-filter-year" class="controls-select" onchange="filterEarnings()" title="Filter by Year" style="min-width: 100px;">
+                                <option value="all">Year (All)</option>
+                            </select>
+                            
+                            <select id="earnings-filter-quarter" class="controls-select" onchange="filterEarnings()" title="Filter by Quarter" style="min-width: 110px;">
+                                <option value="all">Quarter (All)</option>
+                                <option value="Q1">Q1</option>
+                                <option value="Q2">Q2</option>
+                                <option value="Q3">Q3</option>
+                                <option value="Q4">Q4</option>
+                            </select>
+                            
+                            <button class="ai-action-btn" onclick="analyzeSelectedEarnings()" title="Analyze Selected Earnings (Ctrl+Click)" style="margin-left:auto;">
+                                <i class="material-icons">auto_awesome</i>
+                            </button>
                         </div>
-                        <div id="earnings-resizer"></div>
-                        <div id="earnings-right-pane">
-                            <div style="text-align:center; color:#999; margin-top:50px;">
-                                Select an earnings call (Ctrl+Click to multi-select) then click the AI icon to analyze key highlights.
-                            </div>
+                            
+                            <div id="earnings-list" style="overflow-y:auto; flex:1;"></div>
+                    </div>
+                    <div id="earnings-resizer"></div>
+                    <div id="earnings-right-pane">
+                        <div style="text-align:center; color:#999; margin-top:50px;">
+                            Select an earnings call (Ctrl+Click to multi-select) then click the AI icon to analyze key highlights.
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div id="calendar" class="tab-content">
+                <div id="calendar-tab-content" style="padding: 10px;">
                 </div>
             </div>
 
@@ -771,9 +771,9 @@
     </div>
     
     <div id="tickerModal" class="modal">
-        <div class="modal-content modal-xl" style="max-width: 1200px; width: 95%;">
+        <div class="modal-content modal-xl">
             <span class="close" onclick="closeModal('tickerModal')">&times;</span>
-            <div style="display:flex; justify-content:flex-start; align-items:center; gap: 20px; margin-bottom: 15px;">
+            <div style="display:flex; justify-content:flex-start; align-items:center; gap: 20px; margin-bottom: 15px; flex-shrink: 0;">
                 <h2 id="modalTickerName"></h2>
                 <div class="chart-sub-tabs" style="margin-bottom:0; border-bottom:none;">
                     <div class="chart-sub-tab-link active" onclick="openTickerModalTab(event, 'modal-tab-chart')">Chart</div>
@@ -782,7 +782,7 @@
                 </div>
             </div>
             
-            <div id="modal-tab-chart" class="view-content active">
+            <div id="modal-tab-chart" class="view-content active" style="flex:1; display:flex; flex-direction:column; min-height:0;">
                 <div style="display:flex; justify-content:flex-start; align-items:center; gap: 20px;">
                     <div class="chart-controls" style="margin-bottom:0;">
                         <button class="chart-period-btn" onclick="updateModalChart('1M')">1M</button>
@@ -797,20 +797,20 @@
                         <span class="ai-label">AI Summary</span>
                     </button>
                 </div>
-                <div style="height: 400px; width: 100%; margin-top:15px;">
+                <div style="flex: 1; width: 100%; margin-top:15px; min-height: 0;">
                     <canvas id="individualTickerChart"></canvas>
                 </div>
             </div>
 
-            <div id="modal-tab-news" class="view-content">
-                <div style="display: flex; height: 500px; border: 1px solid var(--border-color); border-radius: 8px;">
+            <div id="modal-tab-news" class="view-content" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+                <div style="display: flex; flex: 1; border: 1px solid var(--border-color); border-radius: 8px; min-height:0;">
                     <div id="modal-news-left" style="flex: 0 0 40%; overflow-y: auto; border-right: 1px solid var(--border-color); background: var(--bg-color);"></div>
                     <div id="modal-news-right" style="flex: 1; padding: 15px; overflow-y: auto; background: var(--hover-bg);"></div>
                 </div>
             </div>
 
-            <div id="modal-tab-earnings" class="view-content">
-                <div style="display: flex; height: 500px; border: 1px solid var(--border-color); border-radius: 8px;">
+            <div id="modal-tab-earnings" class="view-content" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+                <div style="display: flex; flex: 1; border: 1px solid var(--border-color); border-radius: 8px; min-height:0;">
                     <div style="flex: 1; border-right: 1px solid var(--border-color); padding: 15px; overflow-y: auto; background: var(--bg-color);">
                         <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Previous Earnings Call AI Summary</h3>
                         <div id="modal-earnings-prev" class="markdown-content"></div>
@@ -1111,6 +1111,7 @@
         let calendarWeekOffset = 0;
         
         let globalHolidays = {}; // Holidays Cache
+        let globalMacroEventsData = []; // Macro API Data
 
         let customPeriodState = { start: null, end: null };
         let currentModalTicker = null;
@@ -1304,7 +1305,7 @@
                 
                 status.innerText = "Loading News, Earnings & Calendar...";
                 // 加載日曆、新聞、財報資料 (在 Render 之前先等待資料，確保 NextEarning 抓得到)
-                await Promise.all([loadNews(), loadEarnings(), loadEarningsCalendar()]);
+                await Promise.all([loadNews(), loadEarnings(), loadMacroEvents(), loadEarningsCalendar()]);
 
                 renderSummaryTab();
                 renderChartTab();
@@ -1355,6 +1356,23 @@
                     }
                 } catch(e) { console.error(`${c} holiday fetch error`, e); }
             }
+        }
+
+        async function loadMacroEvents() {
+            try {
+                const url = 'https://raw.githubusercontent.com/andychu221/yhfinance-fred-data/main/market_data/macro_events.json';
+                const data = await fetchJsonWithRetry(url);
+                if (data && Array.isArray(data)) {
+                    globalMacroEventsData = data;
+                } else {
+                    const d = new Date();
+                    d.setDate(d.getDate() + 1);
+                    globalMacroEventsData = [
+                        //{ date: getLocalYYYYMMDD(d), country: 'US', event: 'CPI YoY' },
+                        //{ date: getLocalYYYYMMDD(new Date(d.getTime() + 86400000)), country: 'US', event: 'Fed Interest Rate Decision' }
+                    ];
+                }
+            } catch(e) { console.error('Macro events fetch error', e); }
         }
 
         async function loadEarningsCalendar() {
@@ -1443,8 +1461,8 @@
             </div>
             `;
 
-            if (!hasData) {
-                html += '<p style="padding:20px; text-align:center; color:#666;">No earnings data available for these 3 weeks.</p>';
+            if (!hasData && globalMacroEventsData.length === 0) {
+                html += '<p style="padding:20px; text-align:center; color:#666;">No earnings or macro data available for these 3 weeks.</p>';
                 container.innerHTML = html;
                 container.style.display = 'block';
                 return;
@@ -1453,7 +1471,6 @@
             container.style.display = 'block';
 
             const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-           // const flagMap = { 'US': '🇺🇸', 'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'TW': '🇹🇼' };
             
             html += '<div style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 15px;">';
             
@@ -1477,13 +1494,15 @@
                 weekDates.forEach((d) => {
                     const dateStr = getLocalYYYYMMDD(d);
                     const holidays = globalHolidays[dateStr] || [];
+                    const isHoliday = holidays.length > 0;
                     const flagsHtml = holidays.map(cc => {
     					if (!cc) return '';
 						const code = cc.toLowerCase();
 						return `<img src="https://flagcdn.com/24x18/${code}.png" style="width:16px; height:11px; vertical-align:middle; margin-left:4px; border-radius:2px;" title="${cc} Holiday">`;
 					}).join(' ');
                     const dayStr = `${d.getMonth()+1}/${d.getDate()}(${daysOfWeek[d.getDay()]})`;
-                    html += `<th>${dayStr} <span style="font-size:1.1rem; margin-left:4px;">${flagsHtml}</span></th>`;
+                    const bgStyle = isHoliday ? 'background-color: #E3F2FD;' : '';
+                    html += `<th style="${bgStyle}">${dayStr} <span style="font-size:1.1rem; margin-left:4px;">${flagsHtml}</span></th>`;
                 });
                 html += '</tr></thead>';
 
@@ -1492,10 +1511,21 @@
                 weekDates.forEach((d) => {
                     const dateStr = getLocalYYYYMMDD(d);
                     const items = earningsByDate[dateStr] || [];
+                    const macroItems = globalMacroEventsData.filter(m => m.date === dateStr);
                     
                     html += `<td><div style="display:flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px;">`;
-                    //html += `<td><div style="display:flex; gap: 8px; flex-wrap: wrap;">`;
                     
+                    if (macroItems.length > 0) {
+                        html += '<div style="display:flex; flex-direction:column; gap:4px; margin-right:8px; border-right:1px dashed #ccc; padding-right:8px;">';
+                        macroItems.forEach(m => {
+                            const flag = m.country ? `<img src="https://flagcdn.com/24x18/${m.country.toLowerCase()}.png" style="width:14px; height:10px; margin-right:4px; border-radius:2px;">` : '';
+                            html += `<div class="calendar-ticker" style="border-left: 3px solid #FF8C00; background: #fff3e0;">
+                                        ${flag}<span style="color:#d35400;">${m.event}</span>
+                                     </div>`;
+                        });
+                        html += '</div>';
+                    }
+
                     for (let i = 0; i < items.length; i += 5) {
                         const chunk = items.slice(i, i + 5);
                         html += '<div style="display:flex; flex-direction:column; gap:4px;">';
@@ -1519,7 +1549,7 @@
                         html += '</div>';
                     }
                     
-                    if (items.length === 0) {
+                    if (items.length === 0 && macroItems.length === 0) {
                         html += '<span style="color:#bbb; font-size:0.85rem; padding:4px;">No events</span>';
                     }
                     
@@ -3289,6 +3319,9 @@
                         const price = currPoint.price;
                         const anchorDate = currPoint.date;
 
+                        // 判斷是否為小數點 0 位的市場
+                        const dec = (t.endsWith('.T') || t.endsWith('.KS')) ? 0 : 2;
+
                         const getP = (pd) => {
                             let d = new Date(anchorDate);
                             if (pd === '1-Day') d.setDate(d.getDate() - 1);
@@ -3330,7 +3363,7 @@
                             case 'MarketCap': 
                                 val = calculateMarketCap(t, price, currPoint.date); 
                                 break;
-                            case 'Price': val = formatNumberWithCommas(price, 2); break; 
+                            case 'Price': val = formatNumberWithCommas(price, dec); break; 
                             case 'NextEarning': 
                                 let nDate = globalNextEarnings[t.split('.')[0]] || globalNextEarnings[t];
                                 val = nDate ? `${nDate.getMonth()+1}/${nDate.getDate()}` : '-';
@@ -3339,34 +3372,15 @@
                                 const period = parseInt(col.id.replace('MA', ''));
 								const maVal = calculateMA(t, period, anchorDate);
                                 if (maVal) {
-									val = formatNumberWithCommas(maVal, 2);
+									val = formatNumberWithCommas(maVal, dec);
                                     css = price > maVal ? 'cell-pos-light' : 'cell-neg-light'; // 高於 MA 綠色，低於 MA 紅色
                                 } else {
                                     val = '-';
                                 }
 								break;
-								//const period = parseInt(col.id.replace('MA', ''));
-                                //const maVal = calculateMA(t, period, anchorDate);
-                                //if (maVal) {
-                                    // 計算距離 MA 的百分比
-                                //    const diffPct = ((price / maVal) - 1) * 100;
-                                //    const sign = diffPct > 0 ? '+' : '';
-                                    
-                                    // 組合數值與淺灰色括號百分比
-                                //    val = `${formatNumberWithCommas(maVal, 2)} <span style="color:#aaa; font-size:0.85em; margin-left:4px;">(${sign}${diffPct.toFixed(2)}%)</span>`;
-                                //    css = price > maVal ? 'cell-pos-light' : 'cell-neg-light';
-                                //} else {
-                                //    val = '-';
-                                //}
-                                //break;
 							case '1YRange':
                                 const hlData = calculate1YHighLow(t, anchorDate);
                                 if (hlData.high && hlData.low && hlData.high !== hlData.low) {
-                                    // 計算左右百分比
-                                    const lowDiff = ((price / hlData.low) - 1) * 100;
-                                    const highDiff = ((price / hlData.high) - 1) * 100;
-                                    const lowSign = lowDiff > 0 ? '+' : '';
-                                    const highSign = highDiff > 0 ? '+' : '';
                                     
                                     // 計算現在價格在區間中的相對位置 (0% ~ 100%)
                                     let posPct = ((price - hlData.low) / (hlData.high - hlData.low)) * 100;
@@ -3379,13 +3393,11 @@
                                         </div>
                                     `;
 
-                                    // 組合最終 HTML： (低點距離%) 低點 [圖形Bar] 高點 (高點距離%)
+                                    // 組合最終 HTML：移除兩側百分比，只留下 低點 [圖形Bar] 高點
                                     val = `<div style="display:flex; align-items:center; justify-content:flex-end; font-size:0.95em; white-space:nowrap;">
-                                              <span style="color:#aaa; margin-right:6px;">(${lowSign}${lowDiff.toFixed(2)}%)</span>
-                                              ${formatNumberWithCommas(hlData.low, 2)} 
+                                              ${formatNumberWithCommas(hlData.low, dec)} 
                                               ${barHtml}
-                                              ${formatNumberWithCommas(hlData.high, 2)}
-                                              <span style="color:#aaa; margin-left:6px;">(${highSign}${highDiff.toFixed(2)}%)</span>
+                                              ${formatNumberWithCommas(hlData.high, dec)}
                                            </div>`;
                                     css = ''; // 圖形化不需額外加紅綠底色
                                 } else {
@@ -3701,7 +3713,7 @@
             modal.querySelectorAll('.view-content').forEach(el => el.style.display = 'none');
             modal.querySelectorAll('.chart-sub-tab-link').forEach(el => el.classList.remove('active'));
             
-            document.getElementById(tabId).style.display = 'block';
+            document.getElementById(tabId).style.display = 'flex'; // Changed to flex for internal scaling
             if (evt) evt.currentTarget.classList.add('active');
         }
         
@@ -3870,6 +3882,13 @@
         callbacks: {title: function(context) {
                 const date = new Date(context[0].parsed.x);
                 return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
+            },
+            label: function(context) {
+                let val = context.parsed.y;
+                if (currentModalTicker.endsWith('.T') || currentModalTicker.endsWith('.KS')) {
+                    return ' Price: ' + val.toFixed(0);
+                }
+                return ' Price: ' + val.toFixed(2);
             }
         }
     }
