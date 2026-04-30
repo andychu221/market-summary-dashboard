@@ -887,6 +887,21 @@
     </div>
 
     <script>
+
+		let currentViewMode = 'return'; // 'return' 或 'technical'
+		const technicalColumns = [
+    		{ id: 'Name', label: 'Name', visible: true },
+			{ id: 'Ticker', label: 'Ticker', visible: true },
+    		{ id: 'Price', label: 'Price', visible: true },
+    		{ id: 'MA5', label: '5MA', visible: true },
+    		{ id: 'MA10', label: '10MA', visible: true },
+			{ id: 'MA20', label: '20MA', visible: true },
+    		{ id: 'MA50', label: '50MA', visible: true },
+   			{ id: 'MA100', label: '100MA', visible: true },
+			{ id: 'MA200', label: '200MA', visible: true },
+    		{ id: 'MA500', label: '500MA', visible: true }
+		];
+		
         const TICKER_NAMES = {
             '2330.TW': 'TSMC', 'TSM': 'TSMC ADR', 'TSM.N': 'TSMC ADR',
             '.TWII': 'TWSE', '.SOX': 'SOX', '.SPX': 'S&P 500', 
@@ -1133,6 +1148,12 @@
             });
         });
 
+		function toggleSummaryViewMode() {
+    		currentViewMode = (currentViewMode === 'return' ? 'technical' : 'return');
+			document.getElementById('toggle-view-text').innerText = (currentViewMode === 'return' ? 'Technical View' : 'Return View');
+    		renderSummaryTab();
+		}
+		
         function populateSummaryControls() {
             const groupSelect = document.getElementById('summary-group-filter');
             groupSelect.innerHTML = '<option value="all">Filter Group (All)</option>';
@@ -1742,7 +1763,16 @@
             
             callGemini(prompt);
         }
-        
+
+		function calculateMA(ticker, period, refDate) {
+    		const data = dataByTicker[ticker];
+    		if (!data) return null;
+			const idx = data.findLastIndex(d => d.date <= refDate);
+    		if (idx < period - 1) return null;
+			const slice = data.slice(idx - period + 1, idx + 1);
+    		return slice.reduce((acc, d) => acc + d.price, 0) / period;
+		}
+
         // ====== New Function for Displaying Ticker Notes (Replaced old Earnings Modal) ====== //
         function showTickerNotes(ticker) {
             const baseTicker = ticker.split('.')[0];
@@ -3186,11 +3216,13 @@
                     });
                 }
 
-                const groupColumns = summaryColumnsState.filter(col => {
-                    if (!col.visible) return false;
-                    if (group === 'equity-index' && (col.id === 'MarketCap' || col.id === 'NextEarning')) return false;
-                    return true;
-                });
+                const groupColumns = currentViewMode === 'return'
+                	? summaryColumnsState.filter(col => {    
+						if (!col.visible) return false;
+                    	if (group === 'equity-index' && (col.id === 'MarketCap' || col.id === 'NextEarning')) return false;
+                        return true;
+                })
+					: technicalColumns;
 
                 const table = card.querySelector('table');
                 let theadHtml = '<thead><tr>';
@@ -3279,7 +3311,17 @@
                                 let nDate = globalNextEarnings[t.split('.')[0]] || globalNextEarnings[t];
                                 val = nDate ? `${nDate.getMonth()+1}/${nDate.getDate()}` : '-';
                                 break;
-                            default: 
+                            case 'MA5': case 'MA10': case 'MA20': case 'MA50': case 'MA100': case 'MA200': case 'MA500':
+                                const period = parseInt(col.id.replace('MA', ''));
+								const maVal = calculateMA(t, period, anchorDate);
+                                if (maVal) {
+									val = formatNumberWithCommas(maVal, 2);
+                                    css = price > maVal ? 'cell-pos-light' : 'cell-neg-light'; // 高於 MA 綠色，低於 MA 紅色
+                                } else {
+                                    val = '-';
+                                }
+								break;
+							default: 
                                 let startVal = getP(col.id);
                                 
                                 if (startVal) {
