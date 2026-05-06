@@ -600,8 +600,9 @@
                             </select>
 
                         <select id="summary-view-mode" class="controls-select" onchange="renderSummaryTab()">
-                            <option value="categorized">General View</option>
-                            <option value="consolidated">All View</option>
+                            <option value="consolidated" selected>My Watchlist</option>
+                            <option value="categorized">By Segment</option>
+                            
                         </select>
 
                         <button class="controls-input" onclick="openManageTickerModal()"><i class="material-icons">list</i> Manage Tickers</button>
@@ -635,7 +636,7 @@
                 <div id="chart-grid" class="view-content active" style="padding-top:20px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <div id="perf-ticker-select-container" class="multi-select-container">
-                        </div>
+                        </div> 
                         <button class="ai-action-btn" title="AI Report Analysis" onclick="analyzePerformanceReport()">
                             <i class="material-icons">auto_awesome</i>
                             <span class="ai-label">AI Summary</span>
@@ -681,6 +682,7 @@
                             <i class="material-icons">auto_awesome</i>
                             <span class="ai-label">AI Summary</span>
                         </button>
+                       
                     </div>
                     <div style="height: 500px; width: 100%; border:1px solid var(--border-color); padding:10px; border-radius:8px;">
                         <canvas id="canvas-custom"></canvas>
@@ -896,7 +898,15 @@
                         <button class="chart-period-btn" onclick="updateModalChart('YTD')">YTD</button>
                         <button class="chart-period-btn" onclick="updateModalChart('1Y')">1Y</button>
                         <button class="chart-period-btn" onclick="updateModalChart('ALL')">All</button>
+                        <!-- 加入一條分隔線區隔，並換成統一的 class 按鈕 -->
+                        <span style="border-left:1px solid #ccc; height:20px; margin:0 5px;"></span>
+                        <button class="chart-period-btn" id="modal-chart-mode-btn" onclick="toggleModalChartMode()">Show Market Cap</button>
+                        <button class="chart-period-btn" onclick="copyChartData('modal')" title="Copy Chart Data">Copy Data</button>
+                        
                     </div>
+                    
+                    
+                    
                     <button class="ai-action-btn" title="AI Technical Analysis" onclick="analyzeTickerChart()">
                         <i class="material-icons">auto_awesome</i>
                         <span class="ai-label">AI Summary</span>
@@ -1238,7 +1248,24 @@
 
         let customPeriodState = { start: null, end: null };
         let currentModalTicker = null;
-        
+        let modalChartMode = 'Price';
+        let currentModalPeriod = '1Y';
+
+        function toggleModalChartMode() {
+            if (modalChartMode === 'Price') {
+                // 指數沒有市值，做防呆
+                if (summaryTickersConfig['equity-index'].includes(currentModalTicker)) {
+                    alert('Market Cap not available for indices.');
+                    return;
+                }
+                modalChartMode = 'MarketCap';
+                document.getElementById('modal-chart-mode-btn').innerText = 'Show Price';
+            } else {
+                modalChartMode = 'Price';
+                document.getElementById('modal-chart-mode-btn').innerText = 'Show Market Cap';
+            }
+            updateModalChart(currentModalPeriod);
+        }
         // Financials State
         let financialsIndex = [];
         let fin_data = null;
@@ -1246,7 +1273,7 @@
         let fin_viewType = 'Quarterly';
         let fin_selectedPeriods = []; 
         let fin_rowConfig = [];
-
+		
         let aiConfig = {
             apiKey: '',
             language: 'zh-TW',
@@ -2061,7 +2088,7 @@
                         title: { display: true, text: `1-Year Performance vs Benchmark & SOX`, color: textColor, font: { size: 14, weight: 'bold' }, align: 'start' },
                         legend: { 
                             display: true, position: 'top', align: 'start',
-                            labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true }
+                            labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true , pointStyle: 'line'}
                         },
                         tooltip: { 
                             mode: 'index', 
@@ -3135,7 +3162,7 @@
                         title: { display: true, text: `${periodName} Trend`, color: textColor, font: { size: 14, weight: 'bold' }, align: 'start' },
                         legend: { 
                             display: true, position: 'top', align: 'start',
-                            labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'rect', padding: 10 }
+                            labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'line', padding: 10 }
                         }, 
                         tooltip: { 
                                   mode: 'index', 
@@ -3238,7 +3265,7 @@
                     plugins: { 
                         legend: { 
                             display: true, position: 'top', align: 'start',
-                            labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true }
+                            labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'line' }
                         }, 
                          tooltip: { 
                             mode: 'index', 
@@ -3379,7 +3406,7 @@
                 card.id = cardId;
                 card.className = 'summary-card';
                 
-                const groupName = group === 'all-stocks' ? 'All Watchlist' : GROUP_DISPLAY_NAMES[group];
+                const groupName = group === 'all-stocks' ? 'My Watchlist' : GROUP_DISPLAY_NAMES[group];
                 const headerHtml = `
                     <div class="summary-card-label">
                         <div style="display:flex; align-items:center; gap:8px;">
@@ -3564,6 +3591,49 @@
                 table.innerHTML = theadHtml + tbodyHtml;
             });
         }
+        function copyChartData(chartKey) {
+            const chart = activeCharts[chartKey];
+            if (!chart) {
+                alert("Chart data not available.");
+                return;
+            }
+            
+            const datasets = chart.data.datasets;
+            if (!datasets || datasets.length === 0) return;
+            
+            // 蒐集所有不重複的日期
+            let datesSet = new Set();
+            datasets.forEach(ds => {
+                ds.data.forEach(pt => {
+                    datesSet.add(pt.x.getTime());
+                });
+            });
+            
+            let datesArr = Array.from(datesSet).sort((a,b) => a - b);
+            
+            // 建立標題列
+            let copyText = "Date\t" + datasets.map(ds => ds.label).join('\t') + "\n";
+            
+            // 建立每一天的數據
+            datesArr.forEach(time => {
+                const d = new Date(time);
+                const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                let row = [dateStr];
+                datasets.forEach(ds => {
+                    const pt = ds.data.find(p => p.x.getTime() === time);
+                    row.push(pt ? pt.y : ""); // 如果那天沒有資料就留白
+                });
+                copyText += row.join('\t') + "\n";
+            });
+            
+            navigator.clipboard.writeText(copyText).then(() => {
+                alert("Chart data copied to clipboard!");
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert("Failed to copy data.");
+            });
+        }
+        
         
         function copySummaryTables() {
             let copyText = "";
@@ -3847,6 +3917,21 @@
                 }
             }
         }
+        function openChartSubTab(evt, tabName) {
+            const container = document.getElementById('chart-main');
+            container.querySelectorAll('.chart-sub-tab-link').forEach(el => el.classList.remove('active'));
+            container.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            if (evt) evt.currentTarget.classList.add('active');
+            
+            // 觸發切換時重新渲染圖表
+            if (tabName === 'chart-custom') {
+                setCustomChartPeriod(currentCustomPeriod);
+            } else if (tabName === 'chart-grid') {
+                renderPerformanceGrid();
+            }
+        }
 
         function openEarningsSubTab(evt, tabName) {
             const container = document.getElementById('earnings');
@@ -3900,6 +3985,10 @@
         
         function openTickerModal(ticker) {
             currentModalTicker = ticker;
+            modalChartMode = 'Price';
+            const modeBtn = document.getElementById('modal-chart-mode-btn');
+            if(modeBtn) modeBtn.innerText = 'Show Market Cap';
+            
             const modal = document.getElementById('tickerModal'); 
             document.getElementById('modalTickerName').innerText = TICKER_NAMES[ticker] || ticker;
             
@@ -3997,6 +4086,7 @@
         }
 
         function updateModalChart(period) {
+             currentModalPeriod = period; // 記住目前的期間
              const ctx = document.getElementById('individualTickerChart').getContext('2d');
              if (activeCharts['modal']) activeCharts['modal'].destroy();
              
@@ -4023,16 +4113,24 @@
                  timeDisplayFormat = 'yyyy';
              }
 
-             const datasetData = recentData.map(pt => ({
-                 x: pt.date,
-                 y: pt.price
-             }));
+             // 【修改這裡】決定 y 軸要塞入什麼資料
+             const datasetData = recentData.map(pt => {
+                 let val = pt.price;
+                 if (modalChartMode === 'MarketCap') {
+                 	let mcap = calculateMarketCapNumeric(currentModalTicker, pt.price, pt.date);
+                    val = mcap !== -1 ? mcap / 1e9 : null;
+                 }
+                 return { x: pt.date, y: val };
+             }).filter(pt => pt.y !== -1 && pt.y !== null); // 過濾掉無法計算的市值
+             
+             const labelText = modalChartMode === 'Price' ? 'Price' : 'Market Cap (B)';
+             
              
              activeCharts['modal'] = new Chart(ctx, { 
                  type: 'line', 
                  data: { 
                      datasets: [{ 
-                         label: 'Price', 
+                         label: labelText, 
                          data: datasetData, 
                          borderColor: '#4a90e2', 
                          borderWidth: 2, 
@@ -4040,7 +4138,7 @@
                          backgroundColor: '#4a90e233', 
                          pointRadius: 0 
                      }] 
-                 }, 
+                 },
                  options: { 
                      responsive: true, 
                      maintainAspectRatio: false, 
@@ -4058,16 +4156,21 @@
                          } 
                      },
                      plugins: {
-                         title: { display: true, text: `${period} Trend` },
+                        //title: { display: true, text: `${period} Trend` },
                         tooltip: { 
                             mode: 'index', 
                             intersect: false,
-                            callbacks: {title: function(context) {
+                            callbacks: {
+                                title: function(context) {
                                     const date = new Date(context[0].parsed.x);
                                     return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
                                 },
+                                // 【修改重點 2】Tooltip 直接加上 B，且不重複除以 1e9
                                 label: function(context) {
                                     let val = context.parsed.y;
+                                    if (modalChartMode === 'MarketCap') {
+                                        return ' Market Cap: ' + val.toFixed(2) + 'B';
+                                    }
                                     if (currentModalTicker.endsWith('.T') || currentModalTicker.endsWith('.KS')) {
                                         return ' Price: ' + val.toFixed(0);
                                     }
