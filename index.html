@@ -704,7 +704,7 @@
                                 </div>
                             </div>
 
-                            <select id="news-filter-relevance" class="controls-select" onchange="filterNews()" title="Filter news by relevance" style="min-width: 120px; display:none;">
+                            <select id="news-filter-relevance" class="controls-select" onchange="filterNews()" title="Filter news by relevance" style="min-width: 120px;">
                                 <option value="all">Relevance (All)</option>
                                 <option value="4" selected>4+</option>
                                 <option value="3">3+</option>
@@ -731,7 +731,7 @@
                                 </div>
                             </div>
                             
-                            <button class="ai-action-btn" onclick="analyzeSelectedNews()" title="Analyze Selected News (Ctrl+Click)" style="margin-left:auto; display:none;">
+                            <button class="ai-action-btn" onclick="analyzeSelectedNews()" title="Analyze Selected News (Ctrl+Click)" style="margin-left:auto;">
                                 <i class="material-icons">auto_awesome</i>
                             </button>
                         </div>
@@ -741,7 +741,7 @@
                     <div id="news-resizer"></div>
                     <div id="news-right-pane">
                         <div style="text-align:center; color:#999; margin-top:50px;">
-                            Select news items to view content.
+                            Select news items (Ctrl+Click to multi-select) then click the AI icon to analyze.
                         </div>
                     </div>
                 </div>
@@ -761,11 +761,11 @@
                                 </div>
                             </div>
 
-                            <select id="earnings-filter-year" class="controls-select" onchange="filterEarnings()" title="Filter by Year" style="min-width: 100px; display:none;">
+                            <select id="earnings-filter-year" class="controls-select" onchange="filterEarnings()" title="Filter by Year" style="min-width: 100px;">
                                 <option value="all">Year (All)</option>
                             </select>
                             
-                            <select id="earnings-filter-quarter" class="controls-select" onchange="filterEarnings()" title="Filter by Quarter" style="min-width: 110px; display:none;">
+                            <select id="earnings-filter-quarter" class="controls-select" onchange="filterEarnings()" title="Filter by Quarter" style="min-width: 110px;">
                                 <option value="all">Quarter (All)</option>
                                 <option value="Q1">Q1</option>
                                 <option value="Q2">Q2</option>
@@ -773,7 +773,7 @@
                                 <option value="Q4">Q4</option>
                             </select>
                             
-                            <button class="ai-action-btn" onclick="analyzeSelectedEarnings()" title="Analyze Selected Earnings (Ctrl+Click)" style="margin-left:auto; display:none;">
+                            <button class="ai-action-btn" onclick="analyzeSelectedEarnings()" title="Analyze Selected Earnings (Ctrl+Click)" style="margin-left:auto;">
                                 <i class="material-icons">auto_awesome</i>
                             </button>
                         </div>
@@ -783,7 +783,7 @@
                     <div id="earnings-resizer"></div>
                     <div id="earnings-right-pane">
                         <div style="text-align:center; color:#999; margin-top:50px;">
-                            Select an earnings call summary to view content.
+                            Select an earnings call (Ctrl+Click to multi-select) then click the AI icon to analyze key highlights.
                         </div>
                     </div>
                 </div>
@@ -926,8 +926,14 @@
 
             <div id="modal-tab-earnings" class="view-content" style="flex:1; display:flex; flex-direction:column; min-height:0;">
                 <div style="display: flex; flex: 1; border: 1px solid var(--border-color); border-radius: 8px; min-height:0;">
-                    <div id="modal-earnings-left" style="flex: 0 0 40%; overflow-y: auto; border-right: 1px solid var(--border-color); background: var(--bg-color);"></div>
-                    <div id="modal-earnings-right" style="flex: 1; padding: 15px; overflow-y: auto; background: var(--hover-bg);"></div>
+                    <div style="flex: 1; border-right: 1px solid var(--border-color); padding: 15px; overflow-y: auto; background: var(--bg-color);">
+                        <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Previous Earnings Call AI Summary</h3>
+                        <div id="modal-earnings-prev" class="markdown-content"></div>
+                    </div>
+                    <div style="flex: 1; padding: 15px; overflow-y: auto; background: var(--bg-color);">
+                        <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Latest Earnings Call AI Summary</h3>
+                        <div id="modal-earnings-latest" class="markdown-content"></div>
+                    </div>
                 </div>
             </div>
             
@@ -1019,6 +1025,7 @@
     </div>
 
     <script>
+
 		let currentViewMode = 'return'; // 'return' 或 'technical'
 		const technicalColumns = [
     		{ id: 'Name', label: 'Name', visible: true },
@@ -1729,12 +1736,11 @@
         
         async function loadEarnings() {
             const listEl = document.getElementById('earnings-list'); 
-            listEl.innerHTML = '<p style="padding:10px;">Loading Earnings Summaries...</p>';
+            listEl.innerHTML = '<p style="padding:10px;">Loading Earnings Calls...</p>';
             let allEarnings = [];
             loadedEarningsTickers = new Set();
             earningsYears = new Set();
             
-            // Modified to load the new JSON format which contains AI summaries
             const url = 'https://raw.githubusercontent.com/andychu221/Earnings-Call-Transcripts/refs/heads/main/earnings_transcripts.json';
             const json = await fetchJsonWithRetry(url);
 
@@ -1770,12 +1776,11 @@
             searchInput.dataset.selectedTicker = 'all';
             filterEarningsCompanyDropdown();
             
-            // 隱藏 Year 和 Quarter 下拉選單 (依據需求2, 左側變成 Summary title, 取消年份季度篩選)
-            // const yearSelect = document.getElementById('earnings-filter-year');
-            // yearSelect.innerHTML = '<option value="all">Year (All)</option>';
-            // Array.from(earningsYears).sort((a,b) => b - a).forEach(y => {
-            //     yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
-            // });
+            const yearSelect = document.getElementById('earnings-filter-year');
+            yearSelect.innerHTML = '<option value="all">Year (All)</option>';
+            Array.from(earningsYears).sort((a,b) => b - a).forEach(y => {
+                yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
+            });
         }
 
         function filterEarningsCompanyDropdown() {
@@ -1817,14 +1822,13 @@
             const searchInput = document.getElementById('earnings-company-search');
             const tickerFilter = searchInput.dataset.selectedTicker || 'all';
             const keyword = searchInput.value.toLowerCase().trim();
+            const yearFilter = document.getElementById('earnings-filter-year').value;
+            const quarterFilter = document.getElementById('earnings-filter-quarter').value;
 
             const listEl = document.getElementById('earnings-list');
             listEl.innerHTML = '';
 
-            // Group earnings by ticker to only show the latest one for each
-            const latestEarningsByTicker = new Map();
-
-            fullEarningsList.forEach(t => {
+            const filtered = fullEarningsList.filter(t => {
                 let matchesSearch = true;
                 if (tickerFilter !== 'all') {
                     matchesSearch = t.ticker === tickerFilter;
@@ -1835,18 +1839,14 @@
                                     (t.title && t.title.toLowerCase().includes(keyword));
                 }
 
-                if (matchesSearch) {
-                    // Only keep the most recent transcript for each ticker
-                    if (!latestEarningsByTicker.has(t.ticker)) {
-                         latestEarningsByTicker.set(t.ticker, t);
-                    }
-                }
+                const matchesYear = yearFilter === 'all' || (t.fiscal_year && t.fiscal_year.toString() === yearFilter);
+                const matchesQuarter = quarterFilter === 'all' || (t.quarter && t.quarter.toUpperCase() === quarterFilter.toUpperCase());
+                
+                return matchesSearch && matchesYear && matchesQuarter;
             });
 
-            const filtered = Array.from(latestEarningsByTicker.values()).sort((a,b) => b.jsDate - a.jsDate);
-
             if (filtered.length === 0) {
-                listEl.innerHTML = '<p style="padding:10px; color:#666;">No earnings summaries found matching filters.</p>';
+                listEl.innerHTML = '<p style="padding:10px; color:#666;">No earnings transcripts found matching filters.</p>';
             } else {
                 renderEarningsList(filtered);
             }
@@ -1858,23 +1858,34 @@
                 const div = document.createElement('div'); 
                 div.className = 'earnings-item';
                 div.dataset.id = t.id;
+                if(selectedEarningsIds.has(t.id)) div.classList.add('selected-for-ai');
                 
                 const fYear = t.fiscal_year || '';
                 const fQuarter = t.quarter || '';
-                const titleStr = `${TICKER_NAMES[t.ticker] || t.ticker} ${fYear} ${fQuarter} Earnings Summary`;
-
+                
                 div.innerHTML = `
                     <div class="earnings-meta">
                         <span class="earnings-tag" style="background:${TICKER_COLORS[t.ticker]||'#ccc'}; color:white;">${TICKER_NAMES[t.ticker] || t.ticker}</span>
-                        <span>${t.published_date || ''}</span>
+                        <span class="earnings-tag" style="background:#f0f0f0; color:#333; font-weight:bold;">${fYear} ${fQuarter}</span>
+                        <span>${t.published_date}</span>
                     </div>
-                    <div class="earnings-title">${titleStr}</div>
+                    <div class="earnings-title">${t.title || `${t.ticker} Earnings Call`}</div>
                 `;
                 
                 div.onclick = (e) => {
-                    document.querySelectorAll('.earnings-item').forEach(el => el.classList.remove('active'));
-                    div.classList.add('active');
-                    showEarningsContent(t);
+                    if (e.ctrlKey || e.metaKey) {
+                        if (selectedEarningsIds.has(t.id)) {
+                            selectedEarningsIds.delete(t.id);
+                            div.classList.remove('selected-for-ai');
+                        } else {
+                            selectedEarningsIds.add(t.id);
+                            div.classList.add('selected-for-ai');
+                        }
+                    } else {
+                        document.querySelectorAll('.earnings-item').forEach(el => el.classList.remove('active'));
+                        div.classList.add('active');
+                        showEarningsContent(t);
+                    }
                 };
                 listEl.appendChild(div);
             });
@@ -1885,25 +1896,68 @@
             if(!item) { pane.innerHTML = ''; return; }
             pane.scrollTop = 0;
             
-            const fYear = item.fiscal_year || '';
-            const fQuarter = item.quarter || '';
-            const titleStr = `${TICKER_NAMES[item.ticker] || item.ticker} ${fYear} ${fQuarter} Earnings Summary`;
+            let displayContent = 'No content available.';
+            if (item.content && item.content.length > 0) {
+                displayContent = item.content;
+            }
 
             pane.innerHTML = `
-                <h2 style="margin-bottom:10px;">${titleStr}</h2>
+                <h2 style="margin-bottom:10px;">${item.title || `${item.ticker} Earnings Call`}</h2>
                 <div style="color:#666; margin-bottom:20px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
-                    ${TICKER_NAMES[item.ticker] || item.ticker} | Fiscal: ${fYear} ${fQuarter} | Published: ${item.published_date || ''}
-                    ${item.url ? ` | <a href="${item.url}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Source Transcript</a>` : ''}
+                    ${TICKER_NAMES[item.ticker] || item.ticker} | Fiscal: ${item.fiscal_year} ${item.quarter} | ${item.published_date}
+                    ${item.url ? ` | <a href="${item.url}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Source</a>` : ''}
                 </div>
                 
-                <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px;">
-                    ${item.AI_Summary ? marked.parse(item.AI_Summary, { breaks: true }) : 'Currently no AI summary available for this earnings call.'}
+                <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary ? marked.parse(item.AI_Summary, { breaks: true }) : '目前這份財報會議沒有 AI 摘要。'}</div>
+                
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px;">${displayContent}</div>
+
+                <div style="color: #999; font-size: 0.9rem; text-align: left; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
+                    本文內容擷取自公開的 Earnings Call 逐字稿，僅供研究參考。
                 </div>
             `;
         }
 
         function analyzeSelectedEarnings() {
-             // Disabled for this modified view as requested
+            const activeItem = document.querySelector('.earnings-item.active');
+            if (activeItem && activeItem.dataset.id) {
+                selectedEarningsIds.add(activeItem.dataset.id);
+            }
+
+            if (selectedEarningsIds.size === 0) {
+                alert('Please Ctrl+Click to select earnings transcripts first.');
+                return;
+            }
+
+            const selectedItems = fullEarningsList.filter(t => selectedEarningsIds.has(t.id));
+            
+            let transcriptText = `Total ${selectedItems.length} transcripts selected:\n\n`;
+            
+            selectedItems.forEach((t, idx) => {
+                transcriptText += `## ${TICKER_NAMES[t.ticker] || t.ticker} (${t.fiscal_year} ${t.quarter})\n`;
+                // Limit content to avoid massive context blowouts if too many selected, though Gemini 2.5 Flash is highly capable
+                const limitContent = t.content ? t.content.substring(0, 15000) + '...[truncated]' : 'No content';
+                transcriptText += `Transcript:\n${limitContent}\n\n`;
+            });
+
+            const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
+            
+            const prompt = `
+            Act as an equity analyst.
+            Review the following earnings call transcripts and focus on:
+            1. Similarities and differences between these transcripts.
+            2. If multiple transcripts are from the same company, highlight the shift in tone, guidance, and strategic focus.
+            3. If transcripts are from different companies, highlight common industry trends and differentiations in their strategies or outlook.
+            
+            Output in ${lang}, well-structured with bullet points.
+            
+            Transcripts:
+            ${transcriptText}
+            `;
+            
+            callGemini(prompt);
         }
 
 		function calculateMA(ticker, period, refDate) {
@@ -2402,24 +2456,29 @@
             newsSources = new Set();
             loadedNewsTickers = new Set();
             
-            // Use the gemini_ai_news.json URL directly
-            const url = 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/blob/main/gemini_ai_news.json';
+            const urls = [
+                'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/yahoo_news.json',
+                'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/udn_news.json',
+                'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/ltn_news.json',
+				'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/wsj_news.json',
+				'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/ft_news.json'
+            ];
             
-            // Note: The raw URL for github blob is different. I am fixing it to raw.githubusercontent.com
-            const rawUrl = 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/gemini_ai_news.json';
-            const json = await fetchJsonWithRetry(rawUrl);
+            const results = await Promise.all(urls.map(u => fetchJsonWithRetry(u)));
 
-            if (json && Array.isArray(json)) {
-                json.forEach((n, idx) => {
-                    n.ticker = n.Ticker; 
-                    n.id = `${n.ticker}_${idx}_${Math.random().toString(36).substr(2,9)}`; 
-                    n.jsDate = new Date(n.Date + ' ' + (n.Time || ''));
-                    
-                    if (n.Source) newsSources.add(n.Source);
-                    if (n.ticker) loadedNewsTickers.add(n.ticker);
-                });
-                allNews = json;
-            }
+            results.forEach(json => {
+                if (json && json.news && Array.isArray(json.news)) {
+                    json.news.forEach((n, idx) => {
+                        n.ticker = n.Ticker; 
+                        n.id = `${n.ticker}_${idx}_${Math.random().toString(36).substr(2,9)}`; 
+                        n.jsDate = new Date(n.Date + ' ' + (n.Time || ''));
+                        
+                        if (n.Source) newsSources.add(n.Source);
+                        if (n.ticker) loadedNewsTickers.add(n.ticker);
+                    });
+                    allNews = allNews.concat(json.news);
+                }
+            });
 
             allNews.sort((a,b) => b.jsDate - a.jsDate); 
             fullNewsList = allNews; 
@@ -2521,14 +2580,12 @@
             const tickerFilter = searchInput.dataset.selectedTicker || 'all';
             const keyword = searchInput.value.toLowerCase().trim();
             const sourceFilter = document.getElementById('news-filter-source').value;
+            const relevanceFilter = document.getElementById('news-filter-relevance').value;
 
             const listEl = document.getElementById('news-list');
             listEl.innerHTML = '';
 
-            // Group news by ticker to only show the latest one for each based on filters
-            const latestNewsByTicker = new Map();
-
-            fullNewsList.forEach(n => {
+            const filtered = fullNewsList.filter(n => {
                 let matchesSearch = true;
                 if (tickerFilter !== 'all') {
                     matchesSearch = n.ticker === tickerFilter;
@@ -2536,7 +2593,7 @@
                     const name = (TICKER_NAMES[n.ticker] || "").toLowerCase();
                     matchesSearch = n.ticker.toLowerCase().includes(keyword) || 
                                     name.includes(keyword) || 
-                                    (n.Title && n.Title.toLowerCase().includes(keyword));
+                                    n.Title.toLowerCase().includes(keyword);
                 }
 
                 const matchesSource = sourceFilter === 'all' || n.Source === sourceFilter;
@@ -2547,15 +2604,13 @@
                     matchesDate = itemDate <= newsSelectedRange.start && itemDate >= newsSelectedRange.end;
                 }
                 
-                if (matchesSearch && matchesSource && matchesDate) {
-                    // Only keep the most recent news item for each ticker
-                    if (!latestNewsByTicker.has(n.ticker)) {
-                        latestNewsByTicker.set(n.ticker, n);
-                    }
+                let matchesRelevance = true;
+                if (relevanceFilter !== 'all') {
+                    matchesRelevance = (n.Related_Score !== undefined && n.Related_Score >= parseInt(relevanceFilter));
                 }
+                
+                return matchesSearch && matchesSource && matchesDate && matchesRelevance;
             });
-
-            const filtered = Array.from(latestNewsByTicker.values()).sort((a,b) => b.jsDate - a.jsDate);
 
             if (filtered.length === 0) {
                 listEl.innerHTML = '<p style="padding:10px; color:#666;">No news found matching filters.</p>';
@@ -2564,12 +2619,36 @@
             }
         }
 		
+		function getSentimentLabel(score) {
+            const s = Math.round(parseFloat(score));
+            if (s >= 2) return 'Pos++';
+            if (s === 1) return 'Pos';
+            if (s === 0) return 'Neu';
+            if (s === -1) return 'Neg';
+            if (s <= -2) return 'Neg++';
+            return 'Neu';
+        }
+		
         function renderNewsList(items) {
             const listEl = document.getElementById('news-list'); 
             items.slice(0, 100).forEach((n, idx) => {
                 const div = document.createElement('div'); 
                 div.className = 'news-item';
                 div.dataset.id = n.id;
+                if(selectedNewsIds.has(n.id)) div.classList.add('selected-for-ai');
+                
+                let extraMeta = '';
+                if (n.Related_Score !== undefined) {
+                    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:#4a90e2;">Relevance: (${n.Related_Score}/5)</span>`;
+                }
+                if (n.Sentiment_Score !== undefined) {
+                    const label = getSentimentLabel(n.Sentiment_Score);
+                    let color = '#666';
+                    if (label.includes('Pos')) color = 'var(--positive-color)'; // Green
+                    else if (label.includes('Neg')) color = 'var(--negative-color)'; // Red
+                    else if (label === 'Neu') color = '#4a90e2'; // Blue
+                    extraMeta += `<span style="margin-left:8px; font-weight:bold; color:${color};">${label}</span>`;
+                }
 				
                 let rawTicker = n.ticker || '';
                 let tickerArr = rawTicker.split(',').map(t => t.trim());
@@ -2583,21 +2662,32 @@
                     displayTickerStr = fullTickerNameStr;
                 }
 
-                const lang = (n.Title && n.Title.match(/[\u4e00-\u9fa5]/)) ? 'CH' : 'EN';
+                const lang = (n.Title.match(/[\u4e00-\u9fa5]/)) ? 'CH' : 'EN';
                 div.innerHTML = `
                     <div class="news-meta">
                         <span class="news-tag" style="background:${TICKER_COLORS[tickerArr[0]]||'#ccc'}; color:white;" title="${fullTickerNameStr}">${displayTickerStr}</span>
                         <span class="news-tag">${lang}</span>
                         <span>${n.Date} ${n.Time || ''}</span>
+						${extraMeta}
                         <span style="margin-left:auto;">${n.Source || 'Source'}</span>
                     </div>
-                    <div class="news-title">${n.Title || 'Daily Summary'}</div>
+                    <div class="news-title">${n.Title}</div>
                 `;
                 
                 div.onclick = (e) => {
-                    document.querySelectorAll('.news-item').forEach(el => el.classList.remove('active'));
-                    div.classList.add('active');
-                    showNewsContent(n);
+                    if (e.ctrlKey || e.metaKey) {
+                        if (selectedNewsIds.has(n.id)) {
+                            selectedNewsIds.delete(n.id);
+                            div.classList.remove('selected-for-ai');
+                        } else {
+                            selectedNewsIds.add(n.id);
+                            div.classList.add('selected-for-ai');
+                        }
+                    } else {
+                        document.querySelectorAll('.news-item').forEach(el => el.classList.remove('active'));
+                        div.classList.add('active');
+                        showNewsContent(n);
+                    }
                 };
                 listEl.appendChild(div);
             });
@@ -2610,28 +2700,73 @@
             
             let displayContent = 'No content available.';
             if (item.Content && item.Content.length > 0) {
-                displayContent = marked.parse(item.Content, { breaks: true });
+                const limit = Math.ceil(item.Content.length);
+                displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
 			}
 
             pane.innerHTML = `
                 <h2 style="margin-bottom:10px;">${item.Title}</h2>
                 <div style="color:#666; margin-bottom:20px; font-size:0.9rem; border-bottom:1px solid #eee; padding-bottom:10px;">
                     ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
-                    ${item.URL ? ` | <a href="${item.URL}" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Original Source</a>` : ''}
                 </div>
                 
-                <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">
-                    ${displayContent}
-                </div>
+
+                <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary ? marked.parse(item.AI_Summary, { breaks: true }) : 'No AI Summary'}</div>
+                
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px;">${displayContent}</div>
 
                 <div style="color: #999; font-size: 0.9rem; text-align: left; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
-                    本文內容由 AI 技術輔助整理，僅供研究參考。
+                    本文內容由 AI 技術輔助整理自外部新聞來源，僅供研究參考。AI 摘要可能存在理解偏差或資訊遺漏，內容不代表原始媒體之立場，請務必點擊原始連結核實。 原始新聞內容之著作權均歸原媒體所有。本摘要僅為導讀用途，不構成對原文的替代。
                 </div>
  				 `;
         }
         
         function analyzeSelectedNews() {
-            // Disabled for this modified view as requested
+            const activeItem = document.querySelector('.news-item.active');
+            if (activeItem && activeItem.dataset.id) {
+                selectedNewsIds.add(activeItem.dataset.id);
+            }
+
+            if (selectedNewsIds.size === 0) {
+                alert('Please Ctrl+Click to select news items first.');
+                return;
+            }
+
+            const selectedItems = fullNewsList.filter(n => selectedNewsIds.has(n.id));
+            
+            const newsByTicker = {};
+            selectedItems.forEach(n => {
+                if (!newsByTicker[n.ticker]) newsByTicker[n.ticker] = [];
+                newsByTicker[n.ticker].push(n);
+            });
+
+            let newsText = `Total ${selectedItems.length} news items selected from ${Object.keys(newsByTicker).length} companies:\n\n`;
+            
+            Object.keys(newsByTicker).forEach(ticker => {
+                const tickerNews = newsByTicker[ticker];
+                newsText += `## ${TICKER_NAMES[ticker] || ticker} (${ticker}) - ${tickerNews.length} articles\n`;
+                tickerNews.forEach((n, idx) => {
+                    newsText += `[${idx + 1}] ${n.Date}\n`;
+                    newsText += `    ${n.AI_Summary || 'No AI Summary'}\n\n`;
+                });
+                newsText += '\n';
+            });
+
+            const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
+            
+            const prompt = `
+            Act as a professional equity research analyst.
+            Summarizes these ${selectedItems.length} news articles covering ${Object.keys(newsByTicker).length} companies.
+            Strictly 3-5 bullet points, and keep each point under 100 words
+            Output in ${lang}.
+            
+            News:
+            ${newsText}
+            `;
+            
+            callGemini(prompt);
         }
 
         function explainVolatility(ticker, val, dateStr, periodType = '1W') {
@@ -2662,7 +2797,7 @@
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             let newsContext = "No specific news found.";
             if (relevantNews.length > 0) {
-                newsContext = relevantNews.map((n, i) => `[${i+1}] ${n.Date}\n  Summary: ${n.Title || 'No Summary'}`).join('\n\n');
+                newsContext = relevantNews.map((n, i) => `[${i+1}] ${n.Date} (Link: ${n.URL})\n  AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
             }
             
             let extraContext = "";
@@ -2713,7 +2848,7 @@
             const relevantNews = fullNewsList.filter(n => n.ticker === currentModalTicker && n.jsDate >= startDate && n.jsDate <= endDate).slice(0, 20);
             let newsText = "No recent news found.";
             if (relevantNews.length > 0) {
-                newsText = relevantNews.map(n => `- ${n.Date}\n Summary: ${n.Title || 'No Summary'}`).join('\n\n');
+                newsText = relevantNews.map(n => `- ${n.Date}\n AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
             }
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
@@ -2767,7 +2902,7 @@
                 newsStartDate.setDate(newsStartDate.getDate() - 5);
                 const tNews = fullNewsList.filter(n => n.ticker === t && n.jsDate >= newsStartDate && n.jsDate <= endDate).slice(0, 20);
                 if(tNews.length > 0) {
-                    allNewsText += `\nNews for ${TICKER_NAMES[t]||t}:\n` + tNews.map(n => `- ${n.Date}\n Summary: ${n.Title || 'No Summary'}`).join('\n\n');
+                    allNewsText += `\nNews for ${TICKER_NAMES[t]||t}:\n` + tNews.map(n => `- ${n.Date}\n AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
                 }
             });
 
@@ -2844,7 +2979,7 @@
 
             let newsText = "No specific news found for this group in the last 5 days.";
             if (groupNews.length > 0) {
-                newsText = groupNews.map(n => `- [${n.Date}] ${TICKER_NAMES[n.ticker]||n.ticker}\n Summary: ${n.Title || 'No Summary'}`).join('\n\n');
+                newsText = groupNews.map(n => `- [${n.Date}] ${TICKER_NAMES[n.ticker]||n.ticker}\n AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
             }
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
@@ -2896,7 +3031,7 @@
 
             const newsStart = new Date(summaryReferenceDate); newsStart.setDate(newsStart.getDate()-5);
             const recentNews = fullNewsList.filter(n => n.jsDate >= newsStart && n.jsDate <= summaryReferenceDate).slice(0, 20);
-             const newsText = recentNews.map(n => `- ${n.Date}\n Summary: ${n.Title || 'No Summary'}`).join('\n\n');
+             const newsText = recentNews.map(n => `- ${n.Date}\n AI Summary: ${n.AI_Summary || 'No AI Summary'}`).join('\n\n');
 
             const lang = aiConfig.language === 'zh-TW' ? 'Traditional Chinese (繁體中文)' : 'English';
             
@@ -3456,7 +3591,6 @@
                 table.innerHTML = theadHtml + tbodyHtml;
             });
         }
-
         function copyChartData(chartKey) {
             const chart = activeCharts[chartKey];
             if (!chart) {
@@ -3904,17 +4038,17 @@
                 recentNews.forEach((n, idx) => {
                     const div = document.createElement('div');
                     div.className = 'news-item';
-                    div.innerHTML = `<div class="news-meta"><span>${n.Date}</span></div><div class="news-title" style="font-size:0.85rem;">${n.Title || 'Daily Summary'}</div>`;
+                    div.innerHTML = `<div class="news-meta"><span>${n.Date}</span></div><div class="news-title" style="font-size:0.85rem;">${n.Title}</div>`;
                     div.onclick = () => {
                         modalNewsLeft.querySelectorAll('.news-item').forEach(el => el.classList.remove('active'));
                         div.classList.add('active');
                         modalNewsRight.innerHTML = `
-                            <h3 style="margin-bottom:10px; font-size:1.1rem;">${n.Title || 'Daily Summary'}</h3>
-                            <div style="font-size:0.8rem; color:#666; margin-bottom:15px;">${n.Date} | ${n.Source || 'Unknown Source'}</div>
+                            <h3 style="margin-bottom:10px; font-size:1.1rem;">${n.Title}</h3>
+                            <div style="font-size:0.8rem; color:#666; margin-bottom:15px;">${n.Date} | ${n.Source}</div>
                             <div class="markdown-content" style="background:#f9f9f9; padding:10px; border-radius:6px; margin-bottom:15px;">
-                                ${n.Content ? marked.parse(n.Content) : 'No Summary available.'}
+                                <strong>AI Summary:</strong><br>${n.AI_Summary ? marked.parse(n.AI_Summary) : 'No AI Summary.'}
                             </div>
-                            <div style="font-size:0.9rem; line-height:1.6;">${n.URL ? `<a href="${n.URL}" target="_blank">Original Source</a>` : ''}</div>
+                            <div style="font-size:0.9rem; line-height:1.6;">${(n.Content || '').substring(0, 500)}... <a href="${n.URL}" target="_blank">Read More</a></div>
                         `;
                     };
                     modalNewsLeft.appendChild(div);
@@ -3927,35 +4061,24 @@
             const tickerEarnings = fullEarningsList.filter(e => e.ticker.split('.')[0] === baseTicker || e.ticker === ticker)
                                                    .sort((a,b) => b.jsDate - a.jsDate);
             
-            const modalEarningsLeft = document.getElementById('modal-earnings-left');
-            const modalEarningsRight = document.getElementById('modal-earnings-right');
-            modalEarningsLeft.innerHTML = '';
-            modalEarningsRight.innerHTML = '<div style="color:#999; text-align:center; margin-top:20px;">Select an earnings summary.</div>';
+            const prevContainer = document.getElementById('modal-earnings-prev');
+            const latestContainer = document.getElementById('modal-earnings-latest');
             
             if (tickerEarnings.length > 0) {
-                 tickerEarnings.forEach((e, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'earnings-item';
-                    const fYear = e.fiscal_year || '';
-                    const fQuarter = e.quarter || '';
-                    div.innerHTML = `<div class="earnings-meta"><span>${e.published_date || ''}</span></div><div class="earnings-title" style="font-size:0.85rem;">${fYear} ${fQuarter} Earnings Summary</div>`;
-                    div.onclick = () => {
-                        modalEarningsLeft.querySelectorAll('.earnings-item').forEach(el => el.classList.remove('active'));
-                        div.classList.add('active');
-                        modalEarningsRight.innerHTML = `
-                            <h3 style="margin-bottom:10px; font-size:1.1rem;">Fiscal: ${fYear} ${fQuarter}</h3>
-                            <div style="font-size:0.8rem; color:#666; margin-bottom:15px;">Published: ${e.published_date || ''} ${e.url ? `| <a href="${e.url}" target="_blank">Source</a>` : ''}</div>
-                            <div class="markdown-content" style="background:#f9f9f9; padding:10px; border-radius:6px; margin-bottom:15px;">
-                                ${e.AI_Summary ? marked.parse(e.AI_Summary) : 'No AI Summary available.'}
-                            </div>
-                        `;
-                    };
-                    modalEarningsLeft.appendChild(div);
-                    if (idx === 0) div.click(); // Auto-select first
-                 });
+                const latest = tickerEarnings[0];
+                latestContainer.innerHTML = `<div style="color:#666; font-size:0.85rem; margin-bottom:10px;">Fiscal: ${latest.fiscal_year} ${latest.quarter} | ${latest.published_date}</div>` + 
+                                            (latest.AI_Summary ? marked.parse(latest.AI_Summary) : 'No AI Summary.');
+                                            
+                if (tickerEarnings.length > 1) {
+                    const prev = tickerEarnings[1];
+                    prevContainer.innerHTML = `<div style="color:#666; font-size:0.85rem; margin-bottom:10px;">Fiscal: ${prev.fiscal_year} ${prev.quarter} | ${prev.published_date}</div>` + 
+                                              (prev.AI_Summary ? marked.parse(prev.AI_Summary) : 'No AI Summary.');
+                } else {
+                    prevContainer.innerHTML = '<p style="color:#666;">No previous earnings call found.</p>';
+                }
             } else {
-                modalEarningsLeft.innerHTML = '<p style="padding:15px; color:#666;">No earnings call found.</p>';
-                modalEarningsRight.innerHTML = '<p style="padding:15px; color:#666;">No earnings call found.</p>';
+                latestContainer.innerHTML = '<p style="color:#666;">No earnings call found.</p>';
+                prevContainer.innerHTML = '<p style="color:#666;">No earnings call found.</p>';
             }
 
             modal.style.display = 'block'; 
