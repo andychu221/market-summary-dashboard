@@ -926,13 +926,12 @@
 
             <div id="modal-tab-earnings" class="view-content" style="flex:1; display:flex; flex-direction:column; min-height:0;">
                 <div style="display: flex; flex: 1; border: 1px solid var(--border-color); border-radius: 8px; min-height:0;">
-                    <div style="flex: 1; border-right: 1px solid var(--border-color); padding: 15px; overflow-y: auto; background: var(--bg-color);">
-                        <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Previous Earnings Call AI Summary</h3>
-                        <div id="modal-earnings-prev" class="markdown-content"></div>
+                    <div id="modal-earnings-left" style="flex: 0 0 40%; overflow-y: auto; border-right: 1px solid var(--border-color); background: var(--bg-color);">
+                        <!-- Earnings Call list will be populated here -->
                     </div>
-                    <div style="flex: 1; padding: 15px; overflow-y: auto; background: var(--bg-color);">
-                        <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Latest Earnings Call AI Summary</h3>
-                        <div id="modal-earnings-latest" class="markdown-content"></div>
+                    <div id="modal-earnings-right" style="flex: 1; padding: 15px; overflow-y: auto; background: var(--bg-color);">
+                        <!-- Selected Earnings Call content will be populated here -->
+                        <div style="color:#999; text-align:center; margin-top:20px;">Select an earnings call summary to view.</div>
                     </div>
                 </div>
             </div>
@@ -1025,7 +1024,6 @@
     </div>
 
     <script>
-
 		let currentViewMode = 'return'; // 'return' 或 'technical'
 		const technicalColumns = [
     		{ id: 'Name', label: 'Name', visible: true },
@@ -1230,6 +1228,7 @@
         let newsSources = new Set();
         let loadedNewsTickers = new Set();
         let fullNewsList = []; 
+        let fullAINewsList = []; // Array to store AI News JSON data
         let newsSelectedRange = { start: null, end: null };
         let selectedNewsIds = new Set(); 
         
@@ -1467,8 +1466,8 @@
                 
                 status.innerText = "Loading News, Earnings, Calendar & Financials...";
                 
-                // 加載日曆、新聞、財報資料等
-                await Promise.all([loadNews(), loadEarnings(), loadMacroEvents(), loadEarningsCalendar(), loadFinancialsIndex()]);
+                // 加載日曆、新聞、財報資料等，包含新增的 AI News json
+                await Promise.all([loadNews(), loadAINews(), loadEarnings(), loadMacroEvents(), loadEarningsCalendar(), loadFinancialsIndex()]);
 
                 renderSummaryTab();
                 renderChartTab();
@@ -1480,6 +1479,23 @@
                 console.error(e);
             }
         }
+
+        // 新增載入 AI News JSON 的函數
+        async function loadAINews() {
+            try {
+                const url = 'https://raw.githubusercontent.com/andychu221/reuters-news-archive/main/gemini_ai_news.json';
+                const data = await fetchJsonWithRetry(url);
+                if (data && Array.isArray(data)) {
+                    fullAINewsList = data.map(item => ({
+                        ...item,
+                        jsDate: new Date(item.Date + ' ' + (item.Time || ''))
+                    })).sort((a, b) => b.jsDate - a.jsDate); // Sort by date descending
+                }
+            } catch (e) {
+                console.error("Error loading AI News JSON", e);
+            }
+        }
+
 
         // ====== Earnings Calendar Function ====== //
         function getLocalYYYYMMDD(d) {
@@ -4025,60 +4041,138 @@
             // Render Chart
             updateModalChart('1Y'); 
 
-            // Render News
+            // ==========================================
+            // Render News using AI News JSON
+            // ==========================================
             const modalNewsLeft = document.getElementById('modal-news-left');
             const modalNewsRight = document.getElementById('modal-news-right');
             modalNewsLeft.innerHTML = '';
             modalNewsRight.innerHTML = '<div style="color:#999; text-align:center; margin-top:20px;">Select a news item.</div>';
             
-            const recentNews = fullNewsList.filter(n => n.ticker && n.ticker.includes(ticker)).slice(0, 20);
-            if (recentNews.length === 0) {
-                modalNewsLeft.innerHTML = '<p style="padding:15px; color:#666;">No recent news.</p>';
+            // Filter AI news for the current ticker
+            const tickerAINews = fullAINewsList.filter(n => n.Ticker && (n.Ticker === ticker || n.Ticker === ticker.split('.')[0]));
+            
+            if (tickerAINews.length === 0) {
+                modalNewsLeft.innerHTML = '<p style="padding:15px; color:#666;">No AI news available for this ticker.</p>';
             } else {
-                recentNews.forEach((n, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'news-item';
-                    div.innerHTML = `<div class="news-meta"><span>${n.Date}</span></div><div class="news-title" style="font-size:0.85rem;">${n.Title}</div>`;
-                    div.onclick = () => {
-                        modalNewsLeft.querySelectorAll('.news-item').forEach(el => el.classList.remove('active'));
-                        div.classList.add('active');
-                        modalNewsRight.innerHTML = `
-                            <h3 style="margin-bottom:10px; font-size:1.1rem;">${n.Title}</h3>
-                            <div style="font-size:0.8rem; color:#666; margin-bottom:15px;">${n.Date} | ${n.Source}</div>
-                            <div class="markdown-content" style="background:#f9f9f9; padding:10px; border-radius:6px; margin-bottom:15px;">
-                                <strong>AI Summary:</strong><br>${n.AI_Summary ? marked.parse(n.AI_Summary) : 'No AI Summary.'}
+                // Determine available dates
+                const availableDatesSet = new Set(tickerAINews.map(n => n.Date));
+                const availableDates = Array.from(availableDatesSet).sort((a, b) => new Date(b) - new Date(a));
+                
+                // Add Date Filter Dropdown
+                let dateFilterHtml = `
+                    <div style="padding: 10px; border-bottom: 1px solid var(--border-color); background: var(--header-bg); position: sticky; top: 0; z-index: 10;">
+                        <select id="modal-news-date-select" class="controls-select" style="width: 100%;" onchange="renderModalTickerNews()">
+                            <option value="latest">Latest</option>
+                            ${availableDates.map(d => `<option value="${d}">${d}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+                
+                // Use a container for the list to allow updating without replacing the select
+                const listContainerId = 'modal-news-list-container';
+                modalNewsLeft.innerHTML = dateFilterHtml + `<div id="${listContainerId}"></div>`;
+                
+                // Expose function to render list based on selection
+                window.renderModalTickerNews = function() {
+                    const selectedVal = document.getElementById('modal-news-date-select').value;
+                    let displayDate = selectedVal;
+                    if (selectedVal === 'latest' && availableDates.length > 0) {
+                        displayDate = availableDates[0];
+                    }
+                    
+                    const filteredNews = tickerAINews.filter(n => n.Date === displayDate);
+                    const listContainer = document.getElementById(listContainerId);
+                    listContainer.innerHTML = '';
+                    
+                    if(filteredNews.length === 0) {
+                        listContainer.innerHTML = '<p style="padding:15px; color:#666;">No news for this date.</p>';
+                        modalNewsRight.innerHTML = '<div style="color:#999; text-align:center; margin-top:20px;">Select a news item.</div>';
+                        return;
+                    }
+                    
+                    filteredNews.forEach((n, idx) => {
+                        const div = document.createElement('div');
+                        div.className = 'news-item';
+                        div.innerHTML = `
+                            <div class="news-meta">
+                                <span class="news-tag">${n.Date} ${n.Time || ''}</span>
+                                <span>${n.Source || 'AI Summary'}</span>
                             </div>
-                            <div style="font-size:0.9rem; line-height:1.6;">${(n.Content || '').substring(0, 500)}... <a href="${n.URL}" target="_blank">Read More</a></div>
+                            <div class="news-title" style="font-size:0.95rem;">${n.Title}</div>
                         `;
-                    };
-                    modalNewsLeft.appendChild(div);
-                    if (idx === 0) div.click(); // Auto-select first
-                });
+                        div.onclick = () => {
+                            listContainer.querySelectorAll('.news-item').forEach(el => el.classList.remove('active'));
+                            div.classList.add('active');
+                            modalNewsRight.innerHTML = `
+                                <h3 style="margin-bottom:10px; font-size:1.2rem;">${n.Title}</h3>
+                                <div style="font-size:0.9rem; color:#666; margin-bottom:15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                                    ${n.Date} ${n.Time || ''} | ${n.Source || 'AI Generated'}
+                                    ${n.URL ? ` | <a href="${n.URL}" target="_blank">Original Article</a>` : ''}
+                                </div>
+                                <div class="markdown-content" style="line-height:1.6;">
+                                    ${marked.parse(n.Content || 'No content provided.', { breaks: true })}
+                                </div>
+                            `;
+                            modalNewsRight.scrollTop = 0;
+                        };
+                        listContainer.appendChild(div);
+                        if (idx === 0) div.click(); // Auto-select first
+                    });
+                };
+                
+                // Initial render
+                window.renderModalTickerNews();
             }
 
-            // Render Earnings
-            const baseTicker = ticker.split('.')[0];
-            const tickerEarnings = fullEarningsList.filter(e => e.ticker.split('.')[0] === baseTicker || e.ticker === ticker)
+            // ==========================================
+            // Render Earnings with split pane
+            // ==========================================
+            const baseTickerForEarn = ticker.split('.')[0];
+            const tickerEarnings = fullEarningsList.filter(e => e.ticker.split('.')[0] === baseTickerForEarn || e.ticker === ticker)
                                                    .sort((a,b) => b.jsDate - a.jsDate);
             
-            const prevContainer = document.getElementById('modal-earnings-prev');
-            const latestContainer = document.getElementById('modal-earnings-latest');
+            const modalEarnLeft = document.getElementById('modal-earnings-left');
+            const modalEarnRight = document.getElementById('modal-earnings-right');
+            modalEarnLeft.innerHTML = '';
+            modalEarnRight.innerHTML = '<div style="color:#999; text-align:center; margin-top:20px;">Select an earnings call summary to view.</div>';
             
             if (tickerEarnings.length > 0) {
-                const latest = tickerEarnings[0];
-                latestContainer.innerHTML = `<div style="color:#666; font-size:0.85rem; margin-bottom:10px;">Fiscal: ${latest.fiscal_year} ${latest.quarter} | ${latest.published_date}</div>` + 
-                                            (latest.AI_Summary ? marked.parse(latest.AI_Summary) : 'No AI Summary.');
-                                            
-                if (tickerEarnings.length > 1) {
-                    const prev = tickerEarnings[1];
-                    prevContainer.innerHTML = `<div style="color:#666; font-size:0.85rem; margin-bottom:10px;">Fiscal: ${prev.fiscal_year} ${prev.quarter} | ${prev.published_date}</div>` + 
-                                              (prev.AI_Summary ? marked.parse(prev.AI_Summary) : 'No AI Summary.');
-                } else {
-                    prevContainer.innerHTML = '<p style="color:#666;">No previous earnings call found.</p>';
-                }
+                 tickerEarnings.forEach((eItem, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'earnings-item'; // Reuse existing class for styling
+                    const fYear = eItem.fiscal_year || '';
+                    const fQuarter = eItem.quarter || '';
+                    
+                    div.innerHTML = `
+                        <div class="earnings-meta">
+                            <span class="earnings-tag" style="background:#f0f0f0; color:#333; font-weight:bold;">${fYear} ${fQuarter}</span>
+                            <span>${eItem.published_date || ''}</span>
+                        </div>
+                        <div class="earnings-title" style="font-size:0.95rem;">${eItem.title || `${eItem.ticker} Earnings Call`}</div>
+                    `;
+                    
+                    div.onclick = () => {
+                        modalEarnLeft.querySelectorAll('.earnings-item').forEach(el => el.classList.remove('active'));
+                        div.classList.add('active');
+                        
+                        modalEarnRight.innerHTML = `
+                            <h3 style="margin-bottom:15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">${eItem.title || `${eItem.ticker} Earnings Call`}</h3>
+                            <div style="color:#666; font-size:0.9rem; margin-bottom:15px;">
+                                Fiscal: ${fYear} ${fQuarter} | Published: ${eItem.published_date}
+                                ${eItem.url ? ` | <a href="${eItem.url}" target="_blank">Source</a>` : ''}
+                            </div>
+                            <div class="markdown-content" style="background:#f9f9f9; padding:15px; border-radius:8px; border: 1px solid #e0e0e0;">
+                                ${eItem.AI_Summary ? marked.parse(eItem.AI_Summary, { breaks: true }) : 'No AI Summary available for this call.'}
+                            </div>
+                        `;
+                        modalEarnRight.scrollTop = 0;
+                    };
+                    modalEarnLeft.appendChild(div);
+                    if (idx === 0) div.click(); // Auto-select first
+                 });
             } else {
-                latestContainer.innerHTML = '<p style="color:#666;">No earnings call found.</p>';
-                prevContainer.innerHTML = '<p style="color:#666;">No earnings call found.</p>';
+                modalEarnLeft.innerHTML = '<p style="padding:15px; color:#666;">No earnings call data found.</p>';
             }
 
             modal.style.display = 'block'; 
