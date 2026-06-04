@@ -3680,22 +3680,22 @@
             });
         }
 
-        function toggleSort(group, colId) {
-            const current = tableSortState[group] || { column: null, direction: 'asc' };
-            if (current.column === colId) {
-                if (current.direction === 'asc') current.direction = 'desc';
-                else {
-                    current.column = null;
-                    current.direction = 'asc';
-                }
-            } else {
-                current.column = colId;
-                current.direction = 'desc'; 
-                if(colId === 'Name' || colId === 'Ticker') current.direction = 'asc';
-            }
-            tableSortState[group] = current;
-            renderSummaryTab();
-        }
+function toggleSort(group, colId) {
+    const current = tableSortState[group] || { column: null, direction: 'asc' };
+    
+    if (current.column === colId) {
+        // 如果已經是目前排序的欄位，單純切換 asc / desc
+        current.direction = current.direction === 'desc' ? 'asc' : 'desc';
+    } else {
+        // 如果是新點擊的欄位，預設為 desc (Name 和 Ticker 預設 asc)
+        current.column = colId;
+        current.direction = 'desc'; 
+        if(colId === 'Name' || colId === 'Ticker') current.direction = 'asc';
+    }
+    
+    tableSortState[group] = current;
+    renderSummaryTab();
+}
 
         function getTickerSortValue(ticker, colId, refDate) {
             const perfData = allPerformanceData.get(ticker);
@@ -3731,6 +3731,21 @@
                 case 'NextEarning': 
                     let nDate = globalNextEarnings[ticker.split('.')[0]] || globalNextEarnings[ticker];
                     return nDate ? nDate.getTime() : -999999999;
+                
+                case 'MA5': case 'MA10': case 'MA20': case 'MA50': case 'MA100': case 'MA200':
+                    const period = parseInt(colId.replace('MA', ''));
+                    const maVal = calculateMA(ticker, period, anchorDate);
+                    return maVal ? maVal : -999999999;
+                case '1YRange':
+                    const hlData = calculate1YHighLow(ticker, anchorDate);
+                    if (hlData.high && hlData.low && hlData.high !== hlData.low) {
+                        // 使用現價在 1Y 區間的相對百分比來做排序基準
+                        return ((price - hlData.low) / (hlData.high - hlData.low)) * 100;
+                    }
+                    return -999999999;
+                
+                
+                
                 default: 
                     let compareVal = currPoint.tri;
                     if (colId === 'Custom' && customPeriodState.end) {
