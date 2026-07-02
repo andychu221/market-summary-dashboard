@@ -6,7 +6,7 @@
 
 這是一個專為股票分析師與投資人打造的全方位前端金融儀表板。提供即時績效追蹤、互動式圖表、AI 驅動的新聞情緒分析，以及財報會議重點摘要，全部整合在一個輕量級的 Web App 中。
 
-![Dashboard Preview](https://via.placeholder.com/800x400.png?text=Dashboard+Preview+Image) *(你可以將此連結替換為你的實際截圖)*
+<img width="1231" height="604" alt="MarketUpdate" src="https://github.com/user-attachments/assets/8ae35689-f0d1-4106-8b01-7daabdc4732b" />
 
 ## ✨ 核心功能
 
@@ -36,6 +36,3 @@
     *   輸入你的 **Google Gemini API Key**。
     *   選擇你偏好的 AI 輸出語言（英文 / 繁體中文）。
 
-## 📝 授權條款
-
-本專案採用 MIT 授權條款。
