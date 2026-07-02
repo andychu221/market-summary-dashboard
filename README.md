@@ -35,7 +35,3 @@ A comprehensive, client-side financial market dashboard designed for equity anal
     *   Click the ⚙️ (Settings) icon in the top right corner.
     *   Input your **Google Gemini API Key**.
     *   Select your preferred output language (English / Traditional Chinese).
-
-## 📝 License
-
-This project is licensed under the MIT License.
