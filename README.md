@@ -6,7 +6,7 @@
 
 A comprehensive, client-side financial market dashboard designed for equity analysts and investors. It provides real-time performance tracking, interactive charting, AI-driven news sentiment analysis, and earnings call summaries—all in a single lightweight Web App.
 
-![Dashboard Preview](https://via.placeholder.com/800x400.png?text=Dashboard+Preview+Image) *(You can replace this link with your actual screenshot)*
+<img width="1231" height="604" alt="MarketUpdate" src="https://github.com/user-attachments/assets/72582f77-f4c0-42c0-9bd3-ce9bdd62b321" />
 
 ## ✨ Key Features
 
