@@ -217,11 +217,18 @@
 		.modal-xl { 
             max-width: 75vw !important; 
             width: 75vw !important; 
-            height: 75vh !important; 
+            height: 90vh !important; 
             display: flex; 
             flex-direction: column; 
-            margin: 12.5vh auto; 
-            overflow: hidden; 
+            
+            /* 加入強制完美置中設定 */
+            margin: 0 !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            
+            overflow: hidden;
         }
         .close { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; z-index: 10; }
         
@@ -1068,7 +1075,8 @@
             // SOXX Additions
             'TXN': 'TI', 'MRVL': 'Marvell', 'ON': 'ON Semi', 'MCHP': 'Microchip',
             'TER': 'Teradyne', 'SWKS': 'Skyworks', 'MPWR': 'MPWR',
-            'ENTG': 'Entegris', 'QRVO': 'Qorvo', 'WOLF': 'Wolfspeed', 'ENPH': 'Enphase'
+            'ENTG': 'Entegris', 'QRVO': 'Qorvo', 'WOLF': 'Wolfspeed', 'ENPH': 'Enphase',
+            'SPCX': 'SpaceX'
         };
 
         const TICKER_DOMAINS = {
@@ -1101,7 +1109,8 @@
             // SOXX Additions
             'TXN': 'ti.com', 'MRVL': 'marvell.com', 'ON': 'onsemi.com', 'MCHP': 'microchip.com',
             'TER': 'teradyne.com', 'SWKS': 'skyworksinc.com', 'MPWR': 'monolithicpower.com',
-            'ENTG': 'entegris.com', 'QRVO': 'qorvo.com', 'WOLF': 'wolfspeed.com', 'ENPH': 'enphase.com'
+            'ENTG': 'entegris.com', 'QRVO': 'qorvo.com', 'WOLF': 'wolfspeed.com', 'ENPH': 'enphase.com',
+            'SPCX': 'spacex.com'
         };
 
         let TICKER_COLORS = {
@@ -1129,7 +1138,8 @@
             // SOXX Additions
             'TXN': '#CC0000', 'MRVL': '#FF4500', 'ON': '#2E8B57', 'MCHP': '#DC143C',
             'TER': '#4682B4', 'SWKS': '#191970', 'MPWR': '#800080',
-            'ENTG': '#708090', 'QRVO': '#00CED1', 'WOLF': '#A52A2A', 'ENPH': '#FF8C00'
+            'ENTG': '#708090', 'QRVO': '#00CED1', 'WOLF': '#A52A2A', 'ENPH': '#FF8C00',
+            'SPCX': '#111111'
         };
 
         let summaryTickersConfig = {
@@ -1155,7 +1165,7 @@
                 '3374.TWO', '6789.TW','5347.TWO','3443.TW'
             ],
             'end-product': [
-                'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'CSCO', '6758.T', 'BTDR'
+                'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'CSCO', '6758.T', 'BTDR','SPCX'
             ]
         };
 
@@ -1282,6 +1292,7 @@
         };
         
         document.addEventListener('DOMContentLoaded', () => {
+        	Chart.defaults.animation = false;
             loadAiSettings();
             initNewsResizer();
             initEarningsResizer();
@@ -3124,103 +3135,143 @@ function findValidTradingDate(ticker, date) {
         }
 
         function renderLineChartWithCustomTicks(canvasId, tickers, periodName) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
 
-    const endDate = summaryReferenceDate;
-    let startDate;
-    let unit = 'month';
+            const endDate = summaryReferenceDate;
+            let startDate;
 
-    const baseTicker = tickers[0] || '2330.TW'; 
-    if (periodName === '1-Year') {
-        startDate = new Date(new Date(endDate).setFullYear(endDate.getFullYear() - 1));
-        unit = 'month';
-    } else if (periodName === 'YTD') {
-        startDate = new Date(endDate.getFullYear(), 0, 1);
-        unit = 'month';
-    } else if (periodName === '1-Month') {
-        let d = new Date(endDate);
-        d.setMonth(d.getMonth() - 1);
-        startDate = findValidTradingDate(baseTicker, d) || d;
-        unit = 'day';
-    } else if (periodName === '1-Week') {
-        let d = new Date(endDate);
-        d.setDate(d.getDate() - 7);
-        startDate = findValidTradingDate(baseTicker, d) || d;
-        unit = 'day';
-    }
+            // 1. 決定起始日 (往前推並對齊最近的有效交易日)
+            const baseTicker = tickers[0] || '2330.TW'; 
+            if (periodName === '1-Year') {
+                let d = new Date(endDate); d.setFullYear(d.getFullYear() - 1);
+                startDate = findValidTradingDate(baseTicker, d) || d;
+            } else if (periodName === 'YTD') {
+                let d = new Date(endDate.getFullYear(), 0, 1);
+                startDate = findValidTradingDate(baseTicker, d) || d;
+            } else if (periodName === '1-Month') {
+                let d = new Date(endDate); d.setMonth(d.getMonth() - 1);
+                startDate = findValidTradingDate(baseTicker, d) || d;
+            } else if (periodName === '1-Week') {
+                let d = new Date(endDate); d.setDate(d.getDate() - 7);
+                startDate = findValidTradingDate(baseTicker, d) || d;
+            }
 
-    const datasets = tickers.map(t => {
-        let tData = dataByTicker[t];
-        if (!tData) return null;
+            // 2. 聯集所有真實的交易日期 (確保沒有假日空檔)
+            let allDates = new Set();
+            allDates.add(formatDateYYYYMMDD(startDate));
+            allDates.add(formatDateYYYYMMDD(endDate));
 
-        // 1. 找到基期 (startDate 當天或往前找最近的一筆)
-        const baseEntry = tData.find(pt => formatDateYYYYMMDD(pt.date) === formatDateYYYYMMDD(startDate)) || 
-                          tData.filter(pt => pt.date <= startDate).pop();
-        const baseTri = baseEntry ? baseEntry.tri : tData[0].tri;
+            tickers.forEach(t => {
+                if(dataByTicker[t]) {
+                    dataByTicker[t].forEach(pt => {
+                        if (pt.date >= startDate && pt.date <= endDate) {
+                            allDates.add(formatDateYYYYMMDD(pt.date));
+                        }
+                    });
+                }
+            });
+            const sortedDates = Array.from(allDates).sort();
 
-        // 2. 只篩選出在 startDate ~ endDate 區間內「實際存在」的交易日
-        const validRangeData = tData.filter(pt => pt.date >= startDate && pt.date <= endDate);
-        
-        // 3. 計算報酬率 (只針對有交易的點)
-        const dataPoints = validRangeData.map(entry => ({
-            x: entry.date,
-            y: ((entry.tri / baseTri) - 1) * 100
-        }));
+            // 3. 建立每個 Ticker 的連續報酬序列
+            const datasets = tickers.map(t => {
+                let tData = dataByTicker[t];
+                if (!tData) return null;
 
-        return { 
-            label: TICKER_NAMES[t] || t, 
-            data: dataPoints, 
-            borderColor: TICKER_COLORS[t] || '#999', 
-            borderWidth: 2, 
-            pointRadius: 0, 
-            tension: 0.1, 
-            spanGaps: false // 【關鍵】設為 false，若中間有斷檔不強行連線
-        };
-    }).filter(Boolean);
+                const baseEntry = tData.find(pt => formatDateYYYYMMDD(pt.date) === formatDateYYYYMMDD(startDate)) || 
+                                  tData.filter(pt => pt.date <= startDate).pop();
+                const baseTri = baseEntry ? baseEntry.tri : tData[0].tri;
 
-    const gridColor = 'rgba(0, 0, 0, 0.1)';
-    const textColor = '#555';
+                let lastY = 0; 
+                const dataPoints = sortedDates.map(dateStr => {
+                    const entry = tData.find(pt => formatDateYYYYMMDD(pt.date) === dateStr);
+                    if (entry) {
+                        lastY = ((entry.tri / baseTri) - 1) * 100;
+                    }
+                    return lastY; 
+                });
 
-    const chartPlugins = { 
-        title: { display: true, text: `${periodName} Trend`, color: textColor, font: { size: 14, weight: 'bold' }, align: 'start' },
-        legend: { 
-            display: true, position: 'top', align: 'start',
-            labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'line', padding: 10 }
-        }, 
-        tooltip: { 
-            mode: 'index', intersect: false,
-            callbacks: { title: function(context) { const date = new Date(context[0].parsed.x); return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`; } }
-        }
-    };
+                return { 
+                    label: TICKER_NAMES[t] || t, 
+                    data: dataPoints, 
+                    borderColor: TICKER_COLORS[t] || '#999', 
+                    borderWidth: 2, 
+                    pointRadius: 0, 
+                    tension: 0, 
+                    spanGaps: true 
+                };
+            }).filter(Boolean);
 
-    activeCharts[canvasId] = new Chart(ctx, {
-        type: 'line', 
-        data: { datasets },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            layout: { padding: { top: 10 } },
-            scales: { 
-                x: {
-                    type: 'time', 
-                    min: startDate.getTime(),
-                    max: endDate.getTime(),
-                    bounds: 'ticks', 
-                    time: {
-                        unit: unit,
-                        displayFormats: { day: 'd/MMM', week: 'd/MMM', month: 'MMM' },
-                        parser: 'yyyy-MM-dd'
-                    },
-                    ticks: { color: textColor, maxRotation: 0, autoSkip: true },
-                    grid: { color: gridColor, drawTicks: true }
+            const gridColor = 'rgba(0, 0, 0, 0.1)';
+            const textColor = '#555';
+
+            activeCharts[canvasId] = new Chart(ctx, {
+                type: 'line', 
+                data: { 
+                    labels: sortedDates, // 這裡放入完整的日期陣列
+                    datasets: datasets 
                 },
-                y: { title: { display: true, text: '%' }, ticks: { color: textColor }, grid: { color: gridColor } } 
-            }, 
-            plugins: chartPlugins 
+                options: { 
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 10 } },
+                    scales: { 
+                        x: {
+                            ticks: { 
+                                color: textColor, 
+                                maxRotation: 0, 
+                                // 1W 和 1M 讓它自動分配間距，1Y 和 YTD 我們手動嚴格控制
+                                autoSkip: (periodName === '1-Week' || periodName === '1-Month'),
+                                maxTicksLimit: periodName === '1-Week' ? 7 : (periodName === '1-Month' ? 12 : undefined),
+                                callback: function(val, index) {
+                                    const dateStr = sortedDates[index];
+                                    if (!dateStr) return null;
+                                    const d = new Date(dateStr);
+                                    const curMonth = d.getMonth();
+                                    
+                                    // 判斷該 index 是否為該月份的「第一個交易日」
+                                    const isFirstTradingDayOfMonth = index === 0 || new Date(sortedDates[index - 1]).getMonth() !== curMonth;
+                                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+                                    if (periodName === '1-Year') {
+                                        // 1-Year: 每兩個月的月初第一個交易日 (取雙數月 0, 2, 4... Jan, Mar, May)
+                                        if (isFirstTradingDayOfMonth && (curMonth % 2 === 0)) {
+                                            return `${months[curMonth]}'${d.getFullYear().toString().substring(2)}`;
+                                        }
+                                        return null; // 回傳 null 會隱藏多餘的標籤與垂直格線
+                                    } else if (periodName === 'YTD') {
+                                        // YTD: 每個月的月初第一個交易日
+                                        if (isFirstTradingDayOfMonth) {
+                                            // 排除作為計算基期的去年 12 月
+                                            if (index === 0 && curMonth === 11) return null; 
+                                            return `${months[curMonth]}'${d.getFullYear().toString().substring(2)}`;
+                                        }
+                                        return null;
+                                    } else {
+                                        // 1-Month 和 1-Week 保持 MM/DD 格式
+                                        return `${curMonth + 1}/${d.getDate()}`;
+                                    }
+                                }
+                            },
+                            grid: { color: gridColor, drawTicks: true }
+                        },
+                        y: { title: { display: true, text: '%' }, ticks: { color: textColor }, grid: { color: gridColor } } 
+                    }, 
+                    plugins: { 
+                        title: { display: true, text: `${periodName} Trend`, color: textColor, font: { size: 14, weight: 'bold' }, align: 'start' },
+                        legend: { display: true, position: 'top', align: 'start', labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'line', padding: 10 } },
+                        tooltip: { 
+                            mode: 'index', 
+                            intersect: false,
+                            callbacks: {
+                                title: function(context) {
+                                    // 游標滑過去時，強制只顯示乾淨的 YYYY-MM-DD
+                                    return sortedDates[context[0].dataIndex];
+                                }
+                            }
+                        }
+                    } 
+                }
+            });
         }
-    });
-}
 
         function setCustomChartPeriod(period) {
              if (period === 'YTD') {
@@ -4043,204 +4094,218 @@ function toggleSort(group, colId) {
         function formatDateDDMMM(date) { return `${date.getMonth()+1}/${date.getDate()}`; }
         function formatDateSlash(date) { const m = date.getMonth()+1; const d = date.getDate(); return `${date.getFullYear()}/${m}/${d}`; }
         
-        function openTickerModal(ticker) {
-    currentModalTicker = ticker;
-    modalChartMode = 'Price';
-    const modeBtn = document.getElementById('modal-chart-mode-btn');
-    if(modeBtn) modeBtn.innerText = 'Show Market Cap';
-    
-    const modal = document.getElementById('tickerModal'); 
-    document.getElementById('modalTickerName').innerText = TICKER_NAMES[ticker] || ticker;
-    
-    const earningsTabLink = document.getElementById('modal-tab-link-earnings');
-    earningsTabLink.style.display = summaryTickersConfig['equity-index'].includes(ticker) ? 'none' : 'flex';
+function openTickerModal(ticker) {
+            currentModalTicker = ticker;
+            modalChartMode = 'Price';
+            const modeBtn = document.getElementById('modal-chart-mode-btn');
+            if(modeBtn) modeBtn.innerText = 'Show Market Cap';
+            
+            const modal = document.getElementById('tickerModal'); 
+            document.getElementById('modalTickerName').innerText = TICKER_NAMES[ticker] || ticker;
+            
+            const earningsTabLink = document.getElementById('modal-tab-link-earnings');
+            earningsTabLink.style.display = summaryTickersConfig['equity-index'].includes(ticker) ? 'none' : 'flex';
 
-    const financialsTabLink = document.getElementById('modal-tab-link-financials');
-    if (financialsTabLink) {
-        let targetFinTicker = null;
-        const baseTickerForFin = ticker.split('.')[0];
-        if (financialsIndex.includes(ticker)) targetFinTicker = ticker;
-        else if (financialsIndex.includes(baseTickerForFin)) targetFinTicker = baseTickerForFin;
+            const financialsTabLink = document.getElementById('modal-tab-link-financials');
+            if (financialsTabLink) {
+                let targetFinTicker = null;
+                const baseTickerForFin = ticker.split('.')[0];
+                if (financialsIndex.includes(ticker)) targetFinTicker = ticker;
+                else if (financialsIndex.includes(baseTickerForFin)) targetFinTicker = baseTickerForFin;
 
-        if (targetFinTicker) {
-            financialsTabLink.style.display = 'flex';
-            financialsTabLink.dataset.targetTicker = targetFinTicker;
-        } else {
-            financialsTabLink.style.display = 'none';
-        }
-    }
-    
-    openTickerModalTab(null, 'modal-tab-chart');
-    document.querySelector('#tickerModal .chart-sub-tab-link').classList.add('active');
-    updateModalChart('1Y'); 
-
-    const modalNewsLeft = document.getElementById('modal-news-left');
-    const modalNewsRight = document.getElementById('modal-news-right');
-    modalNewsLeft.innerHTML = '';
-    modalNewsRight.innerHTML = '';
-    
-    const tickerNews = fullNewsList.filter(n => {
-        let rawTicker = n.ticker || '';
-        let tickerArr = rawTicker.split(',').map(t => t.trim());
-        return tickerArr.includes(ticker) || tickerArr.includes(ticker.split('.')[0]);
-    }).sort((a,b) => b.jsDate - a.jsDate);
-    
-    if (tickerNews.length === 0) {
-        modalNewsLeft.innerHTML = '<p style="padding:15px; color:#666;">No news available.</p>';
-        modalNewsRight.innerHTML = '<div style="color:#999; text-align:center; margin-top:20px;">No data to analyze.</div>';
-    } else {
-        tickerNews.forEach((n) => {
-            const div = document.createElement('div');
-            div.className = 'news-item';
-            div.style.cursor = 'default';
-            div.innerHTML = `
-                <div class="news-meta" style="justify-content: space-between;">
-                    <span>${n.Date} ${n.Time || ''} | ${n.Source || 'Unknown'}</span>
-                    <a href="${n.URL}" target="_blank" title="Open Original"><i class="material-icons" style="font-size:16px;">open_in_new</i></a>
-                </div>
-                <div class="news-title">${n.Title}</div>
-            `;
-            modalNewsLeft.appendChild(div);
-        });
-
-        const refDate = summaryReferenceDate || new Date();
-        const fiveDaysAgo = new Date(refDate);
-        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4);
-
-        const datesArr = [];
-        for(let i=0; i<5; i++) {
-            const d = new Date(fiveDaysAgo);
-            d.setDate(d.getDate() + i);
-            datesArr.push(formatDateYYYYMMDD(d));
-        }
-
-        const volumeMap = {}; datesArr.forEach(d => volumeMap[d] = 0);
-        const sentimentCounts = { pos: 0, neu: 0, neg: 0 };
-        let totalSentiment = 0, sentimentCount = 0;
-        const sourceMap = {}, wordMap = {};
-        const stopWords = new Set(['the', 'to', 'of', 'and', 'in', 'a', 'for', 'on', 'is', 'at', 'by', 'with', 'as', 'that', 'from', 'it', 'this', 'are', 'be', 'an', 'or', 'which', 'will', 'has', 'have', 'up', 'down', 'its', 'about', 'more', 'new', 'after', 'over', 'says', 'stock', 'shares', 'market', 'inc', 'corp', 'vs']);
-
-        tickerNews.forEach(n => {
-            const dStr = n.Date;
-            if(volumeMap[dStr] !== undefined) volumeMap[dStr]++;
-            if(n.Sentiment_Score !== undefined && n.Sentiment_Score !== null) {
-                let score = parseFloat(n.Sentiment_Score);
-                totalSentiment += score; sentimentCount++;
-                if (score >= 1) sentimentCounts.pos++;
-                else if (score <= -1) sentimentCounts.neg++;
-                else sentimentCounts.neu++;
+                if (targetFinTicker) {
+                    financialsTabLink.style.display = 'flex';
+                    financialsTabLink.dataset.targetTicker = targetFinTicker;
+                } else {
+                    financialsTabLink.style.display = 'none';
+                }
             }
-            const src = n.Source || 'Unknown'; sourceMap[src] = (sourceMap[src] || 0) + 1;
-            const cleanTitle = n.Title.toLowerCase().replace(/[^\w\s\u4e00-\u9fa5]/g, ' ');
-            cleanTitle.split(/\s+/).forEach(w => {
-                if(w.length > 1 && !stopWords.has(w) && isNaN(w)) wordMap[w] = (wordMap[w] || 0) + 1;
+            
+            openTickerModalTab(null, 'modal-tab-chart');
+            document.querySelector('#tickerModal .chart-sub-tab-link').classList.add('active');
+            updateModalChart('1Y'); 
+
+            // ==========================================
+            // Render News using ALL News List (Dashboard)
+            // ==========================================
+            const modalNewsLeft = document.getElementById('modal-news-left');
+            const modalNewsRight = document.getElementById('modal-news-right');
+            modalNewsLeft.innerHTML = '';
+            modalNewsRight.innerHTML = '';
+            
+            const tickerNews = fullNewsList.filter(n => {
+                let rawTicker = n.ticker || '';
+                let tickerArr = rawTicker.split(',').map(t => t.trim());
+                return tickerArr.includes(ticker) || tickerArr.includes(ticker.split('.')[0]);
+            }).sort((a,b) => b.jsDate - a.jsDate);
+
+            const refDate = summaryReferenceDate || new Date();
+            const fiveDaysAgo = new Date(refDate);
+            fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4); 
+            
+            const filteredNews = tickerNews.filter(n => n.jsDate >= fiveDaysAgo && n.jsDate <= refDate);
+            
+            if (tickerNews.length === 0) {
+                modalNewsLeft.innerHTML = '<p style="padding:15px; color:#666;">No news available.</p>';
+            } else {
+                filteredNews.forEach((n) => {
+                    const div = document.createElement('div');
+                    div.className = 'news-item';
+                    div.style.cursor = 'default';
+                    div.innerHTML = `
+                        <div class="news-meta" style="justify-content: space-between;">
+                            <span>${n.Date} ${n.Time || ''} | ${n.Source || 'Unknown'}</span>
+                            <a href="${n.URL}" target="_blank" title="Open Original"><i class="material-icons" style="font-size:16px;">open_in_new</i></a>
+                        </div>
+                        <div class="news-title">${n.Title}</div>
+                    `;
+                    modalNewsLeft.appendChild(div);
+                });
+            }
+
+            const datesArr = [];
+            for(let i=0; i<5; i++) {
+                const d = new Date(fiveDaysAgo);
+                d.setDate(d.getDate() + i);
+                datesArr.push(formatDateYYYYMMDD(d));
+            }
+
+            const volumeMap = {}; datesArr.forEach(d => volumeMap[d] = 0);
+            const sentimentCounts = { pos: 0, neu: 0, neg: 0 };
+            let totalSentiment = 0, sentimentCount = 0;
+            const sourceMap = {}, wordMap = {};
+            const stopWords = new Set(['the', 'to', 'of', 'and', 'in', 'a', 'for', 'on', 'is', 'at', 'by', 'with', 'as', 'that', 'from', 'it', 'this', 'are', 'be', 'an', 'or', 'which', 'will', 'has', 'have', 'up', 'down', 'its', 'about', 'more', 'new', 'after', 'over', 'says', 'stock', 'shares', 'market', 'inc', 'corp', 'vs']);
+
+            filteredNews.forEach(n => {
+                if(volumeMap[n.Date] !== undefined) volumeMap[n.Date]++;
+                if(n.Sentiment_Score !== undefined && n.Sentiment_Score !== null) {
+                    let score = parseFloat(n.Sentiment_Score);
+                    totalSentiment += score; sentimentCount++;
+                    if (score >= 1) sentimentCounts.pos++;
+                    else if (score <= -1) sentimentCounts.neg++;
+                    else sentimentCounts.neu++;
+                }
+                const src = n.Source || 'Unknown'; sourceMap[src] = (sourceMap[src] || 0) + 1;
+                const cleanTitle = n.Title.toLowerCase().replace(/[^\w\s\u4e00-\u9fa5]/g, ' ');
+                cleanTitle.split(/\s+/).forEach(w => {
+                    if(w.length > 1 && !stopWords.has(w) && isNaN(w)) wordMap[w] = (wordMap[w] || 0) + 1;
+                });
             });
-        });
 
-        const sortedSources = Object.entries(sourceMap).sort((a,b) => b[1] - a[1]).slice(0, 5); 
-        const sortedWords = Object.entries(wordMap).sort((a,b) => b[1] - a[1]).slice(0, 5); 
-        const avgSentiment = sentimentCount > 0 ? (totalSentiment / sentimentCount).toFixed(2) : 'N/A';
-        let sentimentLabel = 'Neutral', sentimentColor = 'var(--text-secondary)';
-        if (avgSentiment !== 'N/A') {
-            if (avgSentiment >= 0.5) { sentimentLabel = 'Positive'; sentimentColor = '#28a745'; }
-            else if (avgSentiment <= -0.5) { sentimentLabel = 'Negative'; sentimentColor = '#dc3545'; }
-        }
+            const sortedSources = Object.entries(sourceMap).sort((a,b) => b[1] - a[1]).slice(0, 5); 
+            const sortedWords = Object.entries(wordMap).sort((a,b) => b[1] - a[1]).slice(0, 5); 
+            const avgSentiment = sentimentCount > 0 ? (totalSentiment / sentimentCount).toFixed(2) : 'N/A';
+            let sentimentLabel = 'Neutral', sentimentColor = 'var(--text-secondary)';
+            if (avgSentiment !== 'N/A') {
+                if (avgSentiment >= 0.5) { sentimentLabel = 'Positive'; sentimentColor = '#28a745'; }
+                else if (avgSentiment <= -0.5) { sentimentLabel = 'Negative'; sentimentColor = '#dc3545'; }
+            }
 
-        modalNewsRight.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:15px; height: 100%;">
-                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px; flex: 0 0 220px;">
-                    <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:15px; border-radius:8px; box-shadow: var(--shadow-light); display:flex; flex-direction:column;">
-                        <h4 style="margin-bottom:10px; color:var(--text-secondary); font-size:1rem; text-align:center;">5-Day News Volume Trend</h4>
-                        <div style="flex:1; width:100%; position:relative;"><canvas id="modal-news-trend-canvas"></canvas></div>
-                    </div>
-                    <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:15px; border-radius:8px; box-shadow: var(--shadow-light); display:flex; flex-direction:column;">
-                        <h4 style="margin-bottom:10px; color:var(--text-secondary); font-size:1rem; text-align:center;">Sources</h4>
-                        <div style="flex:1; width:100%; position:relative;"><canvas id="modal-news-source-canvas"></canvas></div>
-                    </div>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 2fr; gap:15px; flex: 1; min-height: 250px;">
-                    <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:15px; border-radius:8px; box-shadow: var(--shadow-light); display:flex; flex-direction:column;">
-                        <h4 style="margin-bottom:10px; color:var(--text-secondary); font-size:1rem; text-align:center;">Sentiment</h4>
-                        <div style="position:relative; flex:1; display:flex; justify-content:center; align-items:center;">
-                            <canvas id="modal-news-sentiment-canvas"></canvas>
-                            <div style="position:absolute; pointer-events:none; text-align:center;">
-                                <div style="font-size:1.8rem; font-weight:bold; color:var(--text-primary);">${avgSentiment}</div>
-                                <div style="font-size:0.9rem; font-weight:bold; color:${sentimentColor};">${sentimentLabel}</div>
-                            </div>
+            modalNewsRight.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:15px; height: 100%;">
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px; flex: 0 0 220px;">
+                        <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:15px; border-radius:8px; box-shadow: var(--shadow-light); display:flex; flex-direction:column;">
+                            <h4 style="margin-bottom:10px; color:var(--text-secondary); font-size:1rem; text-align:center;">5-Day News Volume Trend</h4>
+                            <div style="flex:1; width:100%; position:relative;"><canvas id="modal-news-trend-canvas"></canvas></div>
+                        </div>
+                        <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:15px; border-radius:8px; box-shadow: var(--shadow-light); display:flex; flex-direction:column;">
+                            <h4 style="margin-bottom:10px; color:var(--text-secondary); font-size:1rem; text-align:center;">Sources</h4>
+                            <div style="flex:1; width:100%; position:relative;"><canvas id="modal-news-source-canvas"></canvas></div>
                         </div>
                     </div>
-                    <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:15px; border-radius:8px; box-shadow: var(--shadow-light); display:flex; flex-direction:column;">
-                        <h4 style="margin-bottom:10px; color:var(--text-secondary); font-size:1rem; text-align:center;">Top Keywords</h4>
-                        <div style="flex:1; width:100%; position:relative;"><canvas id="modal-news-keyword-canvas"></canvas></div>
+                    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:15px; flex: 1; min-height: 250px;">
+                        <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:15px; border-radius:8px; box-shadow: var(--shadow-light); display:flex; flex-direction:column;">
+                            <h4 style="margin-bottom:10px; color:var(--text-secondary); font-size:1rem; text-align:center;">Sentiment</h4>
+                            <div style="position:relative; flex:1; display:flex; justify-content:center; align-items:center;">
+                                <canvas id="modal-news-sentiment-canvas"></canvas>
+                                <div style="position:absolute; pointer-events:none; text-align:center;">
+                                    <div style="font-size:1.8rem; font-weight:bold; color:var(--text-primary);">${avgSentiment}</div>
+                                    <div style="font-size:0.9rem; font-weight:bold; color:${sentimentColor};">${sentimentLabel}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="background:var(--bg-color); border:1px solid var(--border-color); padding:15px; border-radius:8px; box-shadow: var(--shadow-light); display:flex; flex-direction:column;">
+                            <h4 style="margin-bottom:10px; color:var(--text-secondary); font-size:1rem; text-align:center;">Top Keywords</h4>
+                            <div style="flex:1; width:100%; position:relative;"><canvas id="modal-news-keyword-canvas"></canvas></div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        setTimeout(() => {
-                    // 確保舊的圖表實例被清除
-                    ['modal-news-trend-canvas', 'modal-news-source-canvas', 'modal-news-sentiment-canvas', 'modal-news-keyword-canvas'].forEach(id => {
-                        const existing = Chart.getChart(id);
-                        if (existing) existing.destroy();
-                    });
+            setTimeout(() => {
+                ['modal-news-trend-canvas', 'modal-news-source-canvas', 'modal-news-sentiment-canvas', 'modal-news-keyword-canvas'].forEach(id => {
+                    const existing = Chart.getChart(id);
+                    if (existing) existing.destroy();
+                });
 
-                    // 1. Trend
-                    new Chart(document.getElementById('modal-news-trend-canvas'), {
-                        type: 'line',
-                        data: { labels: datesArr.map(d => d.substring(5)), datasets: [{ label: 'Volume', data: datesArr.map(d => volumeMap[d]), borderColor: '#4a90e2', fill: true, tension: 0.3 }] },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-                    });
-                    
-                    // 2. Source (Vertical Bar)
-                    new Chart(document.getElementById('modal-news-source-canvas'), {
-                        type: 'bar',
-                        data: { labels: sortedSources.map(s => s[0]), datasets: [{ label: 'Count', data: sortedSources.map(s => s[1]), backgroundColor: '#f6c23e' }] },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-                    });
+                // 1. Trend
+                new Chart(document.getElementById('modal-news-trend-canvas'), {
+                    type: 'line',
+                    data: { labels: datesArr.map(d => d.substring(5)), datasets: [{ label: 'Volume', data: datesArr.map(d => volumeMap[d]), borderColor: '#4a90e2', fill: true, tension: 0.3 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } } } }
+                });
+                
+                // 2. Source (Vertical Bar - 直條圖)
+                new Chart(document.getElementById('modal-news-source-canvas'), {
+                    type: 'bar',
+                    data: { labels: sortedSources.map(s => s[0]), datasets: [{ label: 'Count', data: sortedSources.map(s => s[1]), backgroundColor: '#f6c23e' }] },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false, 
+                        plugins: { legend: { display: false } }, 
+                        scales: { 
+                            y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } },
+                            x: { ticks: { callback: function(val) { const l = this.getLabelForValue(val) || ''; return l.length > 8 ? l.substring(0, 6) + '...' : l; } } }
+                        } 
+                    }
+                });
 
-                    // 3. Sentiment
-                    new Chart(document.getElementById('modal-news-sentiment-canvas'), {
-                        type: 'doughnut',
-                        data: { labels: ['Pos', 'Neu', 'Neg'], datasets: [{ data: [sentimentCounts.pos, sentimentCounts.neu, sentimentCounts.neg], backgroundColor: ['#28a745', '#9e9e9e', '#dc3545'] }] },
-                        options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
-                    });
+                // 3. Sentiment
+                new Chart(document.getElementById('modal-news-sentiment-canvas'), {
+                    type: 'doughnut',
+                    data: { labels: ['Pos', 'Neu', 'Neg'], datasets: [{ data: [sentimentCounts.pos, sentimentCounts.neu, sentimentCounts.neg], backgroundColor: ['#28a745', '#9e9e9e', '#dc3545'], borderWidth: 1 }] },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+                });
 
-                    // 4. Keywords (Horizontal)
-                    new Chart(document.getElementById('modal-news-keyword-canvas'), {
-                        type: 'bar',
-                        data: { labels: sortedWords.map(s => s[0]), datasets: [{ label: 'Count', data: sortedWords.map(s => s[1]), backgroundColor: '#1cc88a' }] },
-                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
-                    });
-                }, 200);
-    }
-    
-    const baseTickerForEarn = ticker.split('.')[0];
-    const tickerEarnings = fullEarningsList.filter(e => e.ticker.split('.')[0] === baseTickerForEarn || e.ticker === ticker).sort((a,b) => b.jsDate - a.jsDate);
-    const modalEarnLeft = document.getElementById('modal-earnings-left');
-    const modalEarnRight = document.getElementById('modal-earnings-right');
-    modalEarnLeft.innerHTML = '';
-    modalEarnRight.innerHTML = '<div style="color:#999; text-align:center; margin-top:20px;">Select an earnings call summary.</div>';
-    
-    if (tickerEarnings.length > 0) {
-         tickerEarnings.forEach((eItem, idx) => {
-            const div = document.createElement('div');
-            div.className = 'earnings-item';
-            div.innerHTML = `<div class="earnings-meta">${eItem.fiscal_year} ${eItem.quarter}</div><div class="earnings-title">${eItem.title}</div>`;
-            div.onclick = () => {
-                modalEarnLeft.querySelectorAll('.earnings-item').forEach(el => el.classList.remove('active'));
-                div.classList.add('active');
-                modalEarnRight.innerHTML = `<h3>${eItem.title}</h3><div class="markdown-content">${marked.parse(eItem.AI_Summary || 'No summary.')}</div>`;
-            };
-            modalEarnLeft.appendChild(div);
-            if (idx === 0) div.click();
-         });
-    } else {
-        modalEarnLeft.innerHTML = '<p style="padding:15px; color:#666;">No earnings call data.</p>';
-    }
+                // 4. Keywords (Horizontal Bar - 橫條圖)
+                new Chart(document.getElementById('modal-news-keyword-canvas'), {
+                    type: 'bar',
+                    data: { labels: sortedWords.map(s => s[0]), datasets: [{ label: 'Count', data: sortedWords.map(s => s[1]), backgroundColor: '#1cc88a' }] },
+                    options: { 
+                        indexAxis: 'y', 
+                        responsive: true, maintainAspectRatio: false, 
+                        plugins: { legend: { display: false } }, 
+                        scales: { x: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } } } 
+                    }
+                });
+            }, 300);
+            
+            const baseTickerForEarn = ticker.split('.')[0];
+            const tickerEarnings = fullEarningsList.filter(e => e.ticker.split('.')[0] === baseTickerForEarn || e.ticker === ticker).sort((a,b) => b.jsDate - a.jsDate);
+            const modalEarnLeft = document.getElementById('modal-earnings-left');
+            const modalEarnRight = document.getElementById('modal-earnings-right');
+            modalEarnLeft.innerHTML = '';
+            modalEarnRight.innerHTML = '<div style="color:#999; text-align:center; margin-top:20px;">Select an earnings call summary.</div>';
+            
+            if (tickerEarnings.length > 0) {
+                 tickerEarnings.forEach((eItem, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'earnings-item';
+                    div.innerHTML = `<div class="earnings-meta">${eItem.fiscal_year} ${eItem.quarter}</div><div class="earnings-title">${eItem.title}</div>`;
+                    div.onclick = () => {
+                        modalEarnLeft.querySelectorAll('.earnings-item').forEach(el => el.classList.remove('active'));
+                        div.classList.add('active');
+                        modalEarnRight.innerHTML = `<h3>${eItem.title}</h3><div class="markdown-content">${marked.parse(eItem.AI_Summary || 'No summary.')}</div>`;
+                    };
+                    modalEarnLeft.appendChild(div);
+                    if (idx === 0) div.click();
+                 });
+            } else {
+                modalEarnLeft.innerHTML = '<p style="padding:15px; color:#666;">No earnings call data.</p>';
+            }
 
-    modal.style.display = 'block'; 
-    setTimeout(() => modal.classList.add('show'), 10);
-}
+            modal.style.display = 'block'; 
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
 
         function updateModalChart(period) {
              currentModalPeriod = period; // 記住目前的期間
