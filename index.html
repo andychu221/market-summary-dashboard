@@ -583,7 +583,7 @@
                     <div class="tab-link" onclick="openTab(event, 'chart-main')"><i class="material-icons">show_chart</i> Chart</div>
                     <div class="tab-link" onclick="openTab(event, 'news')"><i class="material-icons">article</i> AI News</div>
                     <div class="tab-link" onclick="openTab(event, 'earnings')"><i class="material-icons">record_voice_over</i> Earnings Call</div>
-                    <div class="tab-link" onclick="openTab(event, 'calendar')"><i class="material-icons">calendar_month</i> Calendar</div>
+                    <div class="tab-link" onclick="openTab(event, 'calendar')"><i class="material-icons">calendar_month</i> Event Calendar</div>
                     
                     <div class="tab-right-controls">
                          <button class="icon-btn" onclick="openAiSettings()" title="AI Settings">
@@ -1066,7 +1066,7 @@
             '2303.TW': 'UMC', '0981.HK': 'SMIC-H', '688981.SS': 'SMIC-A', 'GFS': 'GFS',
             'MSFT': 'Microsoft', 'GOOGL': 'Google', 'AMZN': 'Amazon', 'META': 'Meta', 'TSLA': 'Tesla',
             'AMAT': 'AMAT', 'KLAC': 'KLAC', 'CSCO': 'Cisco', 'BTDR': 'Bitdeer', 'SIMO': 'Silicon',
-            'ASML.AS': 'ASML', '5347.TWO': 'Vanguard', '3443.TW': 'GUC', '3374.TWO': 'Xintec',
+            'ASML.AS': 'ASML', '5347.TWO': 'Vanguard', '3443.TW': 'GUC', '3374.TWO': 'Xintec', '3035.TW': 'Faraday',
             '6789.TW': 'VisEra', '3661.TW': 'Alchip', '603501.SS': 'Willsemi', '6758.T': 'Sony',
             '6526.T': 'Socionext', '000660.KS': 'SK hynix', 'MU': 'Micron', 'NXPI': 'NXP',
 			'2388.TW': 'VIA','2379.TW': 'Realtek','STM': 'STM','NOD.OL': 'Nordic','CRUS': 'Cirrus',
@@ -1100,7 +1100,7 @@
             '.IXIC': 'nasdaq.com', '.N225': 'jpx.co.jp', '.KS11': 'krx.co.kr', '.SSEC': 'cdb.com.cn',//'sse.com.cn',
             'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com', 'META': 'meta.com', 'TSLA': 'tesla.com',
             'AMAT': 'appliedmaterials.com', 'KLAC': 'kla.com', 'CSCO': 'cisco.com', 'BTDR': 'bitdeer.com',
-            'SIMO': 'siliconmotion.com', 'ASML.AS': 'asml.com', '5347.TWO': 'vis.com', '3443.TW': 'guc-asic.com',
+            'SIMO': 'siliconmotion.com', 'ASML.AS': 'asml.com', '5347.TWO': 'vis.com', '3443.TW': 'guc-asic.com','3035.TW': 'faraday-tech.com',
             '3374.TWO': 'xintec.com', '6789.TW': 'viseratech.com', '3661.TW': 'alchip.com', '603501.SS': 'ovt.com',
             '6758.T': 'sony.com', '6526.T': 'socionext.com', '000660.KS': 'skhynix.com', 'MU': 'micron.com', 'NXPI': 'nxp.com',
 			'2388.TW': 'viatech.com', '2379.TW': 'realtek.com', 'STM': 'st.com', 'NOD.OL': 'nordicsemi.com', 'CRUS': 'cirrus.com',
@@ -1114,8 +1114,11 @@
         };
 
         let TICKER_COLORS = {
-            '2330.TW': '#8b0000', 'TSM': '#a52a2a', 'TSM.N': '#a52a2a', 
-            '.TWII': '#000000', '.SOX': '#008080', '.SPX': '#555555',
+            '2330.TW': '#FF0000', // TSMC 紅色
+            'TSM': '#FF69B4', 'TSM.N': '#FF69B4', // TSMC ADR 粉紅色
+            '.TWII': '#87CEFA', // TWSE 淡藍色
+            '.SOX': '#00008B', // SOX 深藍色
+            '.SPX': '#555555',
             '.IXIC': '#0099CC', '.N225': '#FF0000', '.KS11': '#0000FF', '.SSEC': '#CC0000',
             'NVDA': '#76b900', 'NVDA.O': '#76b900',
             'AAPL': '#A2AAAD', 'AAPL.O': '#A2AAAD',
@@ -1124,12 +1127,15 @@
             'AMD': '#ED1C24', 'AMD.O': '#ED1C24',
 			'LRCX': '#ED1C24', 'LRCX.O': '#ED1C24',
             'ADI': '#212529', 'ADI.O': '#212529',
-			'8035.T': '#212529', '8035.T': '#212529',
-            '2454.TW': '#3366CC', '6723.T': '#005CAB', 
-            'INTC': '#0071C5', 'INTC.O': '#0071C5',
+			'8035.T': '#212529',
+            '2454.TW': '#3366CC', '6723.T': '#005CAB', '3035.TW': '#20B2AA', 
+            'INTC': '#008000', 'INTC.O': '#008000', // Intel 綠色
             'ARM': '#0071C5', 
-            '005930.KS': '#1428A0', '2303.TW': '#003366', '0981.HK': '#E31B23',
-            '688981.SS': '#B22222', 'GFS': '#FF6A13',
+            '005930.KS': '#800080', // Samsung 紫色
+            '2303.TW': '#00FFFF', // UMC 青色
+            '0981.HK': '#FFA500', // SMIC-H 橘色
+            '688981.SS': '#808000', // SMIC-A 橄欖綠
+            'GFS': '#BA55D3', // GFS 淡紫色
             'MSFT': '#00A4EF', 'GOOGL': '#4285F4', 'AMZN': '#FF9900', 'META': '#0668E1', 'TSLA': '#E31937',
             'AMAT': '#00558C', 'KLAC': '#D6000F', 'ASML.AS': '#263147', '000660.KS': '#DB0025',
 			'2388.TW': '#F4A460', '2379.TW': '#8A2BE2', 'STM': '#20B2AA', 'NOD.OL': '#FFD700', 'CRUS': '#FF69B4',
@@ -1138,8 +1144,7 @@
             // SOXX Additions
             'TXN': '#CC0000', 'MRVL': '#FF4500', 'ON': '#2E8B57', 'MCHP': '#DC143C',
             'TER': '#4682B4', 'SWKS': '#191970', 'MPWR': '#800080',
-            'ENTG': '#708090', 'QRVO': '#00CED1', 'WOLF': '#A52A2A', 'ENPH': '#FF8C00',
-            'SPCX': '#111111'
+            'ENTG': '#708090', 'QRVO': '#00CED1', 'WOLF': '#A52A2A', 'ENPH': '#FF8C00'
         };
 
         let summaryTickersConfig = {
@@ -1149,7 +1154,7 @@
             ],
             'fabless': [
                 'NVDA', 'AMD', 'AVGO', 'QCOM', '2454.TW', 'ADI', '6723.T', 'NXPI', 'STM', 'ARM',
-                '2379.TW', '3661.TW', '6526.T', 'SIMO', 'NOD.OL', 'CRUS', 
+                '2379.TW', '3661.TW', '3035.TW', '6526.T', 'SIMO', 'NOD.OL', 'CRUS', 
                 '108320.KS', '688099.SS', '688213.SS', '688220.SS', '000063.SZ', '603501.SS',
                 'TXN', 'MRVL', 'MCHP', 'ON', 'MPWR', 'SWKS', 'QRVO', 'WOLF', 'ENPH',
             ],
@@ -1469,10 +1474,15 @@
 
                 initChartSelectors();
 
-                document.getElementById('summary-as-of-date').value = formatDateYYYYMMDD(latestDataDate);
+                // 【修正】確保 Summary 與 Chart 的日期 Input 同時被正確賦值
+                const dateStr = formatDateYYYYMMDD(latestDataDate);
+                document.getElementById('summary-as-of-date').value = dateStr;
+                const chartGridDate = document.getElementById('chart-grid-as-of-date');
+                if (chartGridDate) chartGridDate.value = dateStr;
                 
                 customPeriodState.start = new Date('2020-01-01');
                 customPeriodState.end = latestDataDate;
+                
 
                 rebaseTriData();
                 processPerformanceData();
@@ -1617,19 +1627,42 @@
             const nextMonday = new Date(baseMonday);
             nextMonday.setDate(baseMonday.getDate() + 7);
 
+            const nextNextMonday = new Date(baseMonday);
+            nextNextMonday.setDate(baseMonday.getDate() + 14);
+
             const earningsByDate = {};
             data.forEach(item => {
                 if (!item["Earnings Date"]) return;
                 const dateStr = item["Earnings Date"].split(" ")[0]; 
                 if (!earningsByDate[dateStr]) earningsByDate[dateStr] = [];
-                earningsByDate[dateStr].push(item);
+                
+                const sym = item.Symbol;
+                const baseTicker = sym.split('.')[0];
+                
+                // 【新增】過濾重複邏輯：使用 Domain 或過濾後的名稱作為 Unique Key
+                const domain = TICKER_DOMAINS[sym] || TICKER_DOMAINS[baseTicker];
+                const rawName = TICKER_NAMES[sym] || TICKER_NAMES[baseTicker] || baseTicker;
+                const uniqueKey = domain || rawName.replace(' ADR', '');
+                
+                const exists = earningsByDate[dateStr].some(existingItem => {
+                    const eSym = existingItem.Symbol;
+                    const eBase = eSym.split('.')[0];
+                    const eDomain = TICKER_DOMAINS[eSym] || TICKER_DOMAINS[eBase];
+                    const eRawName = TICKER_NAMES[eSym] || TICKER_NAMES[eBase] || eBase;
+                    const eKey = eDomain || eRawName.replace(' ADR', '');
+                    return eKey === uniqueKey;
+                });
+
+                if (!exists) {
+                    earningsByDate[dateStr].push(item);
+                }
             });
 
-            // 設定三週的起始日與是否為實際的本週
             const weeks = [
                 { date: lastMonday, isThisWeek: lastMonday.getTime() === actualThisMonday.getTime() },
                 { date: baseMonday, isThisWeek: baseMonday.getTime() === actualThisMonday.getTime() },
-                { date: nextMonday, isThisWeek: nextMonday.getTime() === actualThisMonday.getTime() }
+                { date: nextMonday, isThisWeek: nextMonday.getTime() === actualThisMonday.getTime() },
+                { date: nextNextMonday, isThisWeek: nextNextMonday.getTime() === actualThisMonday.getTime() } 
             ];
 
             let hasData = false;
@@ -1652,7 +1685,7 @@
             `;
 
             if (!hasData && globalMacroEventsData.length === 0) {
-                html += '<p style="padding:20px; text-align:center; color:#666;">No earnings or macro data available for these 3 weeks.</p>';
+                html += '<p style="padding:20px; text-align:center; color:#666;">No earnings or macro data available for these 4 weeks.</p>';
                 container.innerHTML = html;
                 container.style.display = 'block';
                 return;
@@ -1672,14 +1705,12 @@
                     weekDates.push(d);
                 }
 
-                // 針對實際本週的表格加上 outline
                 const tableStyle = week.isThisWeek 
                     ? 'table-layout: fixed; width: 100%; outline: 3px solid #e74c3c; outline-offset: 1px; border-radius: 4px; position: relative; z-index: 1;' 
                     : 'table-layout: fixed; width: 100%;';
                 
                 html += `<table class="calendar-table" style="${tableStyle}">`;
                 
-                // 渲染表頭
                 html += '<thead><tr>';
                 weekDates.forEach((d) => {
                     const dateStr = getLocalYYYYMMDD(d);
@@ -1696,7 +1727,6 @@
                 });
                 html += '</tr></thead>';
 
-                // 渲染內容
                 html += '<tbody><tr>';
                 weekDates.forEach((d) => {
                     const dateStr = getLocalYYYYMMDD(d);
@@ -1729,7 +1759,10 @@
                             const tooltipHtml = `<div class="custom-tooltip">EPS Est: ${est}<br>Actual: ${act}</div>`;
                             
                             const logoHtml = getLogoHtml(baseTicker) || getLogoHtml(sym);
-                            const companyName = TICKER_NAMES[baseTicker] || TICKER_NAMES[sym] || baseTicker;
+                            
+                            // 【新增】強制將名稱中的 ' ADR' 移除，讓日曆顯示乾淨
+                            const rawName = TICKER_NAMES[baseTicker] || TICKER_NAMES[sym] || baseTicker;
+                            const companyName = rawName.replace(' ADR', '');
                             
                             html += `<div class="calendar-ticker" style="border-left: 3px solid ${color};">
                                         ${logoHtml}<span>${companyName}</span>
@@ -1751,7 +1784,6 @@
             html += '</div>';
             container.innerHTML = html;
         }
-
         function changeCalendarWeek(direction) {
             if (direction === 0) {
                 calendarWeekOffset = 0;
@@ -3050,7 +3082,8 @@ function findValidTradingDate(ticker, date) {
 
         function analyzePerformanceReport() {
             const tickers = Array.from(selectedPerfTickers);
-            let tableData = "Ticker | 1W | 1M | YTD | 1Y\n---|---|---|---|---\n";
+            // 【修正】更新 AI 提示的表格欄位名稱
+            let tableData = "Ticker | Last Week | Last Month | YTD | Last 1 Year\n---|---|---|---|---\n";
             
             tickers.forEach(t => {
                 const perf = allPerformanceData.get(t);
@@ -3058,10 +3091,11 @@ function findValidTradingDate(ticker, date) {
                 
                 const getRet = (pd) => {
                     let d = new Date(summaryReferenceDate);
-                    if (pd === '1-Week') d.setDate(d.getDate() - 7);
-                    else if (pd === '1-Month') d.setMonth(d.getMonth() - 1);
+                    // 【修正】配合新的 period 名稱
+                    if (pd === 'Last Week') d.setDate(d.getDate() - 7);
+                    else if (pd === 'Last Month') d.setMonth(d.getMonth() - 1);
                     else if (pd === 'YTD') d = new Date(d.getFullYear(), 0, 1);
-                    else if (pd === '1-Year') d.setFullYear(d.getFullYear() - 1);
+                    else if (pd === 'Last 1 Year') d.setFullYear(d.getFullYear() - 1);
                     
                     const p0 = perf.findTriOnOrBefore(d);
                     const p1 = perf.findTriOnOrBefore(summaryReferenceDate);
@@ -3069,7 +3103,7 @@ function findValidTradingDate(ticker, date) {
                     return '-';
                 };
                 
-                tableData += `${TICKER_NAMES[t]||t} | ${getRet('1-Week')} | ${getRet('1-Month')} | ${getRet('YTD')} | ${getRet('1-Year')}\n`;
+                tableData += `${TICKER_NAMES[t]||t} | ${getRet('Last Week')} | ${getRet('Last Month')} | ${getRet('YTD')} | ${getRet('Last 1 Year')}\n`;
             });
 
             const newsStart = new Date(summaryReferenceDate); newsStart.setDate(newsStart.getDate()-5);
@@ -3092,7 +3126,6 @@ function findValidTradingDate(ticker, date) {
             
             callGemini(prompt);
         }
-
         function renderChartTab() {
             if (document.getElementById('chart-grid').classList.contains('active')) renderPerformanceGrid();
             else if (document.getElementById('chart-custom').classList.contains('active')) {
@@ -3103,7 +3136,8 @@ function findValidTradingDate(ticker, date) {
         function renderPerformanceGrid() {
             const tickers = Array.from(selectedPerfTickers);
             const validTickers = tickers.filter(t => dataByTicker[t]);
-            const periods = ['1-Year', 'YTD', '1-Month', '1-Week'];
+            // 【修正】更改圖表名稱
+            const periods = ['Last 1 Year', 'YTD', 'Last Month', 'Last Week'];
             const canvasIds = ['canvas-1y', 'canvas-ytd', 'canvas-1m', 'canvas-1w'];
             
             periods.forEach((p, idx) => renderLineChartWithCustomTicks(canvasIds[idx], validTickers, p));
@@ -3134,6 +3168,7 @@ function findValidTradingDate(ticker, date) {
             return `<img src="https://getlogo.dev/logos/${domain}?token=pub_97e0e4df192f20dd2626307d2148f88d" style="width:20px; height:20px; vertical-align:middle; margin-right:6px; border-radius:50%; object-fit:contain; background:white;" onerror="this.style.display='none'">`;
         }
 
+        
         function renderLineChartWithCustomTicks(canvasId, tickers, periodName) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
@@ -3141,23 +3176,21 @@ function findValidTradingDate(ticker, date) {
             const endDate = summaryReferenceDate;
             let startDate;
 
-            // 1. 決定起始日 (往前推並對齊最近的有效交易日)
             const baseTicker = tickers[0] || '2330.TW'; 
-            if (periodName === '1-Year') {
+            if (periodName === 'Last 1 Year') {
                 let d = new Date(endDate); d.setFullYear(d.getFullYear() - 1);
                 startDate = findValidTradingDate(baseTicker, d) || d;
             } else if (periodName === 'YTD') {
                 let d = new Date(endDate.getFullYear(), 0, 1);
                 startDate = findValidTradingDate(baseTicker, d) || d;
-            } else if (periodName === '1-Month') {
+            } else if (periodName === 'Last Month') {
                 let d = new Date(endDate); d.setMonth(d.getMonth() - 1);
                 startDate = findValidTradingDate(baseTicker, d) || d;
-            } else if (periodName === '1-Week') {
+            } else if (periodName === 'Last Week') {
                 let d = new Date(endDate); d.setDate(d.getDate() - 7);
                 startDate = findValidTradingDate(baseTicker, d) || d;
             }
 
-            // 2. 聯集所有真實的交易日期 (確保沒有假日空檔)
             let allDates = new Set();
             allDates.add(formatDateYYYYMMDD(startDate));
             allDates.add(formatDateYYYYMMDD(endDate));
@@ -3173,7 +3206,6 @@ function findValidTradingDate(ticker, date) {
             });
             const sortedDates = Array.from(allDates).sort();
 
-            // 3. 建立每個 Ticker 的連續報酬序列
             const datasets = tickers.map(t => {
                 let tData = dataByTicker[t];
                 if (!tData) return null;
@@ -3203,67 +3235,122 @@ function findValidTradingDate(ticker, date) {
             }).filter(Boolean);
 
             const gridColor = 'rgba(0, 0, 0, 0.1)';
-            const textColor = '#555';
+            const textColor = '#000000'; 
 
             activeCharts[canvasId] = new Chart(ctx, {
                 type: 'line', 
                 data: { 
-                    labels: sortedDates, // 這裡放入完整的日期陣列
+                    labels: sortedDates, 
                     datasets: datasets 
                 },
                 options: { 
+                    animation: false, 
                     responsive: true, maintainAspectRatio: false, layout: { padding: { top: 10 } },
                     scales: { 
                         x: {
                             ticks: { 
                                 color: textColor, 
                                 maxRotation: 0, 
-                                // 1W 和 1M 讓它自動分配間距，1Y 和 YTD 我們手動嚴格控制
-                                autoSkip: (periodName === '1-Week' || periodName === '1-Month'),
-                                maxTicksLimit: periodName === '1-Week' ? 7 : (periodName === '1-Month' ? 12 : undefined),
+                                font: { size: 13, weight: 'normal' }, 
+                                autoSkip: false, // 全面關閉 autoSkip，由我們精準控制
                                 callback: function(val, index) {
                                     const dateStr = sortedDates[index];
                                     if (!dateStr) return null;
                                     const d = new Date(dateStr);
                                     const curMonth = d.getMonth();
                                     
-                                    // 判斷該 index 是否為該月份的「第一個交易日」
-                                    const isFirstTradingDayOfMonth = index === 0 || new Date(sortedDates[index - 1]).getMonth() !== curMonth;
-                                    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-                                    if (periodName === '1-Year') {
-                                        // 1-Year: 每兩個月的月初第一個交易日 (取雙數月 0, 2, 4... Jan, Mar, May)
-                                        if (isFirstTradingDayOfMonth && (curMonth % 2 === 0)) {
-                                            return `${months[curMonth]}'${d.getFullYear().toString().substring(2)}`;
+                                    let isLastTradingDayOfMonth = false;
+                                    let isLastTradingDayOfWeek = false; 
+                                    
+                                    // 【修正重點】拔除強制將最後一天設為 true 的代碼
+                                    // 確保最後一天 (As of Date) 絕對不會被硬生生印在 X 軸上
+                                    if (index < sortedDates.length - 1) {
+                                        const nextDate = new Date(sortedDates[index + 1]);
+                                        
+                                        // 判斷是否跨月
+                                        if (nextDate.getMonth() !== curMonth) isLastTradingDayOfMonth = true;
+                                        
+                                        // 判斷是否跨週
+                                        const diffDays = (nextDate - d) / (1000 * 60 * 60 * 24);
+                                        if (nextDate.getDay() <= d.getDay() || diffDays > 5) {
+                                            isLastTradingDayOfWeek = true;
                                         }
-                                        return null; // 回傳 null 會隱藏多餘的標籤與垂直格線
+                                    }
+
+                                    const yy = d.getFullYear().toString().substring(2);
+                                    const mm = String(curMonth + 1).padStart(2, '0');
+                                    const dd = String(d.getDate()).padStart(2, '0');
+                                    const formatted = `${mm}/${dd}/${yy}`;
+
+                                    if (periodName === 'Last 1 Year') {
+                                        const endD = new Date(sortedDates[sortedDates.length - 1]);
+                                        const endTotal = endD.getFullYear() * 12 + endD.getMonth();
+                                        const curTotal = d.getFullYear() * 12 + curMonth;
+                                        
+                                        if (isLastTradingDayOfMonth && Math.abs(endTotal - curTotal) % 2 === 0) {
+                                            return formatted;
+                                        }
+                                        return null; 
                                     } else if (periodName === 'YTD') {
-                                        // YTD: 每個月的月初第一個交易日
-                                        if (isFirstTradingDayOfMonth) {
-                                            // 排除作為計算基期的去年 12 月
-                                            if (index === 0 && curMonth === 11) return null; 
-                                            return `${months[curMonth]}'${d.getFullYear().toString().substring(2)}`;
+                                        if (isLastTradingDayOfMonth) {
+                                            return formatted;
+                                        }
+                                        return null;
+                                    } else if (periodName === 'Last Month') {
+                                        if (isLastTradingDayOfWeek) {
+                                            return formatted;
                                         }
                                         return null;
                                     } else {
-                                        // 1-Month 和 1-Week 保持 MM/DD 格式
-                                        return `${curMonth + 1}/${d.getDate()}`;
+                                        // Last Week 期間短，天天顯示
+                                        return formatted;
                                     }
                                 }
                             },
                             grid: { color: gridColor, drawTicks: true }
                         },
-                        y: { title: { display: true, text: '%' }, ticks: { color: textColor }, grid: { color: gridColor } } 
+                        y: { 
+                            title: { display: false }, 
+                            ticks: { 
+                                // 保留前一次加上的負數紅字邏輯
+                                color: function(context) {
+                                    if (context.tick && context.tick.value < 0) {
+                                        return '#dc3545';
+                                    }
+                                    return textColor; 
+                                },
+                                font: { size: 14, weight: 'normal' }, 
+                                callback: function(value) { return value + '%'; } 
+                            }, 
+                            grid: { color: gridColor } 
+                        } 
                     }, 
                     plugins: { 
-                        title: { display: true, text: `${periodName} Trend`, color: textColor, font: { size: 14, weight: 'bold' }, align: 'start' },
-                        legend: { display: true, position: 'top', align: 'start', labels: { color: textColor, boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: 'line', padding: 10 } },
+                        title: { 
+                            display: true, 
+                            text: periodName, 
+                            color: textColor, 
+                            font: { size: 18, weight: 'bold' }, 
+                            align: 'center' 
+                        },
+                        legend: { 
+                            display: true, 
+                            position: 'top', 
+                            align: 'center', 
+                            labels: { 
+                                color: textColor, 
+                                boxWidth: 12, 
+                                font: { size: 14, weight: 'normal' }, 
+                                usePointStyle: true, 
+                                pointStyle: 'line', 
+                                padding: 15 
+                            } 
+                        },
                         tooltip: { 
                             mode: 'index', 
                             intersect: false,
                             callbacks: {
                                 title: function(context) {
-                                    // 游標滑過去時，強制只顯示乾淨的 YYYY-MM-DD
                                     return sortedDates[context[0].dataIndex];
                                 }
                             }
@@ -3272,7 +3359,8 @@ function findValidTradingDate(ticker, date) {
                 }
             });
         }
-
+        
+        
         function setCustomChartPeriod(period) {
              if (period === 'YTD') {
                  const ytdStart = new Date(summaryReferenceDate.getFullYear(), 0, 1);
@@ -3399,10 +3487,11 @@ function findValidTradingDate(ticker, date) {
                         html += `<td>${turnover}</td>`;
                     } else {
                         let d = new Date(currPoint ? currPoint.date : summaryReferenceDate);
+                        // 【修正】配合新的 period 名稱調整計算邏輯
                         if (p === '1-Day') d.setDate(d.getDate() - 1);
-                        else if (p === '1-Week') d.setDate(d.getDate() - 7);
-                        else if (p === '1-Month') d.setMonth(d.getMonth() - 1);
-                        else if (p === '1-Year') d.setFullYear(d.getFullYear() - 1);
+                        else if (p === 'Last Week') d.setDate(d.getDate() - 7);
+                        else if (p === 'Last Month') d.setMonth(d.getMonth() - 1);
+                        else if (p === 'Last 1 Year') d.setFullYear(d.getFullYear() - 1);
                         else if (p === 'YTD') d = new Date(d.getFullYear(), 0, 1);
                         
                         const startVal = perfData.findTriOnOrBefore(d);
@@ -4085,11 +4174,18 @@ function toggleSort(group, colId) {
             processPerformanceData(); 
             renderSummaryTab(); 
             renderChartTab(); 
+            
+            
         }
         
         function closeModal(id) { document.getElementById(id).classList.remove('show'); setTimeout(() => document.getElementById(id).style.display='none', 300); }
         function formatNumberWithCommas(x, decimals) { if (x == null) return '-'; return x.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); }
-        function formatDateYYYYMMDD(date) { return date.toISOString().split('T')[0]; }
+        function formatDateYYYYMMDD(date) { 
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`; 
+        }
         // 改為只顯示 M/D 格式，例如 4/27
         function formatDateDDMMM(date) { return `${date.getMonth()+1}/${date.getDate()}`; }
         function formatDateSlash(date) { const m = date.getMonth()+1; const d = date.getDate(); return `${date.getFullYear()}/${m}/${d}`; }
@@ -4148,13 +4244,34 @@ function openTickerModal(ticker) {
             if (tickerNews.length === 0) {
                 modalNewsLeft.innerHTML = '<p style="padding:15px; color:#666;">No news available.</p>';
             } else {
+                // 左側：只顯示過去 5 天的新聞
                 filteredNews.forEach((n) => {
                     const div = document.createElement('div');
                     div.className = 'news-item';
-                    div.style.cursor = 'default';
+                    
+                    // 【新增】將游標樣式改為 help (帶有問號)，提示使用者可以停留觀看
+                    div.style.cursor = 'help'; 
+                    
+                    // 【新增】利用原生的 title 屬性來實現 Tooltip 顯示 AI Summary
+                    div.title = n.AI_Summary ? n.AI_Summary : 'No AI Summary';
+
+                    // 【新增】加入情緒分數標籤 (與主 News Tab 邏輯共用)
+                    let sentimentHtml = '';
+                    if (n.Sentiment_Score !== undefined && n.Sentiment_Score !== null) {
+                        const label = getSentimentLabel(n.Sentiment_Score);
+                        let color = '#666';
+                        if (label.includes('Pos')) color = 'var(--positive-color)';
+                        else if (label.includes('Neg')) color = 'var(--negative-color)';
+                        else if (label === 'Neu') color = '#4a90e2';
+                        sentimentHtml = `<span style="margin-left:8px; font-weight:bold; color:${color};">${label}</span>`;
+                    }
+
                     div.innerHTML = `
                         <div class="news-meta" style="justify-content: space-between;">
-                            <span>${n.Date} ${n.Time || ''} | ${n.Source || 'Unknown'}</span>
+                            <div>
+                                <span>${n.Date} ${n.Time || ''} | ${n.Source || 'Unknown'}</span>
+                                ${sentimentHtml}
+                            </div>
                             <a href="${n.URL}" target="_blank" title="Open Original"><i class="material-icons" style="font-size:16px;">open_in_new</i></a>
                         </div>
                         <div class="news-title">${n.Title}</div>
