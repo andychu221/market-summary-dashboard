@@ -893,7 +893,7 @@
                 <h2 id="modalTickerName"></h2>
                 <div class="chart-sub-tabs" style="margin-bottom:0; border-bottom:none;">
                     <div class="chart-sub-tab-link active" onclick="openTickerModalTab(event, 'modal-tab-chart')">Chart</div>
-                    <div class="chart-sub-tab-link" onclick="openTickerModalTab(event, 'modal-tab-news')">News</div>
+                    <div class="chart-sub-tab-link" id="modal-tab-link-news" onclick="openTickerModalTab(event, 'modal-tab-news')">News</div>
                     <div class="chart-sub-tab-link" id="modal-tab-link-earnings" onclick="openTickerModalTab(event, 'modal-tab-earnings')">Earnings Call</div>
                 </div>
             </div>
@@ -1621,14 +1621,14 @@
             const baseMonday = new Date(actualThisMonday);
             baseMonday.setDate(actualThisMonday.getDate() + (calendarWeekOffset * 7));
 
-            const lastMonday = new Date(baseMonday);
-            lastMonday.setDate(baseMonday.getDate() - 7);
-
             const nextMonday = new Date(baseMonday);
             nextMonday.setDate(baseMonday.getDate() + 7);
 
             const nextNextMonday = new Date(baseMonday);
             nextNextMonday.setDate(baseMonday.getDate() + 14);
+
+            const nextNextNextMonday = new Date(baseMonday);
+            nextNextNextMonday.setDate(baseMonday.getDate() + 21);
 
             const earningsByDate = {};
             data.forEach(item => {
@@ -1639,7 +1639,7 @@
                 const sym = item.Symbol;
                 const baseTicker = sym.split('.')[0];
                 
-                // 【新增】過濾重複邏輯：使用 Domain 或過濾後的名稱作為 Unique Key
+                // 過濾重複邏輯：使用 Domain 或過濾後的名稱作為 Unique Key
                 const domain = TICKER_DOMAINS[sym] || TICKER_DOMAINS[baseTicker];
                 const rawName = TICKER_NAMES[sym] || TICKER_NAMES[baseTicker] || baseTicker;
                 const uniqueKey = domain || rawName.replace(' ADR', '');
@@ -1657,12 +1657,13 @@
                     earningsByDate[dateStr].push(item);
                 }
             });
-
+            
+            // 改為從本週開始往後顯示4週
             const weeks = [
-                { date: lastMonday, isThisWeek: lastMonday.getTime() === actualThisMonday.getTime() },
                 { date: baseMonday, isThisWeek: baseMonday.getTime() === actualThisMonday.getTime() },
                 { date: nextMonday, isThisWeek: nextMonday.getTime() === actualThisMonday.getTime() },
-                { date: nextNextMonday, isThisWeek: nextNextMonday.getTime() === actualThisMonday.getTime() } 
+                { date: nextNextMonday, isThisWeek: nextNextMonday.getTime() === actualThisMonday.getTime() },
+                { date: nextNextNextMonday, isThisWeek: nextNextNextMonday.getTime() === actualThisMonday.getTime() } 
             ];
 
             let hasData = false;
@@ -1705,25 +1706,19 @@
                     weekDates.push(d);
                 }
 
-                const tableStyle = week.isThisWeek 
-                    ? 'table-layout: fixed; width: 100%; outline: 3px solid #e74c3c; outline-offset: 1px; border-radius: 4px; position: relative; z-index: 1;' 
-                    : 'table-layout: fixed; width: 100%;';
+                // 移除本週的紅色外框
+                const tableStyle = 'table-layout: fixed; width: 100%;';
                 
                 html += `<table class="calendar-table" style="${tableStyle}">`;
                 
                 html += '<thead><tr>';
                 weekDates.forEach((d) => {
-                    const dateStr = getLocalYYYYMMDD(d);
-                    const holidays = globalHolidays[dateStr] || [];
-                    const isHoliday = holidays.length > 0;
-                    const flagsHtml = holidays.map(cc => {
-    					if (!cc) return '';
-						const code = cc.toLowerCase();
-						return `<img src="https://flagcdn.com/24x18/${code}.png" style="width:16px; height:11px; vertical-align:middle; margin-left:4px; border-radius:2px;" title="${cc} Holiday">`;
-					}).join(' ');
-                    const dayStr = `${d.getMonth()+1}/${d.getDate()}(${daysOfWeek[d.getDay()]})`;
-                    const bgStyle = isHoliday ? 'background-color: #E3F2FD;' : '';
-                    html += `<th style="${bgStyle}">${dayStr} <span style="font-size:1.1rem; margin-left:4px;">${flagsHtml}</span></th>`;
+                    const isToday = d.toDateString() === today.toDateString();
+                    const pinHtml = isToday ? '<span style="font-size:1.8rem; margin-right:4px; vertical-align:middle; text-shadow: 1px 1px 3px rgba(0,0,0,0.3);">⛳</span>' : '';
+                    const dayStr = `${pinHtml}${d.getMonth()+1}/${d.getDate()}(${daysOfWeek[d.getDay()]})`;
+                    
+                    // 移除國定假日的淺藍底與表頭國旗
+                    html += `<th>${dayStr}</th>`;
                 });
                 html += '</tr></thead>';
 
@@ -1732,9 +1727,25 @@
                     const dateStr = getLocalYYYYMMDD(d);
                     const items = earningsByDate[dateStr] || [];
                     const macroItems = globalMacroEventsData.filter(m => m.date === dateStr);
+                    const holidays = globalHolidays[dateStr] || []; // 抓取當天假日
                     
                     html += `<td><div style="display:flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px;">`;
                     
+                    // 1. 渲染 Holiday
+                    if (holidays.length > 0) {
+                        html += '<div style="display:flex; flex-direction:column; gap:4px; margin-right:8px; border-right:1px dashed #ccc; padding-right:8px;">';
+                        holidays.forEach(cc => {
+                            if (!cc) return;
+                            const code = cc.toLowerCase();
+                            const flagHtml = `<img src="https://flagcdn.com/24x18/${code}.png" style="width:14px; height:10px; margin-right:4px; border-radius:2px;">`;
+                            html += `<div class="calendar-ticker" style="border-left: 3px solid #ff69b4; background: #ffe0e6;">
+            					${flagHtml}<span style="color:#d81b60; font-weight:bold;">Holiday</span>
+         						</div>`;
+                        });
+                        html += '</div>';
+                    }
+
+                    // 2. 渲染 Macro Events
                     if (macroItems.length > 0) {
                         html += '<div style="display:flex; flex-direction:column; gap:4px; margin-right:8px; border-right:1px dashed #ccc; padding-right:8px;">';
                         macroItems.forEach(m => {
@@ -1746,6 +1757,7 @@
                         html += '</div>';
                     }
 
+                    // 3. 渲染 Earnings
                     for (let i = 0; i < items.length; i += 5) {
                         const chunk = items.slice(i, i + 5);
                         html += '<div style="display:flex; flex-direction:column; gap:4px;">';
@@ -1759,8 +1771,6 @@
                             const tooltipHtml = `<div class="custom-tooltip">EPS Est: ${est}<br>Actual: ${act}</div>`;
                             
                             const logoHtml = getLogoHtml(baseTicker) || getLogoHtml(sym);
-                            
-                            // 【新增】強制將名稱中的 ' ADR' 移除，讓日曆顯示乾淨
                             const rawName = TICKER_NAMES[baseTicker] || TICKER_NAMES[sym] || baseTicker;
                             const companyName = rawName.replace(' ADR', '');
                             
@@ -1772,7 +1782,7 @@
                         html += '</div>';
                     }
                     
-                    if (items.length === 0 && macroItems.length === 0) {
+                    if (items.length === 0 && macroItems.length === 0 && holidays.length === 0) {
                         html += '<span style="color:#bbb; font-size:0.85rem; padding:4px;">No events</span>';
                     }
                     
@@ -1784,6 +1794,7 @@
             html += '</div>';
             container.innerHTML = html;
         }
+        
         function changeCalendarWeek(direction) {
             if (direction === 0) {
                 calendarWeekOffset = 0;
@@ -1973,7 +1984,10 @@
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-                <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px;">${displayContent}</div>
+                <!-- 【改這裡】加上 markdown-content 類別，並用 marked.parse 轉換 displayContent -->
+                <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px;">
+                    ${marked.parse(displayContent, { breaks: true })}
+                </div>
 
                 <div style="color: #999; font-size: 0.9rem; text-align: left; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
                     本文內容擷取自公開的 Earnings Call 逐字稿，僅供研究參考。
@@ -2773,11 +2787,21 @@ function findValidTradingDate(ticker, date) {
             if(!item) { pane.innerHTML = ''; return; }
             pane.scrollTop = 0;
             
+            // 直接顯示所有正文，不裁切 substring
             let displayContent = 'No content available.';
             if (item.Content && item.Content.length > 0) {
-                const limit = Math.ceil(item.Content.length);
-                displayContent = item.Content.substring(0, limit) + '... <a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read More</a>';
+                displayContent = item.Content + '<br><br><a href="' + item.URL + '" target="_blank" style="color:var(--primary-color); font-weight:bold; text-decoration: none;">Read Original</a>';
 			}
+
+            // 動態判斷要不要顯示 AI Summary 的區塊
+            let aiSummaryHtml = '';
+            if (item.AI_Summary) {
+                aiSummaryHtml = `
+                <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                    ${marked.parse(item.AI_Summary, { breaks: true })}
+                </div>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">`;
+            }
 
             pane.innerHTML = `
                 <h2 style="margin-bottom:10px;">${item.Title}</h2>
@@ -2785,17 +2809,14 @@ function findValidTradingDate(ticker, date) {
                     ${TICKER_NAMES[item.ticker] || item.ticker} | ${item.Source || 'Unknown Source'} | ${item.Date} ${item.Time || ''}
                 </div>
                 
-
-                <div class="markdown-content" style="line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${item.AI_Summary ? marked.parse(item.AI_Summary, { breaks: true }) : 'No AI Summary'}</div>
-                
-                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                ${aiSummaryHtml}
 
                 <div style="white-space: pre-wrap; line-height:1.8; font-size:1rem; color:#333; margin-bottom: 20px;">${displayContent}</div>
 
                 <div style="color: #999; font-size: 0.9rem; text-align: left; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">
-                    本文內容由 AI 技術輔助整理自外部新聞來源，僅供研究參考。AI 摘要可能存在理解偏差或資訊遺漏，內容不代表原始媒體之立場，請務必點擊原始連結核實。 原始新聞內容之著作權均歸原媒體所有。本摘要僅為導讀用途，不構成對原文的替代。
+                    本文內容由 AI 技術輔助整理自外部新聞來源... (略)
                 </div>
- 				 `;
+ 			`;
         }
         
         function analyzeSelectedNews() {
@@ -3789,8 +3810,9 @@ function findValidTradingDate(ticker, date) {
             
             // 建立每一天的數據
             datesArr.forEach(time => {
-                const d = new Date(time);
-                const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            	const d = new Date(time);
+                // 改為使用 UTC 防止本地時區偏差
+                const dateStr = d.toISOString().split('T')[0]; 
                 let row = [dateStr];
                 datasets.forEach(ds => {
                     const pt = ds.data.find(p => p.x.getTime() === time);
@@ -4240,7 +4262,8 @@ function openTickerModal(ticker) {
             fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4); 
             
             const filteredNews = tickerNews.filter(n => n.jsDate >= fiveDaysAgo && n.jsDate <= refDate);
-            
+            // 【新增這行】判斷沒有新聞就隱藏該 Tab
+            document.getElementById('modal-tab-link-news').style.display = tickerNews.length === 0 ? 'none' : 'flex';
             if (tickerNews.length === 0) {
                 modalNewsLeft.innerHTML = '<p style="padding:15px; color:#666;">No news available.</p>';
             } else {
@@ -4411,7 +4434,7 @@ function openTickerModal(ticker) {
                     div.onclick = () => {
                         modalEarnLeft.querySelectorAll('.earnings-item').forEach(el => el.classList.remove('active'));
                         div.classList.add('active');
-                        modalEarnRight.innerHTML = `<h3>${eItem.title}</h3><div class="markdown-content">${marked.parse(eItem.AI_Summary || 'No summary.')}</div>`;
+                        modalEarnRight.innerHTML = `<h3>${eItem.title}</h3><div class="markdown-content">${marked.parse(eItem.AI_Summary || 'No summary.', { breaks: true })}</div>`;
                     };
                     modalEarnLeft.appendChild(div);
                     if (idx === 0) div.click();
